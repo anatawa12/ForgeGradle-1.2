@@ -11,18 +11,10 @@ import net.minecraftforge.gradle.SequencedInputSupplier;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.srg2source.rangeapplier.RangeApplier;
-import net.minecraftforge.srg2source.util.io.FolderSupplier;
-import net.minecraftforge.srg2source.util.io.InputSupplier;
-import net.minecraftforge.srg2source.util.io.OutputSupplier;
-import net.minecraftforge.srg2source.util.io.ZipInputSupplier;
-import net.minecraftforge.srg2source.util.io.ZipOutputSupplier;
+import net.minecraftforge.srg2source.util.io.*;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Optional;
-import org.gradle.api.tasks.OutputFiles;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -32,8 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class ApplyS2STask extends DefaultTask
-{
+public class ApplyS2STask extends DefaultTask {
     @InputFiles
     private final List<Object> srg = new LinkedList<Object>();
 
@@ -53,8 +44,7 @@ public class ApplyS2STask extends DefaultTask
     private DelayedFile out;
 
     @TaskAction
-    public void doTask() throws IOException
-    {
+    public void doTask() throws IOException {
         List<File> ins = getIn();
         File out = getOut();
         File rangemap = getRangeMap();
@@ -66,13 +56,10 @@ public class ApplyS2STask extends DefaultTask
 
         if (ins.size() == 0)
             return; // no input.
-        else if (ins.size() == 1)
-        {
+        else if (ins.size() == 1) {
             // just 1 supplier.
             inSup = getInput(ins.get(0));
-        }
-        else
-        {
+        } else {
             // multinput
             inSup = new SequencedInputSupplier();
             for (File f : ins)
@@ -85,8 +72,7 @@ public class ApplyS2STask extends DefaultTask
         else
             outSup = getOutput(out);
 
-        if (getExcModifiers() != null)
-        {
+        if (getExcModifiers() != null) {
             getLogger().lifecycle("creating default param names");
             exc = generateDefaultExc(getExcModifiers(), exc, srg);
         }
@@ -99,40 +85,32 @@ public class ApplyS2STask extends DefaultTask
         outSup.close();
     }
 
-    private InputSupplier getInput(File f) throws IOException
-    {
+    private InputSupplier getInput(File f) throws IOException {
         if (f.isDirectory())
             return new FolderSupplier(f);
-        else if (f.getPath().endsWith(".jar") || f.getPath().endsWith(".zip"))
-        {
+        else if (f.getPath().endsWith(".jar") || f.getPath().endsWith(".zip")) {
             ZipInputSupplier supp = new ZipInputSupplier();
             supp.readZip(f);
             return supp;
-        }
-        else
+        } else
             throw new IllegalArgumentException("Can only make suppliers out of directories and zips right now!");
     }
 
-    private OutputSupplier getOutput(File f) throws IOException
-    {
+    private OutputSupplier getOutput(File f) throws IOException {
         if (f.isDirectory())
             return new FolderSupplier(f);
-        else if (f.getPath().endsWith(".jar") || f.getPath().endsWith(".zip"))
-        {
+        else if (f.getPath().endsWith(".jar") || f.getPath().endsWith(".zip")) {
             return new ZipOutputSupplier(f);
-        }
-        else
+        } else
             throw new IllegalArgumentException("Can only make suppliers out of directories and zips right now!");
     }
 
-    private void applyRangeMap(InputSupplier inSup, OutputSupplier outSup, FileCollection srg, FileCollection exc, File rangeMap, File rangeLog) throws IOException
-    {
+    private void applyRangeMap(InputSupplier inSup, OutputSupplier outSup, FileCollection srg, FileCollection exc, File rangeMap, File rangeLog) throws IOException {
         RangeApplier app = new RangeApplier().readSrg(srg.getFiles());
 
         app.setOutLogger(Constants.getTaskLogStream(getProject(), this.getName() + ".log"));
 
-        if (!exc.isEmpty())
-        {
+        if (!exc.isEmpty()) {
             app.readParamMap(exc);
         }
 
@@ -143,18 +121,15 @@ public class ApplyS2STask extends DefaultTask
     }
 
 
-    private FileCollection generateDefaultExc(File modifiers, FileCollection currentExcs, FileCollection srgs)
-    {
+    private FileCollection generateDefaultExc(File modifiers, FileCollection currentExcs, FileCollection srgs) {
         if (modifiers == null || !modifiers.exists())
             return currentExcs;
 
         Map<String, Boolean> statics = Maps.newHashMap();
 
-        try
-        {
+        try {
             getLogger().debug("  Reading Modifiers:");
-            for (String line : Files.readLines(modifiers, Charset.defaultCharset()))
-            {
+            for (String line : Files.readLines(modifiers, Charset.defaultCharset())) {
                 if (Strings.isNullOrEmpty(line) || line.startsWith("#"))
                     continue;
                 String[] args = line.split("=");
@@ -169,11 +144,9 @@ public class ApplyS2STask extends DefaultTask
             temp.createNewFile();
 
             BufferedWriter writer = Files.newWriter(temp, Charsets.UTF_8);
-            for (File f : srgs)
-            {
+            for (File f : srgs) {
                 getLogger().debug("  Reading SRG: " + f);
-                for (String line : Files.readLines(f, Charset.defaultCharset()))
-                {
+                for (String line : Files.readLines(f, Charset.defaultCharset())) {
                     if (Strings.isNullOrEmpty(line) || line.startsWith("#"))
                         continue;
 
@@ -181,11 +154,9 @@ public class ApplyS2STask extends DefaultTask
                     line = line.substring(4);
                     String[] pts = line.split(" ");
 
-                    if (type.equals("MD"))
-                    {
+                    if (type.equals("MD")) {
                         String name = pts[2].substring(pts[2].lastIndexOf('/') + 1);
-                        if (name.startsWith("func_"))
-                        {
+                        if (name.startsWith("func_")) {
                             Boolean isStatic = statics.get(pts[0] + pts[1]);
                             getLogger().debug("    MD: " + line);
                             name = name.substring(5, name.indexOf('_', 5));
@@ -196,12 +167,10 @@ public class ApplyS2STask extends DefaultTask
 
                             int i = 0;
                             boolean inArray = false;
-                            while (i < pts[1].length())
-                            {
+                            while (i < pts[1].length()) {
                                 char c = pts[1].charAt(i);
 
-                                switch (c)
-                                {
+                                switch (c) {
                                     case '(': //Start
                                         break;
                                     case ')': //End
@@ -235,8 +204,7 @@ public class ApplyS2STask extends DefaultTask
                                 i++;
                             }
 
-                            if (params.size() > 0)
-                            {
+                            if (params.size() > 0) {
                                 writer.write(pts[2].substring(0, pts[2].lastIndexOf('/')));
                                 writer.write('.');
                                 writer.write(pts[2].substring(pts[2].lastIndexOf('/') + 1));
@@ -257,9 +225,7 @@ public class ApplyS2STask extends DefaultTask
                 files.add(f);
 
             return getProject().files(files.toArray());
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             Throwables.propagate(e);
         }
 
@@ -267,27 +233,23 @@ public class ApplyS2STask extends DefaultTask
     }
 
     @InputFiles
-    public FileCollection getIns()
-    {
+    public FileCollection getIns() {
         return getProject().files(in);
     }
 
-    public List<File> getIn()
-    {
+    public List<File> getIn() {
         List<File> files = new LinkedList<File>();
         for (DelayedFile f : in)
             files.add(f.call());
         return files;
     }
 
-    public void addIn(DelayedFile in)
-    {
+    public void addIn(DelayedFile in) {
         this.in.add(in);
     }
 
     @OutputFiles
-    public FileCollection getOuts()
-    {
+    public FileCollection getOuts() {
         File outFile = getOut();
         if (outFile.isDirectory())
             return getProject().fileTree(outFile);
@@ -295,73 +257,59 @@ public class ApplyS2STask extends DefaultTask
             return getProject().files(outFile);
     }
 
-    public File getOut()
-    {
+    public File getOut() {
         return out.call();
     }
 
-    public void setOut(DelayedFile out)
-    {
+    public void setOut(DelayedFile out) {
         this.out = out;
     }
 
-    public FileCollection getSrgs()
-    {
+    public FileCollection getSrgs() {
         return getProject().files(srg);
     }
 
-    public void addSrg(DelayedFile srg)
-    {
+    public void addSrg(DelayedFile srg) {
         this.srg.add(srg);
     }
 
-    public void addSrg(String srg)
-    {
+    public void addSrg(String srg) {
         this.srg.add(srg);
     }
 
-    public void addSrg(File srg)
-    {
+    public void addSrg(File srg) {
         this.srg.add(srg);
     }
 
-    public FileCollection getExcs()
-    {
+    public FileCollection getExcs() {
         return getProject().files(exc);
     }
 
-    public void addExc(DelayedFile exc)
-    {
+    public void addExc(DelayedFile exc) {
         this.exc.add(exc);
     }
 
-    public void addExc(String exc)
-    {
+    public void addExc(String exc) {
         this.exc.add(exc);
     }
 
-    public void addExc(File exc)
-    {
+    public void addExc(File exc) {
         this.exc.add(exc);
     }
 
-    public File getRangeMap()
-    {
+    public File getRangeMap() {
         return rangeMap.call();
     }
 
-    public void setRangeMap(DelayedFile rangeMap)
-    {
+    public void setRangeMap(DelayedFile rangeMap) {
         this.rangeMap = rangeMap;
     }
 
-    public void setExcModifiers(DelayedFile value)
-    {
+    public void setExcModifiers(DelayedFile value) {
         this.excModifiers = value;
     }
 
-    public File getExcModifiers()
-    {
+    public File getExcModifiers() {
         return this.excModifiers == null ? null : this.excModifiers.call();
     }
 }

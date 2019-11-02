@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class Version
-{
+public class Version {
     public String id;
     public Date time;
     public Date releaseTime;
@@ -18,37 +17,32 @@ public class Version
     public String incompatibilityReason;
     private String assets;
     public List<OSRule> rules;
-    
+
     private List<Library> _libraries;
 
-    public List<Library> getLibraries()
-    {
-        if (_libraries == null)
-        {
+    public List<Library> getLibraries() {
+        if (_libraries == null) {
             _libraries = new ArrayList<Library>();
             if (libraries == null) return _libraries;
-            for (Library lib : libraries)
-            {
-                if (lib.applies())
-                {
+            for (Library lib : libraries) {
+                if (lib.applies()) {
                     _libraries.add(lib);
                 }
             }
         }
         return _libraries;
     }
-    
-    public String getAssets()
-    {
+
+    public String getAssets() {
         return assets == null ? "legacy" : assets;
     }
-    
+
     /**
      * Populates this instance with information from another version json.
+     *
      * @param version Version json to extend from
      */
-    public void extendFrom(Version version)
-    {
+    public void extendFrom(Version version) {
         // strings. repalce if null.
         if (minecraftArguments == null)
             minecraftArguments = version.minecraftArguments;

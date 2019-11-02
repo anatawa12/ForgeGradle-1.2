@@ -1,9 +1,6 @@
 package net.minecraftforge.gradle.user.lib;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-
+import com.google.common.base.Throwables;
 import net.minecraftforge.gradle.GradleConfigurationException;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.json.JsonFactory;
@@ -16,7 +13,6 @@ import net.minecraftforge.gradle.tasks.user.reobf.ArtifactSpec;
 import net.minecraftforge.gradle.tasks.user.reobf.ReobfTask;
 import net.minecraftforge.gradle.user.UserBasePlugin;
 import net.minecraftforge.gradle.user.UserConstants;
-
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -24,31 +20,30 @@ import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.bundling.Jar;
 
-import com.google.common.base.Throwables;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 
-public class LiteLoaderPlugin extends UserLibBasePlugin
-{
+public class LiteLoaderPlugin extends UserLibBasePlugin {
     private Artifact llArtifact;
-    
+
     private static final String EXTENSION = "litemod";
 
     @Override
-    public void applyPlugin()
-    {
+    public void applyPlugin() {
         super.applyPlugin();
         commonApply();
-        
+
         // change main output to litemod
         ((Jar) project.getTasks().getByName("jar")).setExtension(EXTENSION);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
-    public void applyOverlayPlugin()
-    {
+    public void applyOverlayPlugin() {
         // add in extension
         project.getExtensions().create(actualApiName(), getExtensionClass(), this);
-        
+
         // ensure that this lib goes everywhere MC goes. its a required lib after all.
         Configuration config = project.getConfigurations().create(actualApiName());
         project.getConfigurations().getByName(UserConstants.CONFIG_MC).extendsFrom(config);
@@ -65,19 +60,17 @@ public class LiteLoaderPlugin extends UserLibBasePlugin
         project.afterEvaluate(new Action() {
 
             @Override
-            public void execute(Object arg0)
-            {
+            public void execute(Object arg0) {
                 getOverlayExtension().copyFrom(otherPlugin.getExtension());
             }
 
         });
-        
+
         commonApply();
     }
-    
+
     @SuppressWarnings("rawtypes")
-    protected void configurePackaging()
-    {
+    protected void configurePackaging() {
         String cappedApiName = Character.toUpperCase(actualApiName().charAt(0)) + actualApiName().substring(1);
         JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
 
@@ -91,11 +84,9 @@ public class LiteLoaderPlugin extends UserLibBasePlugin
         ((Jar) project.getTasks().getByName("jar")).setClassifier(((UserBasePlugin) otherPlugin).getApiName());
 
         //  configure reobf for litemod
-        ((ReobfTask) project.getTasks().getByName("reobf")).reobf(jarTask, new Action<ArtifactSpec>()
-        {
+        ((ReobfTask) project.getTasks().getByName("reobf")).reobf(jarTask, new Action<ArtifactSpec>() {
             @Override
-            public void execute(ArtifactSpec spec)
-            {
+            public void execute(ArtifactSpec spec) {
                 spec.setSrgMcp();
 
                 JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
@@ -107,17 +98,15 @@ public class LiteLoaderPlugin extends UserLibBasePlugin
         project.getArtifacts().add("archives", jarTask);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void commonApply()
-    {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void commonApply() {
         // add repo
         project.allprojects(new Action<Project>() {
-            public void execute(Project proj)
-            {
+            public void execute(Project proj) {
                 addMavenRepo(proj, "liteloaderRepo", "http://dl.liteloader.com/versions/");
             }
         });
-        
+
         final DelayedFile json = delayedFile("{CACHE_DIR}/minecraft/liteloader.json");
 
         {
@@ -126,24 +115,20 @@ public class LiteLoaderPlugin extends UserLibBasePlugin
             task.setUrl("http://dl.liteloader.com/versions/versions.json");
             task.setFile(json);
             task.setDieWithError(false);
-            
+
             // make sure it happens sometime during the build.
             project.getTasks().getByName("setupCIWorkspace").dependsOn(task);
             project.getTasks().getByName("setupDevWorkspace").dependsOn(task);
             project.getTasks().getByName("setupDecompWorkspace").dependsOn(task);
-            
+
             task.doLast(new Action() {
 
                 @Override
-                public void execute(Object arg0)
-                {
+                public void execute(Object arg0) {
                     EtagDownloadTask task = (EtagDownloadTask) arg0;
-                    try
-                    {
+                    try {
                         readJsonDep(task.getFile());
-                    }
-                    catch (IOException e)
-                    {
+                    } catch (IOException e) {
                         Throwables.propagate(e);
                     }
                 }
@@ -154,16 +139,11 @@ public class LiteLoaderPlugin extends UserLibBasePlugin
         project.afterEvaluate(new Action() {
 
             @Override
-            public void execute(Object arg0)
-            {
-                if (json.call().exists())
-                {
-                    try
-                    {
+            public void execute(Object arg0) {
+                if (json.call().exists()) {
+                    try {
                         readJsonDep(json.call());
-                    }
-                    catch (IOException e)
-                    {
+                    } catch (IOException e) {
                         Throwables.propagate(e);
                     }
                 }
@@ -172,10 +152,8 @@ public class LiteLoaderPlugin extends UserLibBasePlugin
         });
     }
 
-    private final void readJsonDep(File json) throws IOException
-    {
-        if (llArtifact != null)
-        {
+    private final void readJsonDep(File json) throws IOException {
+        if (llArtifact != null) {
             // its already set.. why parse again?
             return;
         }
@@ -190,55 +168,47 @@ public class LiteLoaderPlugin extends UserLibBasePlugin
         llArtifact = obj.latest;
 
         // add the dependency.
-        project.getLogger().debug("LiteLoader dep: "+llArtifact.getMcpDepString());
+        project.getLogger().debug("LiteLoader dep: " + llArtifact.getMcpDepString());
         project.getDependencies().add(actualApiName(), llArtifact.getMcpDepString());
     }
 
     @Override
-    protected String getClientRunClass()
-    {
+    protected String getClientRunClass() {
         return "com.mumfrey.liteloader.debug.Start";
     }
 
     @Override
-    protected Iterable<String> getClientRunArgs()
-    {
+    protected Iterable<String> getClientRunArgs() {
         return new ArrayList<String>(0);
     }
 
     @Override
-    protected String getServerRunClass()
-    {
+    protected String getServerRunClass() {
         return "net.minecraft.server.MinecraftServer";
     }
 
     @Override
-    protected Iterable<String> getServerRunArgs()
-    {
+    protected Iterable<String> getServerRunArgs() {
         return new ArrayList<String>(0);
     }
 
     @Override
-    String actualApiName()
-    {
+    String actualApiName() {
         return "liteloader";
     }
-    
+
     @Override
-    public final boolean canOverlayPlugin()
-    {
+    public final boolean canOverlayPlugin() {
         return true;
     }
 
     @Override
-    protected String getClientTweaker()
-    {
+    protected String getClientTweaker() {
         return "com.mumfrey.liteloader.launch.LiteLoaderTweaker";
     }
-    
+
     @Override
-    protected String getServerTweaker()
-    {
+    protected String getServerTweaker() {
         return ""; // umm...
     }
 }

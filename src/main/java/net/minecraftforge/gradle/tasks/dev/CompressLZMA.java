@@ -1,19 +1,16 @@
 package net.minecraftforge.gradle.tasks.dev;
 
+import com.google.common.io.ByteStreams;
 import lzma.streams.LzmaOutputStream;
 import net.minecraftforge.gradle.delayed.DelayedFile;
-
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
-import com.google.common.io.ByteStreams;
-
 import java.io.*;
 
-public class CompressLZMA extends DefaultTask
-{
+public class CompressLZMA extends DefaultTask {
     @InputFile
     private DelayedFile inputFile;
 
@@ -21,12 +18,11 @@ public class CompressLZMA extends DefaultTask
     private DelayedFile outputFile;
 
     @TaskAction
-    public void doTask() throws IOException
-    {
+    public void doTask() throws IOException {
         final BufferedInputStream in = new BufferedInputStream(new FileInputStream(getInputFile()));
         final OutputStream out = new LzmaOutputStream.Builder(new FileOutputStream(getOutputFile()))
-                                .useEndMarkerMode(true)
-                                .build();
+                .useEndMarkerMode(true)
+                .build();
 
         ByteStreams.copy(in, out);
 
@@ -34,23 +30,19 @@ public class CompressLZMA extends DefaultTask
         out.close();
     }
 
-    public File getInputFile()
-    {
+    public File getInputFile() {
         return inputFile.call();
     }
 
-    public void setInputFile(DelayedFile inputFile)
-    {
+    public void setInputFile(DelayedFile inputFile) {
         this.inputFile = inputFile;
     }
 
-    public File getOutputFile()
-    {
+    public File getOutputFile() {
         return outputFile.call();
     }
 
-    public void setOutputFile(DelayedFile outputFile)
-    {
+    public void setOutputFile(DelayedFile outputFile) {
         this.outputFile = outputFile;
     }
 }

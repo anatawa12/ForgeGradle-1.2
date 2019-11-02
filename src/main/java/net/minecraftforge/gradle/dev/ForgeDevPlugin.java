@@ -1,41 +1,17 @@
 package net.minecraftforge.gradle.dev;
 
-import static net.minecraftforge.gradle.dev.DevConstants.*;
+import com.google.common.base.Throwables;
 import groovy.lang.Closure;
-
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-
 import net.minecraftforge.gradle.CopyInto;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedBase;
-import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedBase.IDelayedResolver;
-import net.minecraftforge.gradle.tasks.ApplyS2STask;
-import net.minecraftforge.gradle.tasks.CreateStartTask;
-import net.minecraftforge.gradle.tasks.CrowdinDownloadTask;
-import net.minecraftforge.gradle.tasks.DecompileTask;
-import net.minecraftforge.gradle.tasks.ExtractS2SRangeTask;
-import net.minecraftforge.gradle.tasks.ProcessSrcJarTask;
-import net.minecraftforge.gradle.tasks.ProcessJarTask;
-import net.minecraftforge.gradle.tasks.RemapSourcesTask;
+import net.minecraftforge.gradle.delayed.DelayedFile;
+import net.minecraftforge.gradle.tasks.*;
 import net.minecraftforge.gradle.tasks.abstractutil.DelayedJar;
 import net.minecraftforge.gradle.tasks.abstractutil.ExtractTask;
 import net.minecraftforge.gradle.tasks.abstractutil.FileFilterTask;
-import net.minecraftforge.gradle.tasks.dev.ChangelogTask;
-import net.minecraftforge.gradle.tasks.dev.FMLVersionPropTask;
-import net.minecraftforge.gradle.tasks.dev.ForgeVersionReplaceTask;
-import net.minecraftforge.gradle.tasks.dev.GenBinaryPatches;
-import net.minecraftforge.gradle.tasks.dev.GenDevProjectsTask;
-import net.minecraftforge.gradle.tasks.dev.GeneratePatches;
-import net.minecraftforge.gradle.tasks.dev.ObfuscateTask;
-import net.minecraftforge.gradle.tasks.dev.SubmoduleChangelogTask;
-import net.minecraftforge.gradle.tasks.dev.SubprojectTask;
-import net.minecraftforge.gradle.tasks.dev.VersionJsonTask;
-
+import net.minecraftforge.gradle.tasks.dev.*;
 import org.apache.commons.io.FileUtils;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
@@ -46,13 +22,17 @@ import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.bundling.Zip;
 
-import com.google.common.base.Throwables;
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 
-public class ForgeDevPlugin extends DevBasePlugin
-{
+import static net.minecraftforge.gradle.dev.DevConstants.*;
+
+public class ForgeDevPlugin extends DevBasePlugin {
     @Override
-    public void applyPlugin()
-    {
+    public void applyPlugin() {
         super.applyPlugin();
 
         // set fmlDir
@@ -94,8 +74,7 @@ public class ForgeDevPlugin extends DevBasePlugin
         task.setGroup("Forge");
     }
 
-    protected void createJarProcessTasks()
-    {
+    protected void createJarProcessTasks() {
         ProcessJarTask task2 = makeTask("deobfuscateJar", ProcessJarTask.class);
         {
             task2.setInJar(delayedFile(Constants.JAR_MERGED));
@@ -164,8 +143,7 @@ public class ForgeDevPlugin extends DevBasePlugin
         }
     }
 
-    private void createSourceCopyTasks()
-    {
+    private void createSourceCopyTasks() {
         ExtractTask task = makeTask("extractMcResources", ExtractTask.class);
         {
             task.exclude(JAVA_FILES);
@@ -203,23 +181,20 @@ public class ForgeDevPlugin extends DevBasePlugin
     }
 
     @SuppressWarnings("serial")
-    private void createProjectTasks()
-    {
+    private void createProjectTasks() {
         FMLVersionPropTask sub = makeTask("createVersionPropertiesFML", FMLVersionPropTask.class);
         {
             //sub.setTasks("createVersionProperties");
             //sub.setBuildFile(delayedFile("{FML_DIR}/build.gradle"));
-            sub.setVersion(new Closure<String>(project)
-            {
+            sub.setVersion(new Closure<String>(project) {
                 @Override
-                public String call(Object... args)
-                {
+                public String call(Object... args) {
                     return FmlDevPlugin.getVersionFromGit(project, new File(delayedString("{FML_DIR}").call()));
                 }
             });
             sub.setOutputFile(delayedFile(FML_VERSIONF));
         }
-        
+
         CreateStartTask makeStart = makeTask("makeStart", CreateStartTask.class);
         {
             makeStart.addResource("GradleStart.java");
@@ -276,14 +251,13 @@ public class ForgeDevPlugin extends DevBasePlugin
             task.setMappingChannel(delayedString("{MAPPING_CHANNEL}"));
             task.setMappingVersion(delayedString("{MAPPING_VERSION}"));
 
-            task.dependsOn("extractNatives","createVersionPropertiesFML", makeStart);
+            task.dependsOn("extractNatives", "createVersionPropertiesFML", makeStart);
         }
 
         makeTask("generateProjects").dependsOn("generateProjectClean", "generateProjectForge");
     }
 
-    private void createEclipseTasks()
-    {
+    private void createEclipseTasks() {
         SubprojectTask task = makeTask("eclipseClean", SubprojectTask.class);
         {
             task.setBuildFile(delayedFile(ECLIPSE_CLEAN + "/build.gradle"));
@@ -301,8 +275,7 @@ public class ForgeDevPlugin extends DevBasePlugin
         makeTask("eclipse").dependsOn("eclipseClean", "eclipseForge");
     }
 
-    private void createMiscTasks()
-    {
+    private void createMiscTasks() {
         DelayedFile rangeMapClean = delayedFile("{BUILD_DIR}/tmp/rangemapCLEAN.txt");
         DelayedFile rangeMapDirty = delayedFile("{BUILD_DIR}/tmp/rangemapDIRTY.txt");
 
@@ -326,13 +299,11 @@ public class ForgeDevPlugin extends DevBasePlugin
             applyS2S.dependsOn("genSrgs", extractRange);
 
             String[] paths = {DevConstants.FML_RESOURCES, DevConstants.FORGE_RESOURCES};
-            for (String path : paths)
-            {
-                for (File f : project.fileTree(delayedFile(path).call()).getFiles())
-                {
-                    if(f.getPath().endsWith(".exc"))
+            for (String path : paths) {
+                for (File f : project.fileTree(delayedFile(path).call()).getFiles()) {
+                    if (f.getPath().endsWith(".exc"))
                         applyS2S.addExc(f);
-                    else if(f.getPath().endsWith(".srg"))
+                    else if (f.getPath().endsWith(".srg"))
                         applyS2S.addSrg(f);
                 }
             }
@@ -358,13 +329,11 @@ public class ForgeDevPlugin extends DevBasePlugin
             applyS2S.dependsOn("genSrgs", extractRange);
 
             String[] paths = {DevConstants.FML_RESOURCES};
-            for (String path : paths)
-            {
-                for (File f : project.fileTree(delayedFile(path).call()).getFiles())
-                {
-                    if(f.getPath().endsWith(".exc"))
+            for (String path : paths) {
+                for (File f : project.fileTree(delayedFile(path).call()).getFiles()) {
+                    if (f.getPath().endsWith(".exc"))
                         applyS2S.addExc(f);
-                    else if(f.getPath().endsWith(".srg"))
+                    else if (f.getPath().endsWith(".srg"))
                         applyS2S.addSrg(f);
                 }
             }
@@ -432,8 +401,7 @@ public class ForgeDevPlugin extends DevBasePlugin
     }
 
     @SuppressWarnings("serial")
-    private void createPackageTasks()
-    {
+    private void createPackageTasks() {
         CrowdinDownloadTask crowdin = makeTask("getLocalizations", CrowdinDownloadTask.class);
         {
             crowdin.setOutput(delayedFile(CROWDIN_ZIP));
@@ -481,10 +449,8 @@ public class ForgeDevPlugin extends DevBasePlugin
             uni.exclude("devbinpatches.pack.lzma");
             uni.setIncludeEmptyDirs(false);
             uni.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
-            uni.setManifest(new Closure<Object>(project)
-            {
-                public Object call()
-                {
+            uni.setManifest(new Closure<Object>(project) {
+                public Object call() {
                     Manifest mani = (Manifest) getDelegate();
                     mani.getAttributes().put("Main-Class", delayedString("{MAIN_CLASS}").call());
                     mani.getAttributes().put("TweakClass", delayedString("{FML_TWEAK_CLASS}").call());
@@ -492,17 +458,12 @@ public class ForgeDevPlugin extends DevBasePlugin
                     return null;
                 }
             });
-            uni.doLast(new Action<Task>()
-            {
+            uni.doLast(new Action<Task>() {
                 @Override
-                public void execute(Task arg0)
-                {
-                    try
-                    {
-                        signJar(((DelayedJar)arg0).getArchivePath(), "forge", "*/*/**", "!paulscode/**");
-                    }
-                    catch (Exception e)
-                    {
+                public void execute(Task arg0) {
+                    try {
+                        signJar(((DelayedJar) arg0).getArchivePath(), "forge", "*/*/**", "!paulscode/**");
+                    } catch (Exception e) {
                         Throwables.propagate(e);
                     }
                 }
@@ -520,17 +481,13 @@ public class ForgeDevPlugin extends DevBasePlugin
             genInstallJson.addReplacement("@version@", delayedString("{VERSION}"));
             genInstallJson.addReplacement("@project@", delayedString("Forge"));
             genInstallJson.addReplacement("@artifact@", delayedString("net.minecraftforge:forge:{MC_VERSION_SAFE}-{VERSION}"));
-            genInstallJson.addReplacement("@universal_jar@", new Closure<String>(project)
-            {
-                public String call()
-                {
+            genInstallJson.addReplacement("@universal_jar@", new Closure<String>(project) {
+                public String call() {
                     return uni.getArchiveName();
                 }
             });
-            genInstallJson.addReplacement("@timestamp@", new Closure<String>(project)
-            {
-                public String call()
-                {
+            genInstallJson.addReplacement("@timestamp@", new Closure<String>(project) {
+                public String call() {
                     return (new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")).format(new Date());
                 }
             });
@@ -540,8 +497,7 @@ public class ForgeDevPlugin extends DevBasePlugin
         {
             inst.setClassifier("installer");
             inst.from(new Closure<File>(project) {
-                public File call()
-                {
+                public File call() {
                     return uni.getArchivePath();
                 }
             });
@@ -604,13 +560,11 @@ public class ForgeDevPlugin extends DevBasePlugin
             s2s.getOutputs().upToDateWhen(Constants.CALL_FALSE); //Fucking caching.
 
             String[] paths = {DevConstants.FML_RESOURCES, DevConstants.FORGE_RESOURCES};
-            for (String path : paths)
-            {
-                for (File f : project.fileTree(delayedFile(path).call()).getFiles())
-                {
-                    if(f.getPath().endsWith(".exc"))
+            for (String path : paths) {
+                for (File f : project.fileTree(delayedFile(path).call()).getFiles()) {
+                    if (f.getPath().endsWith(".exc"))
                         s2s.addExc(f);
-                    else if(f.getPath().endsWith(".srg"))
+                    else if (f.getPath().endsWith(".srg"))
                         s2s.addSrg(f);
                 }
             }
@@ -621,20 +575,17 @@ public class ForgeDevPlugin extends DevBasePlugin
             userDev.setClassifier("userdev");
             userDev.from(delayedFile(JSON_DEV));
             userDev.from(new Closure<File>(project) {
-                public File call()
-                {
+                public File call() {
                     return patchZipFML.getArchivePath();
                 }
             });
             userDev.from(new Closure<File>(project) {
-                public File call()
-                {
+                public File call() {
                     return patchZipForge.getArchivePath();
                 }
             });
             userDev.from(new Closure<File>(project) {
-                public File call()
-                {
+                public File call() {
                     return classZip.getArchivePath();
                 }
             });
@@ -684,21 +635,18 @@ public class ForgeDevPlugin extends DevBasePlugin
         project.getArtifacts().add("archives", src);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static String getVersionFromJava(Project project, String file) throws IOException
-    {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static String getVersionFromJava(Project project, String file) throws IOException {
         String major = "0";
         String minor = "0";
         String revision = "0";
         String build = "0";
 
         String prefix = "public static final int";
-        List<String> lines = (List<String>)FileUtils.readLines(project.file(file));
-        for (String s : lines)
-        {
+        List<String> lines = (List<String>) FileUtils.readLines(project.file(file));
+        for (String s : lines) {
             s = s.trim();
-            if (s.startsWith(prefix))
-            {
+            if (s.startsWith(prefix)) {
                 s = s.substring(prefix.length(), s.length() - 1);
                 s = s.replace('=', ' ').replace("Version", "").replaceAll(" +", " ").trim();
                 String[] pts = s.split(" ");
@@ -709,34 +657,28 @@ public class ForgeDevPlugin extends DevBasePlugin
             }
         }
 
-        if (System.getenv().containsKey("BUILD_NUMBER"))
-        {
+        if (System.getenv().containsKey("BUILD_NUMBER")) {
             build = System.getenv("BUILD_NUMBER");
         }
 
         String branch = null;
-        if (!System.getenv().containsKey("GIT_BRANCH"))
-        {
+        if (!System.getenv().containsKey("GIT_BRANCH")) {
             branch = runGit(project, project.getProjectDir(), "rev-parse", "--abbrev-ref", "HEAD");
-        }
-        else
-        {
+        } else {
             branch = System.getenv("GIT_BRANCH");
             branch = branch.substring(branch.lastIndexOf('/') + 1);
         }
 
-        if (branch != null && (branch.equals("master") || branch.equals("HEAD")))
-        {
+        if (branch != null && (branch.equals("master") || branch.equals("HEAD"))) {
             branch = null;
         }
 
-        IDelayedResolver resolver = (IDelayedResolver)project.getPlugins().findPlugin("forgedev");
+        IDelayedResolver resolver = (IDelayedResolver) project.getPlugins().findPlugin("forgedev");
         StringBuilder out = new StringBuilder();
 
         out.append(DelayedBase.resolve("{MC_VERSION_SAFE}", project, resolver)).append('-'); // Somehow configure this?
         out.append(major).append('.').append(minor).append('.').append(revision).append('.').append(build);
-        if (branch != null)
-        {
+        if (branch != null) {
             out.append('-').append(branch);
         }
 
@@ -744,8 +686,7 @@ public class ForgeDevPlugin extends DevBasePlugin
     }
 
     @Override
-    public void afterEvaluate()
-    {
+    public void afterEvaluate() {
         super.afterEvaluate();
 
         SubprojectTask task = (SubprojectTask) project.getTasks().getByName("eclipseClean");
@@ -755,33 +696,30 @@ public class ForgeDevPlugin extends DevBasePlugin
         task = (SubprojectTask) project.getTasks().getByName("eclipseForge");
         task.configureProject(getExtension().getSubprojects());
         task.configureProject(getExtension().getCleanProject());
-        
+
         {
             // because different versions of authlib
             CreateStartTask makeStart = (CreateStartTask) project.getTasks().getByName("makeStart");
             String mcVersion = delayedString("{MC_VERSION}").call();
-            
+
             if (mcVersion.startsWith("1.7")) // MC 1.7.X
             {
                 if (mcVersion.endsWith("10")) // MC 1.7.10
                 {
                     makeStart.addReplacement("//@@USERTYPE@@", "argMap.put(\"userType\", auth.getUserType().getName());");
                     makeStart.addReplacement("//@@USERPROP@@", "argMap.put(\"userProperties\", new GsonBuilder().registerTypeAdapter(com.mojang.authlib.properties.PropertyMap.class, new net.minecraftforge.gradle.OldPropertyMapSerializer()).create().toJson(auth.getUserProperties()));");
-                }
-                else
-                {
+                } else {
                     makeStart.removeResource("net/minecraftforge/gradle/OldPropertyMapSerializer.java");
                 }
-                
+
                 makeStart.addReplacement("@@CLIENTTWEAKER@@", delayedString("cpw.mods.fml.common.launcher.FMLTweaker"));
                 makeStart.addReplacement("@@SERVERTWEAKER@@", delayedString("cpw.mods.fml.common.launcher.FMLServerTweaker"));
-            }
-            else // MC 1.8 +
+            } else // MC 1.8 +
             {
                 makeStart.removeResource("net/minecraftforge/gradle/OldPropertyMapSerializer.java");
                 makeStart.addReplacement("//@@USERTYPE@@", "argMap.put(\"userType\", auth.getUserType().getName());");
                 makeStart.addReplacement("//@@USERPROP@@", "argMap.put(\"userProperties\", new GsonBuilder().registerTypeAdapter(com.mojang.authlib.properties.PropertyMap.class, new com.mojang.authlib.properties.PropertyMap.Serializer()).create().toJson(auth.getUserProperties()));");
-                
+
                 makeStart.addReplacement("@@CLIENTTWEAKER@@", delayedString("net.minecraftforge.fml.common.launcher.FMLTweaker"));
                 makeStart.addReplacement("@@SERVERTWEAKER@@", delayedString("net.minecraftforge.fml.common.launcher.FMLServerTweaker"));
             }

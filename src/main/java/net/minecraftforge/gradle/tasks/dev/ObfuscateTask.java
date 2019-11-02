@@ -1,17 +1,6 @@
 package net.minecraftforge.gradle.tasks.dev;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.LinkedList;
-
+import com.google.common.io.Files;
 import net.md_5.specialsource.Jar;
 import net.md_5.specialsource.JarMapping;
 import net.md_5.specialsource.JarRemapper;
@@ -21,7 +10,6 @@ import net.md_5.specialsource.provider.JointProvider;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.dev.FmlDevPlugin;
 import net.minecraftforge.gradle.extrastuff.ReobfExceptor;
-
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
@@ -29,15 +17,20 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.tasks.TaskAction;
 
-import com.google.common.io.Files;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.LinkedList;
 
-public class ObfuscateTask extends DefaultTask
-{
+public class ObfuscateTask extends DefaultTask {
     private DelayedFile outJar;
     private DelayedFile preFFJar;
     private DelayedFile srg;
     private DelayedFile exc;
-    private boolean     reverse;
+    private boolean reverse;
     private DelayedFile buildFile;
     private LinkedList<Action<Project>> configureProject = new LinkedList<Action<Project>>();
     private DelayedFile methodsCsv;
@@ -46,48 +39,44 @@ public class ObfuscateTask extends DefaultTask
     private LinkedList<String> extraSrg = new LinkedList<String>();
 
     @TaskAction
-    public void doTask() throws IOException
-    {
+    public void doTask() throws IOException {
         getLogger().debug("Building child project model...");
         Project childProj = FmlDevPlugin.getProject(getBuildFile(), getProject());
-        for (Action<Project> act : configureProject)
-        {
+        for (Action<Project> act : configureProject) {
             if (act != null)
                 act.execute(childProj);
         }
-        
+
         AbstractTask compileTask = (AbstractTask) childProj.getTasks().getByName("compileJava");
         AbstractTask jarTask = (AbstractTask) childProj.getTasks().getByName(subTask);
 
         // executing jar task
-        getLogger().debug("Executing child "+subTask+" task...");
+        getLogger().debug("Executing child " + subTask + " task...");
         executeTask(jarTask);
-        
-        File inJar = (File)jarTask.property("archivePath");
+
+        File inJar = (File) jarTask.property("archivePath");
 
         File srg = getSrg();
 
-        if (getExc() != null)
-        {
+        if (getExc() != null) {
             ReobfExceptor exceptor = new ReobfExceptor();
             exceptor.toReobfJar = inJar;
             exceptor.deobfJar = getPreFFJar();
             exceptor.excConfig = getExc();
             exceptor.fieldCSV = getFieldsCsv();
             exceptor.methodCSV = getMethodsCsv();
-            
-            File outSrg =  new File(this.getTemporaryDir(), "reobf_cls.srg");
-            
+
+            File outSrg = new File(this.getTemporaryDir(), "reobf_cls.srg");
+
             exceptor.doFirstThings();
             exceptor.buildSrg(srg, outSrg);
-            
+
             srg = outSrg;
         }
-        
+
         // append SRG
         BufferedWriter writer = new BufferedWriter(new FileWriter(srg, true));
-        for (String line : extraSrg)
-        {
+        for (String line : extraSrg) {
             writer.write(line);
             writer.newLine();
         }
@@ -95,25 +84,21 @@ public class ObfuscateTask extends DefaultTask
         writer.close();
 
         getLogger().debug("Obfuscating jar...");
-        obfuscate(inJar, (FileCollection)compileTask.property("classpath"), srg);
+        obfuscate(inJar, (FileCollection) compileTask.property("classpath"), srg);
     }
 
-    private void executeTask(AbstractTask task)
-    {
-        for (Object dep : task.getTaskDependencies().getDependencies(task))
-        {
+    private void executeTask(AbstractTask task) {
+        for (Object dep : task.getTaskDependencies().getDependencies(task)) {
             executeTask((AbstractTask) dep);
         }
 
-        if (!task.getState().getExecuted())
-        {
+        if (!task.getState().getExecuted()) {
             getLogger().lifecycle(task.getPath());
             task.execute();
         }
     }
 
-    private void obfuscate(File inJar, FileCollection classpath, File srg) throws FileNotFoundException, IOException
-    {
+    private void obfuscate(File inJar, FileCollection classpath, File srg) throws FileNotFoundException, IOException {
         // load mapping
         JarMapping mapping = new JarMapping();
         mapping.loadMappings(Files.newReader(srg, Charset.defaultCharset()), null, null, reverse);
@@ -143,8 +128,7 @@ public class ObfuscateTask extends DefaultTask
         remapper.remapJar(input, getOutJar());
     }
 
-    public static URL[] toUrls(FileCollection collection) throws MalformedURLException
-    {
+    public static URL[] toUrls(FileCollection collection) throws MalformedURLException {
         ArrayList<URL> urls = new ArrayList<URL>();
 
         for (File file : collection.getFiles())
@@ -153,109 +137,88 @@ public class ObfuscateTask extends DefaultTask
         return urls.toArray(new URL[urls.size()]);
     }
 
-    public File getOutJar()
-    {
+    public File getOutJar() {
         return outJar.call();
     }
 
-    public void setOutJar(DelayedFile outJar)
-    {
+    public void setOutJar(DelayedFile outJar) {
         this.outJar = outJar;
     }
-    
-    public File getPreFFJar()
-    {
+
+    public File getPreFFJar() {
         return preFFJar.call();
     }
 
-    public void setPreFFJar(DelayedFile preFFJar)
-    {
+    public void setPreFFJar(DelayedFile preFFJar) {
         this.preFFJar = preFFJar;
     }
 
-    public File getSrg()
-    {
+    public File getSrg() {
         return srg.call();
     }
 
-    public void setSrg(DelayedFile srg)
-    {
+    public void setSrg(DelayedFile srg) {
         this.srg = srg;
     }
 
-    public File getExc()
-    {
+    public File getExc() {
         return exc.call();
     }
 
-    public void setExc(DelayedFile exc)
-    {
+    public void setExc(DelayedFile exc) {
         this.exc = exc;
     }
 
-    public boolean isReverse()
-    {
+    public boolean isReverse() {
         return reverse;
     }
 
-    public void setReverse(boolean reverse)
-    {
+    public void setReverse(boolean reverse) {
         this.reverse = reverse;
     }
 
-    public File getBuildFile()
-    {
+    public File getBuildFile() {
         return buildFile.call();
     }
 
-    public void setBuildFile(DelayedFile buildFile)
-    {
+    public void setBuildFile(DelayedFile buildFile) {
         this.buildFile = buildFile;
     }
 
 
-    public File getMethodsCsv()
-    {
+    public File getMethodsCsv() {
         return methodsCsv.call();
     }
 
-    public void setMethodsCsv(DelayedFile methodsCsv)
-    {
+    public void setMethodsCsv(DelayedFile methodsCsv) {
         this.methodsCsv = methodsCsv;
     }
 
-    public File getFieldsCsv()
-    {
+    public File getFieldsCsv() {
         return fieldsCsv.call();
     }
 
-    public void setFieldsCsv(DelayedFile fieldsCsv)
-    {
+    public void setFieldsCsv(DelayedFile fieldsCsv) {
         this.fieldsCsv = fieldsCsv;
     }
-    
-    public void configureProject(Action<Project> action)
-    {
+
+    public void configureProject(Action<Project> action) {
         configureProject.add(action);
     }
 
-    public LinkedList<String> getExtraSrg()
-    {
+    public LinkedList<String> getExtraSrg() {
         return extraSrg;
     }
 
-    public void setExtraSrg(LinkedList<String> extraSrg)
-    {
+    public void setExtraSrg(LinkedList<String> extraSrg) {
         this.extraSrg = extraSrg;
     }
 
-    public String getSubTask()
-    {
+    public String getSubTask() {
         return subTask;
     }
 
-    public void setSubTask(String subTask)
-    {
+    public void setSubTask(String subTask) {
         this.subTask = subTask;
     }
 }

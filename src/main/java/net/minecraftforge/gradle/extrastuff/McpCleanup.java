@@ -1,119 +1,95 @@
 package net.minecraftforge.gradle.extrastuff;
 
+import net.minecraftforge.gradle.common.Constants;
+
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.minecraftforge.gradle.common.Constants;
-
-public class McpCleanup
-{
+public class McpCleanup {
     public static final Pattern COMMENTS_TRAILING = Pattern.compile("(?m)[ \\t]+$");
     public static final Pattern COMMENTS_NEWLINES = Pattern.compile("(?m)^(?:\\r\\n|\\r|\\n){2,}");
 
-    public static String stripComments(String text)
-    {
+    public static String stripComments(String text) {
         StringReader in = new StringReader(text);
         StringWriter out = new StringWriter(text.length());
         boolean inComment = false;
         boolean inString = false;
         char c;
         int ci;
-        try
-        {
-            while ((ci = in.read()) != -1)
-            {
+        try {
+            while ((ci = in.read()) != -1) {
                 c = (char) ci;
-                switch (c)
-                    {
-                        case '\\':
-                            {
-                                out.write(c);
-                                out.write(in.read());//Skip escaped chars
-                                break;
-                            }
-                        case '\"':
-                            {
-                                if (!inComment)
-                                {
-                                    out.write(c);
-                                    inString = !inString;
-                                }
-                                break;
-                            }
-                        case '\'':
-                            {
-                                if (!inComment)
-                                {
-                                    out.write(c);
-                                    out.write(in.read());
-                                    out.write(in.read());
-                                }
-                                break;
-                            }
-                        case '*':
-                            {
-                                char c2 = (char) in.read();
-                                if (inComment && c2 == '/')
-                                {
-                                    inComment = false;
-                                    out.write(' ');//Allows int x = 3; int y = -/**/-x; to work
-                                }
-                                else
-                                {
+                switch (c) {
+                    case '\\': {
+                        out.write(c);
+                        out.write(in.read());//Skip escaped chars
+                        break;
+                    }
+                    case '\"': {
+                        if (!inComment) {
+                            out.write(c);
+                            inString = !inString;
+                        }
+                        break;
+                    }
+                    case '\'': {
+                        if (!inComment) {
+                            out.write(c);
+                            out.write(in.read());
+                            out.write(in.read());
+                        }
+                        break;
+                    }
+                    case '*': {
+                        char c2 = (char) in.read();
+                        if (inComment && c2 == '/') {
+                            inComment = false;
+                            out.write(' ');//Allows int x = 3; int y = -/**/-x; to work
+                        } else {
+                            out.write(c);
+                            out.write(c2);
+                        }
+                        break;
+                    }
+                    case '/': {
+                        if (!inString) {
+                            char c2 = (char) in.read();
+                            switch (c2) {
+                                case '/':
+                                    char c3 = 0;
+                                    while (c3 != '\n' && c3 != '\r') {
+                                        c3 = (char) in.read();
+                                    }
+                                    out.write(c3);//write newline
+                                    break;
+                                case '*':
+                                    inComment = true;
+                                    break;
+                                default:
                                     out.write(c);
                                     out.write(c2);
-                                }
-                                break;
+                                    break;
                             }
-                        case '/':
-                            {
-                                if (!inString)
-                                {
-                                    char c2 = (char) in.read();
-                                    switch (c2)
-                                        {
-                                            case '/':
-                                                char c3 = 0;
-                                                while (c3 != '\n' && c3 != '\r')
-                                                {
-                                                    c3 = (char) in.read();
-                                                }
-                                                out.write(c3);//write newline
-                                                break;
-                                            case '*':
-                                                inComment = true;
-                                                break;
-                                            default:
-                                                out.write(c);
-                                                out.write(c2);
-                                                break;
-                                        }
-                                }
-                                else
-                                {
-                                    out.write(c);
-                                }
-                                break;
-                            }
-                        default:
-                            {
-                                if (!inComment)
-                                {
-                                    out.write(c);
-                                }
-                                break;
-                            }
+                        } else {
+                            out.write(c);
+                        }
+                        break;
                     }
+                    default: {
+                        if (!inComment) {
+                            out.write(c);
+                        }
+                        break;
+                    }
+                }
             }
             out.close();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        
+
         text = out.toString();
 
         text = COMMENTS_TRAILING.matcher(text).replaceAll("");
@@ -236,8 +212,7 @@ public class McpCleanup
     // 5.8119...F to ((float)Math.PI * 185F / 100F)
     public static final Pattern CLEANUP_185pi100F = Pattern.compile("0\\.8119[0-9]*[Ff]");
 
-    public static String cleanup(String text)
-    {
+    public static String cleanup(String text) {
         // simple replacements
         text = CLEANUP_header.matcher(text).replaceAll("");
         text = CLEANUP_footer.matcher(text).replaceAll("");
@@ -248,29 +223,27 @@ public class McpCleanup
         text = CLEANUP_blockends.matcher(text).replaceAll("");
         text = CLEANUP_gl.matcher(text).replaceAll("");
         text = CLEANUP_maxD.matcher(text).replaceAll("Double.MAX_VALUE");
-    
+
         // unicode chars
         {
             Matcher matcher = CLEANUP_unicode.matcher(text);
             int val;
             StringBuffer buffer = new StringBuffer(text.length());
-    
-            while (matcher.find())
-            {
+
+            while (matcher.find()) {
                 val = Integer.parseInt(matcher.group(1), 16);
                 // work around the replace('\u00a7', '$') call in MinecraftServer and a couple of '\u0000'
-                if (val > 255)
-                {
+                if (val > 255) {
                     matcher.appendReplacement(buffer, Matcher.quoteReplacement("" + val));
                 }
             }
             matcher.appendTail(buffer);
             text = buffer.toString();
         }
-    
+
         // charval.. its stupid.
         text = CLEANUP_charval.matcher(text).replaceAll("$1"); // TESTING NEEDED
-    
+
         //		 pi?   true
         text = CLEANUP_piD.matcher(text).replaceAll("Math.PI");
         text = CLEANUP_piF.matcher(text).replaceAll("(float)Math.PI");
@@ -296,7 +269,7 @@ public class McpCleanup
         text = CLEANUP_7pi100F.matcher(text).replaceAll("((float)Math.PI * 7F / 100F)");
         text = CLEANUP_185pi100D.matcher(text).replaceAll("(Math.PI * 185D / 100D)");
         text = CLEANUP_185pi100F.matcher(text).replaceAll("((float)Math.PI * 185F / 100F)");
-    
+
         return text;
     }
 
@@ -306,18 +279,14 @@ public class McpCleanup
      * @param text Full file as a string
      * @return Full file as a string with imports fixed.
      */
-    public static String fixImports(String text)
-    {
+    public static String fixImports(String text) {
         Matcher match = CLEANUP_package.matcher(text);
-        if (match.find())
-        {
+        if (match.find()) {
             String pack = match.group(1);
 
             Matcher match2 = CLEANUP_import.matcher(text);
-            while (match2.find())
-            {
-                if (match2.group(1).equals(pack))
-                {
+            while (match2.find()) {
+                if (match2.group(1).equals(pack)) {
                     text = text.replace(match2.group(), "");
                 }
             }

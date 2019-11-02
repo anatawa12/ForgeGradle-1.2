@@ -5,8 +5,8 @@ site_description: Documentation for ForgeGradle the gradle plugin for Minecraft
 repo_url: https://github.com/MinecraftForge/ForgeGradle
 
 pages:
-- ['index.md', 'Introduction']
-- ['cookbook.md', 'Cook Book']
-- ['user-guide/shading.md', 'User Guide', 'Shading']
-- ['reference/mcblock.md', 'Adept Reference', "Minecraft{} Block"]
-- ['reference/tasks.md', 'Adept Reference', "Tasks"]
+  - ['index.md', 'Introduction']
+  - ['cookbook.md', 'Cook Book']
+  - ['user-guide/shading.md', 'User Guide', 'Shading']
+  - ['reference/mcblock.md', 'Adept Reference', "Minecraft{} Block"]
+  - ['reference/tasks.md', 'Adept Reference', "Tasks"]

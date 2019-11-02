@@ -1,11 +1,5 @@
 package net.minecraftforge.gradle.tasks.user;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
-
 import net.md_5.specialsource.Jar;
 import net.md_5.specialsource.JarMapping;
 import net.md_5.specialsource.JarRemapper;
@@ -16,31 +10,34 @@ import net.md_5.specialsource.provider.JointProvider;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
 import net.minecraftforge.gradle.tasks.dev.ObfuscateTask;
-
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
-public class SingleDeobfTask extends CachedTask
-{
+import java.io.File;
+import java.io.IOException;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
+
+public class SingleDeobfTask extends CachedTask {
     @InputFile
-    private DelayedFile  inJar;
+    private DelayedFile inJar;
 
     @InputFile
-    private DelayedFile  srg;
+    private DelayedFile srg;
 
     // getter is marked for input files
     private List<Object> classpath = new ArrayList<Object>(5);
 
     @Cached
     @OutputFile
-    private DelayedFile  outJar;
+    private DelayedFile outJar;
 
     @TaskAction
-    public void doTask() throws IOException
-    {
+    public void doTask() throws IOException {
         File in = getInJar();
         File out = getOutJar();
         File mappings = getSrg();
@@ -68,49 +65,42 @@ public class SingleDeobfTask extends CachedTask
         remapper.remapJar(input, out);
     }
 
-    public File getInJar()
-    {
+    public File getInJar() {
         return inJar.call();
     }
 
-    public void setInJar(DelayedFile inJar)
-    {
+    public void setInJar(DelayedFile inJar) {
         this.inJar = inJar;
     }
 
-    public File getOutJar()
-    {
+    public File getOutJar() {
         return outJar.call();
     }
 
-    public void setOutJar(DelayedFile outJar)
-    {
+    public void setOutJar(DelayedFile outJar) {
         this.outJar = outJar;
     }
 
-    public File getSrg()
-    {
+    public File getSrg() {
         return srg.call();
     }
 
-    public void setSrg(DelayedFile srg)
-    {
+    public void setSrg(DelayedFile srg) {
         this.srg = srg;
     }
 
     @InputFiles
-    public FileCollection getClasspath()
-    {
+    public FileCollection getClasspath() {
         return getProject().files(classpath.toArray());
     }
 
     /**
      * Whatever works, Closure, file, dir, dependency config.
      * Evaluated with project.file later
+     *
      * @param classpathEntry entry
      */
-    public void addClasspath(Object classpathEntry)
-    {
+    public void addClasspath(Object classpathEntry) {
         classpath.add(classpathEntry);
     }
 }

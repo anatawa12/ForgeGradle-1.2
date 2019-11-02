@@ -1,23 +1,16 @@
 package net.minecraftforge.gradle.dev;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import edu.sc.seis.launch4j.Launch4jPluginExtension;
 import groovy.lang.Closure;
 import groovy.util.MapEntry;
-
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
-
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -31,7 +24,6 @@ import net.minecraftforge.gradle.tasks.abstractutil.DownloadTask;
 import net.minecraftforge.gradle.tasks.abstractutil.ExtractTask;
 import net.minecraftforge.gradle.tasks.dev.CompressLZMA;
 import net.minecraftforge.gradle.tasks.dev.ObfuscateTask;
-
 import org.apache.shiro.util.AntPathMatcher;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
@@ -43,29 +35,27 @@ import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.bundling.Zip;
 import org.gradle.process.ExecSpec;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
-public abstract class DevBasePlugin extends BasePlugin<DevExtension>
-{
+public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
     private AntPathMatcher antMatcher = new AntPathMatcher();
-    protected static final String[] JAVA_FILES = new String[] { "**.java", "*.java", "**/*.java" };
+    protected static final String[] JAVA_FILES = new String[]{"**.java", "*.java", "**/*.java"};
 
     @SuppressWarnings("serial")
     @Override
-    public void applyPlugin()
-    {
+    public void applyPlugin() {
         ExtractTask task = makeTask("extractWorkspace", ExtractTask.class);
         {
             task.getOutputs().upToDateWhen(new Closure<Boolean>(null) {
-                public Boolean call(Object... obj)
-                {
+                public Boolean call(Object... obj) {
                     File file = new File(project.getProjectDir(), "eclipse");
                     return (file.exists() && file.isDirectory());
                 }
@@ -75,13 +65,11 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
         }
 
         DownloadTask task1;
-        if (hasInstaller())
-        {
+        if (hasInstaller()) {
             // apply L4J
             this.applyExternalPlugin("launch4j");
 
-            if (project.getTasks().findByName("uploadArchives") != null)
-            {
+            if (project.getTasks().findByName("uploadArchives") != null) {
                 project.getTasks().getByName("uploadArchives").dependsOn("launch4j");
             }
 
@@ -111,26 +99,20 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
             task1.setUrl(delayedString(Constants.MC_JSON_URL));
             task1.setOutput(delayedFile(DevConstants.JSON_BASE));
             task1.setDoesCache(false);
-            task1.doLast(new Closure<Boolean>(project)
-            {
+            task1.doLast(new Closure<Boolean>(project) {
                 @Override
-                public Boolean call()
-                {
-                    try
-                    {
+                public Boolean call() {
+                    try {
                         File json = delayedFile(DevConstants.JSON_BASE).call();
                         if (!json.exists())
                             return true;
                         List<String> lines = Files.readLines(json, Charsets.UTF_8);
                         StringBuilder buf = new StringBuilder();
-                        for (String line : lines)
-                        {
+                        for (String line : lines) {
                             buf = buf.append(line).append('\n');
                         }
                         Files.write(buf.toString().getBytes(Charsets.UTF_8), json);
-                    }
-                    catch (Throwable t)
-                    {
+                    } catch (Throwable t) {
                         Throwables.propagate(t);
                     }
                     return true;
@@ -177,25 +159,22 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
             task6.setSrgExc(delayedFile(DevConstants.SRG_EXC));
             task6.setMcpExc(delayedFile(DevConstants.MCP_EXC));
             task6.setDoesCache(false);
-            
+
             task6.dependsOn("extractMcpData");
         }
     }
 
     @Override
-    public final void applyOverlayPlugin()
-    {
+    public final void applyOverlayPlugin() {
         // nothing.
     }
 
     @Override
-    public final boolean canOverlayPlugin()
-    {
+    public final boolean canOverlayPlugin() {
         return false;
     }
 
-    private void configureLaunch4J()
-    {
+    private void configureLaunch4J() {
         if (!hasInstaller())
             return;
 
@@ -213,33 +192,30 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
 
         if (Constants.OPERATING_SYSTEM == OS.WINDOWS)
             command += "c.exe";
-        else
-        {
+        else {
             final String extraCommand = command;
 
             Task task = project.getTasks().getByName("extractL4J");
             task.doLast(new Action<Task>() {
 
                 @Override
-                public void execute(Task task)
-                {
+                public void execute(Task task) {
                     File f = new File(extraCommand);
-                    if (!f.canExecute())
-                    {
+                    if (!f.canExecute()) {
                         boolean worked = f.setExecutable(true);
-                        project.getLogger().debug("Setting file +X "+worked + " : "+f.getPath());
+                        project.getLogger().debug("Setting file +X " + worked + " : " + f.getPath());
                     }
                     FileTree tree = delayedFileTree(DevConstants.LAUNCH4J_DIR + "/bin").call();
-                    tree.visit(new FileVisitor()
-                    {
-                        @Override public void visitDir(FileVisitDetails dirDetails){}
+                    tree.visit(new FileVisitor() {
                         @Override
-                        public void visitFile(FileVisitDetails fileDetails)
-                        {
-                            if (!fileDetails.getFile().canExecute())
-                            {
+                        public void visitDir(FileVisitDetails dirDetails) {
+                        }
+
+                        @Override
+                        public void visitFile(FileVisitDetails fileDetails) {
+                            if (!fileDetails.getFile().canExecute()) {
                                 boolean worked = fileDetails.getFile().setExecutable(true);
-                                project.getLogger().debug("Setting file +X "+worked + " : "+fileDetails.getPath());
+                                project.getLogger().debug("Setting file +X " + worked + " : " + fileDetails.getPath());
                             }
                         }
                     });
@@ -254,8 +230,7 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
         task.getInputs().file(installer);
 
         String icon = ext.getIcon();
-        if (icon == null || icon.isEmpty())
-        {
+        if (icon == null || icon.isEmpty()) {
             icon = delayedFile(DevConstants.LAUNCH4J_DIR + "/demo/SimpleApp/l4j/SimpleApp.ico").call().getAbsolutePath();
         }
         icon = new File(icon).getAbsolutePath();
@@ -264,36 +239,32 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
     }
 
     @Override
-    protected DelayedFile getDevJson()
-    {
+    protected DelayedFile getDevJson() {
         return delayedFile(DevConstants.JSON_DEV);
     }
 
     @Override
-    public void afterEvaluate()
-    {
+    public void afterEvaluate() {
         super.afterEvaluate();
 
         configureLaunch4J();
 
         // set obfuscate extras
         Task t = project.getTasks().getByName("obfuscateJar");
-        if (t != null)
-        {
-            ObfuscateTask obf = ((ObfuscateTask)t);
+        if (t != null) {
+            ObfuscateTask obf = ((ObfuscateTask) t);
             obf.setExtraSrg(getExtension().getSrgExtra());
             obf.configureProject(getExtension().getSubprojects());
             obf.configureProject(getExtension().getDirtyProject());
         }
 
-        try
-        {
+        try {
             ExtractTask extractNatives = makeTask("extractNativesNew", ExtractTask.class);
             {
                 extractNatives.exclude("META-INF", "META-INF/**", "META-INF/*");
                 extractNatives.into(delayedFile(Constants.NATIVES_DIR));
             }
-            
+
             Copy copyNatives = makeTask("extractNatives", Copy.class);
             {
                 copyNatives.from(delayedFile(Constants.NATIVES_DIR));
@@ -303,30 +274,23 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
             }
 
             DelayedFile devJson = getDevJson();
-            if (devJson == null)
-            {
+            if (devJson == null) {
                 project.getLogger().info("Dev json not set, could not create native downloads tasks");
                 return;
             }
 
-            if (version == null)
-            {
+            if (version == null) {
                 File jsonFile = devJson.call().getAbsoluteFile();
-                try
-                {
+                try {
                     version = JsonFactory.loadVersion(jsonFile, jsonFile.getParentFile());
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     project.getLogger().error("" + jsonFile + " could not be parsed");
                     Throwables.propagate(e);
                 }
             }
 
-            for (Library lib : version.getLibraries())
-            {
-                if (lib.natives != null)
-                {
+            for (Library lib : version.getLibraries()) {
+                if (lib.natives != null) {
                     String path = lib.getPathNatives();
                     String taskName = "downloadNatives-" + lib.getArtifactName().split(":")[1];
 
@@ -341,56 +305,45 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
                 }
             }
 
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             Throwables.propagate(e);
         }
     }
 
-    protected Class<DevExtension> getExtensionClass()
-    {
+    protected Class<DevExtension> getExtensionClass() {
         return DevExtension.class;
     }
 
-    protected DevExtension getOverlayExtension()
-    {
+    protected DevExtension getOverlayExtension() {
         // never happens.
         return null;
     }
 
-    protected String getServerClassPath(File json)
-    {
-        try
-        {
+    protected String getServerClassPath(File json) {
+        try {
             JsonObject node = new JsonParser().parse(Files.toString(json, Charset.defaultCharset())).getAsJsonObject();
 
             StringBuilder buf = new StringBuilder();
 
-            for (JsonElement libElement : node.get("versionInfo").getAsJsonObject().get("libraries").getAsJsonArray())
-            {
+            for (JsonElement libElement : node.get("versionInfo").getAsJsonObject().get("libraries").getAsJsonArray()) {
                 JsonObject lib = libElement.getAsJsonObject();
-                
-                if (lib.has("serverreq") && lib.get("serverreq").getAsBoolean())
-                {
+
+                if (lib.has("serverreq") && lib.get("serverreq").getAsBoolean()) {
                     String[] pts = lib.get("name").getAsString().split(":");
                     buf.append(String.format("libraries/%s/%s/%s/%s-%s.jar ", pts[0].replace('.', '/'), pts[1], pts[2], pts[1], pts[2]));
                 }
             }
             buf.append(delayedString("minecraft_server.{MC_VERSION}.jar").call());
             return buf.toString();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public String resolve(String pattern, Project project, DevExtension exten)
-    {
+    public String resolve(String pattern, Project project, DevExtension exten) {
         pattern = super.resolve(pattern, project, exten);
-        
+
         // MCP_DATA_DIR wont be resolved if the data dir doesnt eixts,,, hence...
         pattern = pattern.replace("{MCP_DATA_DIR}", "{FML_CONF_DIR}");
 
@@ -398,8 +351,7 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
         // lets trim the MC version from the replacement string.
         String version = project.getVersion().toString();
         String mcSafe = exten.getVersion().replace('-', '_');
-        if (version.startsWith(mcSafe + "-"))
-        {
+        if (version.startsWith(mcSafe + "-")) {
             version = version.substring(mcSafe.length() + 1);
         }
         pattern = pattern.replace("{VERSION}", version);
@@ -414,14 +366,11 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
     }
 
     @SuppressWarnings("serial")
-    protected static String runGit(final Project project, final File workDir, final String... args)
-    {
+    protected static String runGit(final Project project, final File workDir, final String... args) {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        project.exec(new Closure<ExecSpec>(project, project)
-        {
+        project.exec(new Closure<ExecSpec>(project, project) {
             @Override
-            public ExecSpec call()
-            {
+            public ExecSpec call() {
                 ExecSpec exec = (ExecSpec) getDelegate();
                 exec.setExecutable("git");
                 exec.args((Object[]) args);
@@ -434,20 +383,15 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
         return out.toString().trim();
     }
 
-    private boolean shouldSign(String path, List<String> includes, List<String> excludes)
-    {
-        for (String exclude : excludes)
-        {
-            if (antMatcher.matches(exclude, path))
-            {
+    private boolean shouldSign(String path, List<String> includes, List<String> excludes) {
+        for (String exclude : excludes) {
+            if (antMatcher.matches(exclude, path)) {
                 return false;
             }
         }
 
-        for (String include : includes)
-        {
-            if (antMatcher.matches(include, path))
-            {
+        for (String include : includes) {
+            if (antMatcher.matches(include, path)) {
                 return true;
             }
         }
@@ -456,15 +400,13 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
     }
 
     @SuppressWarnings("unchecked")
-    protected void signJar(File archive, String keyName,  String... filters) throws IOException
-    {
+    protected void signJar(File archive, String keyName, String... filters) throws IOException {
         if (!project.hasProperty("jarsigner")) return;
 
         List<String> excludes = new ArrayList<String>();
         List<String> includes = new ArrayList<String>();
 
-        for (String s : filters)
-        {
+        for (String s : filters) {
             if (s.startsWith("!")) excludes.add(s.substring(1));
             else includes.add(s);
         }
@@ -479,17 +421,13 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
         // Create a temporary jar with only the things we want to sign
         ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(temp)));
         ZipFile base = new ZipFile(archive);
-        for (ZipEntry e: Collections.list(base.entries()))
-        {
-            if (shouldSign(e.getName(), includes, excludes))
-            {
+        for (ZipEntry e : Collections.list(base.entries())) {
+            if (shouldSign(e.getName(), includes, excludes)) {
                 ZipEntry n = new ZipEntry(e.getName());
                 n.setTime(e.getTime());
                 out.putNextEntry(n);
                 ByteStreams.copy(base.getInputStream(e), out);
-            }
-            else
-            {
+            } else {
                 unsigned.put(e.getName(), new MapEntry(ByteStreams.toByteArray(base.getInputStream(e)), e.getTime()));
             }
         }
@@ -497,7 +435,7 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
         out.close();
 
         // Sign the temporary jar
-        Map<String, String> jarsigner = (Map<String, String>)project.property("jarsigner");
+        Map<String, String> jarsigner = (Map<String, String>) project.property("jarsigner");
 
         Map<String, String> args = Maps.newHashMap();
         args.put("alias", keyName);
@@ -515,14 +453,10 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
         //Join the signed jar and our unsigned content
         out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(archive)));
         base = new ZipFile(signed);
-        for (ZipEntry e: Collections.list(base.entries()))
-        {
-            if (e.isDirectory())
-            {
+        for (ZipEntry e : Collections.list(base.entries())) {
+            if (e.isDirectory()) {
                 out.putNextEntry(e);
-            }
-            else
-            {
+            } else {
                 ZipEntry n = new ZipEntry(e.getName());
                 n.setTime(e.getTime());
                 out.putNextEntry(n);
@@ -531,8 +465,7 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
         }
         base.close();
 
-        for (Map.Entry<String, Map.Entry<byte[], Long>> e : unsigned.entrySet())
-        {
+        for (Map.Entry<String, Map.Entry<byte[], Long>> e : unsigned.entrySet()) {
             ZipEntry n = new ZipEntry(e.getKey());
             n.setTime(e.getValue().getValue());
             out.putNextEntry(n);
@@ -542,8 +475,7 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension>
         signed.delete();
     }
 
-    protected boolean hasInstaller()
-    {
+    protected boolean hasInstaller() {
         return true;
     }
 }

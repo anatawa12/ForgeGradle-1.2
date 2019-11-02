@@ -1,27 +1,12 @@
 package net.minecraftforge.gradle.dev;
 
-import static net.minecraftforge.gradle.dev.DevConstants.*;
 import groovy.lang.Closure;
-
-import java.io.File;
-
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
-import net.minecraftforge.gradle.tasks.ApplyS2STask;
-import net.minecraftforge.gradle.tasks.DecompileTask;
-import net.minecraftforge.gradle.tasks.ExtractS2SRangeTask;
-import net.minecraftforge.gradle.tasks.ProcessJarTask;
-import net.minecraftforge.gradle.tasks.ProcessSrcJarTask;
-import net.minecraftforge.gradle.tasks.RemapSourcesTask;
+import net.minecraftforge.gradle.tasks.*;
 import net.minecraftforge.gradle.tasks.abstractutil.DelayedJar;
 import net.minecraftforge.gradle.tasks.abstractutil.ExtractTask;
-import net.minecraftforge.gradle.tasks.dev.FMLVersionPropTask;
-import net.minecraftforge.gradle.tasks.dev.GenBinaryPatches;
-import net.minecraftforge.gradle.tasks.dev.GenDevProjectsTask;
-import net.minecraftforge.gradle.tasks.dev.GeneratePatches;
-import net.minecraftforge.gradle.tasks.dev.ObfuscateTask;
-import net.minecraftforge.gradle.tasks.dev.SubprojectTask;
-
+import net.minecraftforge.gradle.tasks.dev.*;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Task;
 import org.gradle.api.file.ConfigurableFileTree;
@@ -30,11 +15,13 @@ import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.Delete;
 
-public class EduDevPlugin extends DevBasePlugin
-{
+import java.io.File;
+
+import static net.minecraftforge.gradle.dev.DevConstants.*;
+
+public class EduDevPlugin extends DevBasePlugin {
     @Override
-    public void applyPlugin()
-    {
+    public void applyPlugin() {
         super.applyPlugin();
 
         // set folders
@@ -85,13 +72,11 @@ public class EduDevPlugin extends DevBasePlugin
     }
 
     @Override
-    protected final DelayedFile getDevJson()
-    {
+    protected final DelayedFile getDevJson() {
         return delayedFile(DevConstants.EXTRA_JSON_DEV);
     }
 
-    protected void createJarProcessTasks()
-    {
+    protected void createJarProcessTasks() {
         ProcessJarTask task2 = makeTask("deobfuscateJar", ProcessJarTask.class);
         {
             task2.setInJar(delayedFile(Constants.JAR_MERGED));
@@ -162,9 +147,8 @@ public class EduDevPlugin extends DevBasePlugin
         }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void createSourceCopyTasks()
-    {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void createSourceCopyTasks() {
         ExtractTask task = makeTask("extractCleanResources", ExtractTask.class);
         {
             task.exclude(JAVA_FILES);
@@ -192,8 +176,7 @@ public class EduDevPlugin extends DevBasePlugin
             task.onlyIf(new Spec() {
 
                 @Override
-                public boolean isSatisfiedBy(Object arg0)
-                {
+                public boolean isSatisfiedBy(Object arg0) {
                     File dir = delayedFile(ECLIPSE_EDU_RES).call();
                     if (!dir.exists())
                         return true;
@@ -216,8 +199,7 @@ public class EduDevPlugin extends DevBasePlugin
             task.onlyIf(new Spec() {
 
                 @Override
-                public boolean isSatisfiedBy(Object arg0)
-                {
+                public boolean isSatisfiedBy(Object arg0) {
                     File dir = delayedFile(ECLIPSE_EDU_SRC).call();
                     if (!dir.exists())
                         return true;
@@ -233,17 +215,14 @@ public class EduDevPlugin extends DevBasePlugin
     }
 
     @SuppressWarnings("serial")
-    private void createProjectTasks()
-    {
+    private void createProjectTasks() {
         FMLVersionPropTask sub = makeTask("createVersionPropertiesFML", FMLVersionPropTask.class);
         {
             //sub.setTasks("createVersionProperties");
             //sub.setBuildFile(delayedFile("{FML_DIR}/build.gradle"));
-            sub.setVersion(new Closure<String>(project)
-            {
+            sub.setVersion(new Closure<String>(project) {
                 @Override
-                public String call(Object... args)
-                {
+                public String call(Object... args) {
                     return FmlDevPlugin.getVersionFromGit(project, new File(delayedString("{FML_DIR}").call()));
                 }
             });
@@ -282,14 +261,13 @@ public class EduDevPlugin extends DevBasePlugin
             task.setMappingChannel(delayedString("{MAPPING_CHANNEL}"));
             task.setMappingVersion(delayedString("{MAPPING_VERSION}"));
 
-            task.dependsOn("extractNatives","createVersionPropertiesFML");
+            task.dependsOn("extractNatives", "createVersionPropertiesFML");
         }
 
         makeTask("generateProjects").dependsOn("generateProjectClean", "generateProjectMcEdu");
     }
 
-    private void createEclipseTasks()
-    {
+    private void createEclipseTasks() {
         SubprojectTask task = makeTask("eclipseClean", SubprojectTask.class);
         {
             task.setBuildFile(delayedFile(ECLIPSE_CLEAN + "/build.gradle"));
@@ -308,8 +286,7 @@ public class EduDevPlugin extends DevBasePlugin
     }
 
     @SuppressWarnings("unused")
-    private void createMiscTasks()
-    {
+    private void createMiscTasks() {
         DelayedFile rangeMapClean = delayedFile("{BUILD_DIR}/tmp/rangemapCLEAN.txt");
         DelayedFile rangeMapDirty = delayedFile("{BUILD_DIR}/tmp/rangemapDIRTY.txt");
 
@@ -330,13 +307,11 @@ public class EduDevPlugin extends DevBasePlugin
             applyS2S.setRangeMap(rangeMapDirty);
             applyS2S.dependsOn("genSrgs", extractRange);
             String[] paths = {DevConstants.FML_RESOURCES, DevConstants.FORGE_RESOURCES, DevConstants.EXTRA_RESOURCES};
-            for (String path : paths)
-            {
-                for (File f : project.fileTree(delayedFile(path).call()).getFiles())
-                {
-                    if(f.getPath().endsWith(".exc"))
+            for (String path : paths) {
+                for (File f : project.fileTree(delayedFile(path).call()).getFiles()) {
+                    if (f.getPath().endsWith(".exc"))
                         applyS2S.addExc(f);
-                    else if(f.getPath().endsWith(".srg"))
+                    else if (f.getPath().endsWith(".srg"))
                         applyS2S.addSrg(f);
                 }
             }
@@ -418,8 +393,7 @@ public class EduDevPlugin extends DevBasePlugin
     }
 
     @SuppressWarnings("serial")
-    private void createPackageTasks()
-    {
+    private void createPackageTasks() {
         project.getConfigurations().maybeCreate("archives");
 
         /*
@@ -466,10 +440,8 @@ public class EduDevPlugin extends DevBasePlugin
             uni.exclude("devbinpatches.pack.lzma");
             uni.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
             uni.setIncludeEmptyDirs(false);
-            uni.setManifest(new Closure<Object>(project)
-            {
-                public Object call()
-                {
+            uni.setManifest(new Closure<Object>(project) {
+                public Object call() {
                     Manifest mani = (Manifest) getDelegate();
                     mani.getAttributes().put("Main-Class", delayedString("{MAIN_CLASS}").call());
                     mani.getAttributes().put("TweakClass", delayedString("{FML_TWEAK_CLASS}").call());
@@ -503,8 +475,7 @@ public class EduDevPlugin extends DevBasePlugin
     }
 
     @Override
-    public void afterEvaluate()
-    {
+    public void afterEvaluate() {
         super.afterEvaluate();
 
         SubprojectTask task = (SubprojectTask) project.getTasks().getByName("eclipseClean");
@@ -517,8 +488,7 @@ public class EduDevPlugin extends DevBasePlugin
     }
 
     @Override
-    protected boolean hasInstaller()
-    {
+    protected boolean hasInstaller() {
         return false;
     }
 }

@@ -1,38 +1,18 @@
 package net.minecraftforge.gradle.dev;
 
 //import edu.sc.seis.launch4j.Launch4jPluginExtension;
-import static net.minecraftforge.gradle.dev.DevConstants.CROWDIN_FORGEID;
-import static net.minecraftforge.gradle.dev.DevConstants.CROWDIN_ZIP;
-import static net.minecraftforge.gradle.dev.DevConstants.EXC_MODIFIERS_DIRTY;
+
 import groovy.lang.Closure;
-
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import net.minecraftforge.gradle.CopyInto;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedBase;
 import net.minecraftforge.gradle.delayed.DelayedFile;
-import net.minecraftforge.gradle.tasks.ApplyS2STask;
-import net.minecraftforge.gradle.tasks.CrowdinDownloadTask;
-import net.minecraftforge.gradle.tasks.DecompileTask;
-import net.minecraftforge.gradle.tasks.ExtractS2SRangeTask;
-import net.minecraftforge.gradle.tasks.ProcessSrcJarTask;
-import net.minecraftforge.gradle.tasks.ProcessJarTask;
-import net.minecraftforge.gradle.tasks.RemapSourcesTask;
+import net.minecraftforge.gradle.tasks.*;
 import net.minecraftforge.gradle.tasks.abstractutil.DelayedJar;
 import net.minecraftforge.gradle.tasks.abstractutil.ExtractTask;
 import net.minecraftforge.gradle.tasks.abstractutil.FileFilterTask;
-import net.minecraftforge.gradle.tasks.dev.ChangelogTask;
-import net.minecraftforge.gradle.tasks.dev.FMLVersionPropTask;
-import net.minecraftforge.gradle.tasks.dev.GenBinaryPatches;
-import net.minecraftforge.gradle.tasks.dev.GenDevProjectsTask;
-import net.minecraftforge.gradle.tasks.dev.GeneratePatches;
-import net.minecraftforge.gradle.tasks.dev.ObfuscateTask;
-import net.minecraftforge.gradle.tasks.dev.SubprojectTask;
-
+import net.minecraftforge.gradle.tasks.dev.*;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -42,11 +22,15 @@ import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.bundling.Zip;
 
-public class FmlDevPlugin extends DevBasePlugin
-{
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import static net.minecraftforge.gradle.dev.DevConstants.*;
+
+public class FmlDevPlugin extends DevBasePlugin {
     @Override
-    public void applyPlugin()
-    {
+    public void applyPlugin() {
         super.applyPlugin();
 
         // set fmlDir
@@ -94,8 +78,7 @@ public class FmlDevPlugin extends DevBasePlugin
         delTask.setGroup("Clean");
     }
 
-    protected void createJarProcessTasks()
-    {
+    protected void createJarProcessTasks() {
 
         ProcessJarTask task2 = makeTask("deobfuscateJar", ProcessJarTask.class);
         {
@@ -154,8 +137,7 @@ public class FmlDevPlugin extends DevBasePlugin
         }
     }
 
-    private void createSourceCopyTasks()
-    {
+    private void createSourceCopyTasks() {
         // COPY CLEAN STUFF
         ExtractTask task = makeTask("extractMcResources", ExtractTask.class);
         {
@@ -211,8 +193,7 @@ public class FmlDevPlugin extends DevBasePlugin
         }
     }
 
-    private void createProjectTasks()
-    {
+    private void createProjectTasks() {
         GenDevProjectsTask task = makeTask("generateProjectClean", GenDevProjectsTask.class);
         {
             task.setTargetDir(delayedFile(DevConstants.ECLIPSE_CLEAN));
@@ -242,14 +223,13 @@ public class FmlDevPlugin extends DevBasePlugin
             task.setMappingChannel(delayedString("{MAPPING_CHANNEL}"));
             task.setMappingVersion(delayedString("{MAPPING_VERSION}"));
 
-            task.dependsOn("extractNatives","createVersionProperties");
+            task.dependsOn("extractNatives", "createVersionProperties");
         }
 
         makeTask("generateProjects").dependsOn("generateProjectClean", "generateProjectFML");
     }
 
-    private void createEclipseTasks()
-    {
+    private void createEclipseTasks() {
         SubprojectTask task = makeTask("eclipseClean", SubprojectTask.class);
         {
             task.setBuildFile(delayedFile(DevConstants.ECLIPSE_CLEAN + "/build.gradle"));
@@ -267,8 +247,7 @@ public class FmlDevPlugin extends DevBasePlugin
         makeTask("eclipse").dependsOn("eclipseClean", "eclipseFML");
     }
 
-    private void createMiscTasks()
-    {
+    private void createMiscTasks() {
         DelayedFile rangeMap = delayedFile("{BUILD_DIR}/tmp/rangemap.txt");
 
         ExtractS2SRangeTask task = makeTask("extractRange", ExtractS2SRangeTask.class);
@@ -292,11 +271,10 @@ public class FmlDevPlugin extends DevBasePlugin
             task4.dependsOn("genSrgs", task);
 
             // find all the exc & srg files in the resources.
-            for (File f : project.fileTree(delayedFile(DevConstants.FML_RESOURCES).call()).getFiles())
-            {
-                if(f.getPath().endsWith(".exc"))
+            for (File f : project.fileTree(delayedFile(DevConstants.FML_RESOURCES).call()).getFiles()) {
+                if (f.getPath().endsWith(".exc"))
                     task4.addExc(f);
-                else if(f.getPath().endsWith(".srg"))
+                else if (f.getPath().endsWith(".srg"))
                     task4.addSrg(f);
             }
         }
@@ -352,8 +330,7 @@ public class FmlDevPlugin extends DevBasePlugin
     }
 
     @SuppressWarnings("serial")
-    private void createPackageTasks()
-    {
+    private void createPackageTasks() {
         CrowdinDownloadTask crowdin = makeTask("getLocalizations", CrowdinDownloadTask.class);
         {
             crowdin.setOutput(delayedFile(CROWDIN_ZIP));
@@ -388,10 +365,8 @@ public class FmlDevPlugin extends DevBasePlugin
             uni.exclude("devbinpatches.pack.lzma");
             uni.setIncludeEmptyDirs(false);
             uni.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
-            uni.setManifest(new Closure<Object>(project)
-            {
-                public Object call()
-                {
+            uni.setManifest(new Closure<Object>(project) {
+                public Object call() {
                     Manifest mani = (Manifest) getDelegate();
                     mani.getAttributes().put("Main-Class", delayedString("{MAIN_CLASS}").call());
                     mani.getAttributes().put("TweakClass", delayedString("{FML_TWEAK_CLASS}").call());
@@ -411,17 +386,13 @@ public class FmlDevPlugin extends DevBasePlugin
             genInstallJson.addReplacement("@version@", delayedString("{VERSION}"));
             genInstallJson.addReplacement("@project@", delayedString("FML"));
             genInstallJson.addReplacement("@artifact@", delayedString("cpw.mods:fml:{MC_VERSION_SAFE}-{VERSION}"));
-            genInstallJson.addReplacement("@universal_jar@", new Closure<String>(project)
-            {
-                public String call()
-                {
+            genInstallJson.addReplacement("@universal_jar@", new Closure<String>(project) {
+                public String call() {
                     return uni.getArchiveName();
                 }
             });
-            genInstallJson.addReplacement("@timestamp@", new Closure<String>(project)
-            {
-                public String call()
-                {
+            genInstallJson.addReplacement("@timestamp@", new Closure<String>(project) {
+                public String call() {
                     return (new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")).format(new Date());
                 }
             });
@@ -431,8 +402,7 @@ public class FmlDevPlugin extends DevBasePlugin
         {
             inst.setClassifier("installer");
             inst.from(new Closure<File>(project) {
-                public File call()
-                {
+                public File call() {
                     return uni.getArchivePath();
                 }
             });
@@ -478,11 +448,10 @@ public class FmlDevPlugin extends DevBasePlugin
             s2s.getOutputs().upToDateWhen(Constants.CALL_FALSE); //Fucking caching.
 
             // find all the exc & srg files in the resources.
-            for (File f : project.fileTree(delayedFile(DevConstants.FML_RESOURCES).call()).getFiles())
-            {
-                if(f.getPath().endsWith(".exc"))
+            for (File f : project.fileTree(delayedFile(DevConstants.FML_RESOURCES).call()).getFiles()) {
+                if (f.getPath().endsWith(".exc"))
                     s2s.addExc(f);
-                else if(f.getPath().endsWith(".srg"))
+                else if (f.getPath().endsWith(".srg"))
                     s2s.addSrg(f);
             }
         }
@@ -492,14 +461,12 @@ public class FmlDevPlugin extends DevBasePlugin
             userDev.setClassifier("userdev");
             userDev.from(delayedFile(DevConstants.JSON_DEV));
             userDev.from(new Closure<File>(project) {
-                public File call()
-                {
+                public File call() {
                     return patchZip.getArchivePath();
                 }
             });
             userDev.from(new Closure<File>(project) {
-                public File call()
-                {
+                public File call() {
                     return classZip.getArchivePath();
                 }
             });
@@ -546,15 +513,12 @@ public class FmlDevPlugin extends DevBasePlugin
         project.getArtifacts().add("archives", src);
     }
 
-    public static String getVersionFromGit(Project project)
-    {
+    public static String getVersionFromGit(Project project) {
         return getVersionFromGit(project, project.getProjectDir());
     }
 
-    public static String getVersionFromGit(Project project, File workDir)
-    {
-        if (project == null)
-        {
+    public static String getVersionFromGit(Project project, File workDir) {
+        if (project == null) {
             project = BasePlugin.getProject(null, null);
         }
 
@@ -567,32 +531,26 @@ public class FmlDevPlugin extends DevBasePlugin
         String revision = pts[2];
         String build = "0";
 
-        if (System.getenv().containsKey("BUILD_NUMBER"))
-        {
+        if (System.getenv().containsKey("BUILD_NUMBER")) {
             build = System.getenv("BUILD_NUMBER");
         }
 
         String branch = null;
-        if (!System.getenv().containsKey("GIT_BRANCH"))
-        {
+        if (!System.getenv().containsKey("GIT_BRANCH")) {
             branch = runGit(project, workDir, "rev-parse", "--abbrev-ref", "HEAD");
-        }
-        else
-        {
+        } else {
             branch = System.getenv("GIT_BRANCH");
             branch = branch.substring(branch.lastIndexOf('/') + 1);
         }
 
-        if (branch != null && (branch.equals("master") || branch.equals("HEAD")))
-        {
+        if (branch != null && (branch.equals("master") || branch.equals("HEAD"))) {
             branch = null;
         }
 
         StringBuilder out = new StringBuilder();
         out.append(DelayedBase.resolve("{MC_VERSION_SAFE}", project)).append('-'); // Somehow configure this?
         out.append(major).append('.').append(minor).append('.').append(revision).append('.').append(build);
-        if (branch != null)
-        {
+        if (branch != null) {
             out.append('-').append(branch);
         }
 
@@ -600,8 +558,7 @@ public class FmlDevPlugin extends DevBasePlugin
     }
 
     @Override
-    public void afterEvaluate()
-    {
+    public void afterEvaluate() {
         super.afterEvaluate();
 
         SubprojectTask task = (SubprojectTask) project.getTasks().getByName("eclipseClean");

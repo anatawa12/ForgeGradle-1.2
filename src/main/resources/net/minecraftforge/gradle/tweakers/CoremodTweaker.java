@@ -1,37 +1,32 @@
 package net.minecraftforge.gradle.tweakers;
 
+import net.minecraft.launchwrapper.ITweaker;
+import net.minecraft.launchwrapper.Launch;
+import net.minecraft.launchwrapper.LaunchClassLoader;
+import net.minecraftforge.gradle.GradleStartCommon;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
-import net.minecraft.launchwrapper.ITweaker;
-import net.minecraft.launchwrapper.Launch;
-import net.minecraft.launchwrapper.LaunchClassLoader;
-import net.minecraftforge.gradle.GradleStartCommon;
-
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-public class CoremodTweaker implements ITweaker
-{
-    protected static final Logger LOGGER             = LogManager.getLogger("GradleStart");
-    private static final String   COREMOD_CLASS      = "fml.relauncher.CoreModManager";
-    private static final String   TWEAKER_SORT_FIELD = "tweakSorting";
+public class CoremodTweaker implements ITweaker {
+    protected static final Logger LOGGER = LogManager.getLogger("GradleStart");
+    private static final String COREMOD_CLASS = "fml.relauncher.CoreModManager";
+    private static final String TWEAKER_SORT_FIELD = "tweakSorting";
 
     @Override
-    public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile)
-    {
+    public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void injectIntoClassLoader(LaunchClassLoader classLoader)
-    {
-        try
-        {
+    public void injectIntoClassLoader(LaunchClassLoader classLoader) {
+        try {
             Field coreModList = GradleStartCommon.getFmlClass("fml.relauncher.CoreModManager", classLoader).getDeclaredField("loadPlugins");
             coreModList.setAccessible(true);
 
@@ -50,22 +45,19 @@ public class CoremodTweaker implements ITweaker
 
             List<ITweaker> oldList = (List<ITweaker>) coreModList.get(null);
 
-            for (int i = 0; i < oldList.size(); i++)
-            {
+            for (int i = 0; i < oldList.size(); i++) {
                 ITweaker tweaker = oldList.get(i);
 
-                if (clazz.isInstance(tweaker))
-                {
+                if (clazz.isInstance(tweaker)) {
                     Object coreMod = pluginField.get(tweaker);
                     Object oldFile = fileField.get(tweaker);
                     File newFile = GradleStartCommon.coreMap.get(coreMod.getClass().getCanonicalName());
 
                     LOGGER.info("Injecting location in coremod {}", coreMod.getClass().getCanonicalName());
 
-                    if (newFile != null && oldFile == null)
-                    {
+                    if (newFile != null && oldFile == null) {
                         // build new tweaker.
-                        oldList.set(i, construct.newInstance(new Object[] {
+                        oldList.set(i, construct.newInstance(new Object[]{
                                 (String) fields[0].get(tweaker), // name
                                 coreMod, // coremod
                                 newFile, // location
@@ -75,9 +67,7 @@ public class CoremodTweaker implements ITweaker
                     }
                 }
             }
-        }
-        catch (Throwable t)
-        {
+        } catch (Throwable t) {
             LOGGER.log(Level.ERROR, "Something went wrong with the coremod adding.");
             t.printStackTrace();
         }
@@ -87,29 +77,24 @@ public class CoremodTweaker implements ITweaker
         ((List<String>) Launch.blackboard.get("TweakClasses")).add(atTweaker);
 
         // make sure its after the deobf tweaker
-        try
-        {
+        try {
             Field f = GradleStartCommon.getFmlClass(COREMOD_CLASS, classLoader).getDeclaredField(TWEAKER_SORT_FIELD);
             f.setAccessible(true);
             ((Map<String, Integer>) f.get(null)).put(atTweaker, Integer.valueOf(1001));
-        }
-        catch (Throwable t)
-        {
+        } catch (Throwable t) {
             LOGGER.log(Level.ERROR, "Something went wrong with the adding the AT tweaker adding.");
             t.printStackTrace();
         }
     }
 
     @Override
-    public String getLaunchTarget()
-    {
+    public String getLaunchTarget() {
         // if it gets here... something went terribly wrong..
         return null;
     }
 
     @Override
-    public String[] getLaunchArguments()
-    {
+    public String[] getLaunchArguments() {
         // if it gets here... something went terribly wrong.
         return new String[0];
     }

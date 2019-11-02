@@ -1,5 +1,12 @@
 package net.minecraftforge.gradle.extrastuff;
 
+import com.google.common.base.Joiner;
+import com.google.common.io.Resources;
+import com.google.gson.reflect.TypeToken;
+import net.minecraftforge.gradle.common.Constants;
+import net.minecraftforge.gradle.json.GLConstantGroup;
+import net.minecraftforge.gradle.json.JsonFactory;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -7,16 +14,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.minecraftforge.gradle.common.Constants;
-import net.minecraftforge.gradle.json.GLConstantGroup;
-import net.minecraftforge.gradle.json.JsonFactory;
-
-import com.google.common.base.Joiner;
-import com.google.common.io.Resources;
-import com.google.gson.reflect.TypeToken;
-
-public class GLConstantFixer
-{
+public class GLConstantFixer {
     private static final String[] PACKAGES = {
             "GL11",
             "GL12",
@@ -39,26 +37,21 @@ public class GLConstantFixer
     private static final String IMPORT_CHECK = "import " + CHECK;
     private static final String IMPORT_REPLACE = "import " + ADD_AFTER + ";";
 
-    public GLConstantFixer() throws IOException
-    {
+    public GLConstantFixer() throws IOException {
         String text = Resources.toString(Resources.getResource(GLConstantFixer.class, "gl.json"), Charset.defaultCharset());
-        json = JsonFactory.GSON.fromJson(text, new TypeToken<List<GLConstantGroup>>(){}.getType());
+        json = JsonFactory.GSON.fromJson(text, new TypeToken<List<GLConstantGroup>>() {}.getType());
     }
 
-    public String fixOGL(String text)
-    {
+    public String fixOGL(String text) {
         // if it never uses openGL, ignore it.
-        if (!text.contains(IMPORT_CHECK))
-        {
+        if (!text.contains(IMPORT_CHECK)) {
             return text;
         }
 
         text = annotateConstants(text);
 
-        for (String pack : PACKAGES)
-        {
-            if (text.contains(pack + "."))
-            {
+        for (String pack : PACKAGES) {
+            if (text.contains(pack + ".")) {
                 text = updateImports(text, CHECK + pack);
             }
         }
@@ -66,16 +59,14 @@ public class GLConstantFixer
         return text;
     }
 
-    private String annotateConstants(String text)
-    {
+    private String annotateConstants(String text) {
         Matcher rootMatch = CALL_REGEX.matcher(text);
         String pack, method, fullCall;
         StringBuffer out = new StringBuffer(text.length());
         StringBuffer innerOut;
 
         // search with regex.
-        while (rootMatch.find())
-        {
+        while (rootMatch.find()) {
             // helper variables
             fullCall = rootMatch.group();
             pack = rootMatch.group(1);
@@ -85,25 +76,20 @@ public class GLConstantFixer
             innerOut = new StringBuffer(fullCall.length());
 
             // search for hardcoded numbers
-            while (constantMatcher.find())
-            {
+            while (constantMatcher.find()) {
                 // helper variables and return variable.
                 String constant = constantMatcher.group();
                 String answer = null;
 
                 // iterrate over the JSON
-                for (GLConstantGroup group : json)
-                {
+                for (GLConstantGroup group : json) {
 
                     // ensure that the package and method are defined
-                    if (group.functions.containsKey(pack) && group.functions.get(pack).contains(method))
-                    {
+                    if (group.functions.containsKey(pack) && group.functions.get(pack).contains(method)) {
                         // itterrate through the map.
-                        for (Map.Entry<String, Map<String, String>> entry : group.constants.entrySet())
-                        {
+                        for (Map.Entry<String, Map<String, String>> entry : group.constants.entrySet()) {
                             // find the actual constant for the number from the regex
-                            if (entry.getValue().containsKey(constant))
-                            {
+                            if (entry.getValue().containsKey(constant)) {
                                 // construct the final line
                                 answer = entry.getKey() + "." + entry.getValue().get(constant);
                             }
@@ -113,16 +99,14 @@ public class GLConstantFixer
                 }
 
                 // replace the final line.
-                if (answer != null)
-                {
+                if (answer != null) {
                     constantMatcher.appendReplacement(innerOut, Matcher.quoteReplacement(answer));
                 }
             }
             constantMatcher.appendTail(innerOut);
 
             // replace the final line.
-            if (fullCall != null)
-            {
+            if (fullCall != null) {
                 rootMatch.appendReplacement(out, Matcher.quoteReplacement(innerOut.toString()));
             }
         }
@@ -131,10 +115,8 @@ public class GLConstantFixer
         return out.toString();
     }
 
-    private String updateImports(String text, String imp)
-    {
-        if (!text.contains("import " + imp + ";"))
-        {
+    private String updateImports(String text, String imp) {
+        if (!text.contains("import " + imp + ";")) {
             text = text.replace(IMPORT_REPLACE, IMPORT_REPLACE + Constants.NEWLINE + "import " + imp + ";");
         }
 

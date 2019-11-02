@@ -1,5 +1,19 @@
 package net.minecraftforge.gradle.tasks;
 
+import au.com.bytecode.opencsv.CSVReader;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
+import com.google.common.io.Files;
+import net.minecraftforge.gradle.delayed.DelayedFile;
+import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
+import net.minecraftforge.srg2source.rangeapplier.MethodData;
+import net.minecraftforge.srg2source.rangeapplier.SrgContainer;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.TaskAction;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -9,25 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import net.minecraftforge.gradle.delayed.DelayedFile;
-import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
-import net.minecraftforge.srg2source.rangeapplier.MethodData;
-import net.minecraftforge.srg2source.rangeapplier.SrgContainer;
-
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
-
-import au.com.bytecode.opencsv.CSVReader;
-
-import com.google.common.base.Charsets;
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
-
-public class GenSrgTask extends CachedTask
-{
+public class GenSrgTask extends CachedTask {
     @InputFile
     private DelayedFile inSrg;
     @InputFile
@@ -54,7 +50,7 @@ public class GenSrgTask extends CachedTask
     @Cached
     @OutputFile
     private DelayedFile mcpToNotch;
-    
+
     @Cached
     @OutputFile
     private DelayedFile SrgToMcp;
@@ -72,8 +68,7 @@ public class GenSrgTask extends CachedTask
     private DelayedFile mcpExc;
 
     @TaskAction
-    public void doTask() throws IOException
-    {
+    public void doTask() throws IOException {
         // csv data.  SRG -> MCP
         HashMap<String, String> methods = new HashMap<String, String>();
         HashMap<String, String> fields = new HashMap<String, String>();
@@ -89,26 +84,22 @@ public class GenSrgTask extends CachedTask
 
     }
 
-    private static void readCSVs(File methodCsv, File fieldCsv, Map<String, String> methodMap, Map<String, String> fieldMap) throws IOException
-    {
+    private static void readCSVs(File methodCsv, File fieldCsv, Map<String, String> methodMap, Map<String, String> fieldMap) throws IOException {
 
         // read methods
         CSVReader csvReader = RemapSourcesTask.getReader(methodCsv);
-        for (String[] s : csvReader.readAll())
-        {
+        for (String[] s : csvReader.readAll()) {
             methodMap.put(s[0], s[1]);
         }
 
         // read fields
         csvReader = RemapSourcesTask.getReader(fieldCsv);
-        for (String[] s : csvReader.readAll())
-        {
+        for (String[] s : csvReader.readAll()) {
             fieldMap.put(s[0], s[1]);
         }
     }
 
-    private Map<String, String> readExtraSrgs(FileCollection extras, SrgContainer inSrg)
-    {
+    private Map<String, String> readExtraSrgs(FileCollection extras, SrgContainer inSrg) {
         return Maps.newHashMap(); //Nop this out.
         /*
         SrgContainer extraSrg = new SrgContainer().readSrgs(extras);
@@ -137,8 +128,7 @@ public class GenSrgTask extends CachedTask
         */
     }
 
-    private void writeOutSrgs(SrgContainer inSrg, Map<String, String> methods, Map<String, String> fields) throws IOException
-    {
+    private void writeOutSrgs(SrgContainer inSrg, Map<String, String> methods, Map<String, String> fields) throws IOException {
         // ensure folders exist
         Files.createParentDirs(getNotchToSrg());
         Files.createParentDirs(getNotchToMcp());
@@ -155,9 +145,8 @@ public class GenSrgTask extends CachedTask
 
         String line, temp, mcpName;
         // packages
-        for (Entry<String, String> e : inSrg.packageMap.entrySet())
-        {
-            line = "PK: "+e.getKey()+" "+e.getValue();
+        for (Entry<String, String> e : inSrg.packageMap.entrySet()) {
+            line = "PK: " + e.getKey() + " " + e.getValue();
 
             // nobody cares about the packages.
             notchToSrg.write(line);
@@ -175,14 +164,13 @@ public class GenSrgTask extends CachedTask
             //mcpToSrg.newLine();
 
             // reverse!
-            mcpToNotch.write("PK: "+e.getValue()+" "+e.getKey());
+            mcpToNotch.write("PK: " + e.getValue() + " " + e.getKey());
             mcpToNotch.newLine();
         }
 
         // classes
-        for (Entry<String, String> e : inSrg.classMap.entrySet())
-        {
-            line = "CL: "+e.getKey()+" "+e.getValue();
+        for (Entry<String, String> e : inSrg.classMap.entrySet()) {
+            line = "CL: " + e.getKey() + " " + e.getValue();
 
             // same...
             notchToSrg.write(line);
@@ -192,80 +180,78 @@ public class GenSrgTask extends CachedTask
             notchToMcp.write(line);
             notchToMcp.newLine();
 
-            line = "CL: "+e.getValue()+" "+e.getValue();
+            line = "CL: " + e.getValue() + " " + e.getValue();
 
             // deobf: same classes on both sides.
-            srgToMcp.write("CL: "+e.getValue()+" "+e.getValue());
+            srgToMcp.write("CL: " + e.getValue() + " " + e.getValue());
             srgToMcp.newLine();
 
             // reobf: same classes on both sides.
-            mcpToSrg.write("CL: "+e.getValue()+" "+e.getValue());
+            mcpToSrg.write("CL: " + e.getValue() + " " + e.getValue());
             mcpToSrg.newLine();
 
             // output is notch
-            mcpToNotch.write("CL: "+e.getValue()+" "+e.getKey());
+            mcpToNotch.write("CL: " + e.getValue() + " " + e.getKey());
             mcpToNotch.newLine();
         }
 
         // fields
-        for (Entry<String, String> e : inSrg.fieldMap.entrySet())
-        {
-            line = "FD: "+e.getKey()+" "+e.getValue();
+        for (Entry<String, String> e : inSrg.fieldMap.entrySet()) {
+            line = "FD: " + e.getKey() + " " + e.getValue();
 
             // same...
-            notchToSrg.write("FD: "+e.getKey()+" "+e.getValue());
+            notchToSrg.write("FD: " + e.getKey() + " " + e.getValue());
             notchToSrg.newLine();
 
-            temp = e.getValue().substring(e.getValue().lastIndexOf('/')+1);
+            temp = e.getValue().substring(e.getValue().lastIndexOf('/') + 1);
             mcpName = e.getValue();
             if (fields.containsKey(temp))
                 mcpName = mcpName.replace(temp, fields.get(temp));
 
             // SRG and MCP have the same class names
-            notchToMcp.write("FD: "+e.getKey()+" "+mcpName);
+            notchToMcp.write("FD: " + e.getKey() + " " + mcpName);
             notchToMcp.newLine();
 
             // srg name -> mcp name
-            srgToMcp.write("FD: "+e.getValue()+" "+mcpName);
+            srgToMcp.write("FD: " + e.getValue() + " " + mcpName);
             srgToMcp.newLine();
 
             // mcp name -> srg name
-            mcpToSrg.write("FD: "+mcpName+" "+e.getValue());
+            mcpToSrg.write("FD: " + mcpName + " " + e.getValue());
             mcpToSrg.newLine();
 
             // output is notch
-            mcpToNotch.write("FD: "+mcpName+" "+e.getKey());
+            mcpToNotch.write("FD: " + mcpName + " " + e.getKey());
             mcpToNotch.newLine();
         }
 
         // methods
-        for (Entry<MethodData, MethodData> e : inSrg.methodMap.entrySet())
-        {
-            line = "MD: "+e.getKey()+" "+e.getValue();
+        for (Entry<MethodData, MethodData> e : inSrg.methodMap.entrySet()) {
+            line = "MD: " + e.getKey() + " " + e.getValue();
 
             // same...
-            notchToSrg.write("MD: "+e.getKey()+" "+e.getValue());
+            notchToSrg.write("MD: " + e.getKey() + " " + e.getValue());
             notchToSrg.newLine();
 
-            temp = e.getValue().name.substring(e.getValue().name.lastIndexOf('/')+1);
+            temp = e.getValue().name.substring(e.getValue().name.lastIndexOf('/') + 1);
             mcpName = e.getValue().toString();
             if (methods.containsKey(temp))
                 mcpName = mcpName.replace(temp, methods.get(temp));
 
             // SRG and MCP have the same class names
-            notchToMcp.write("MD: "+e.getKey()+" "+mcpName);
+            notchToMcp.write("MD: " + e.getKey() + " " + mcpName);
             notchToMcp.newLine();
 
             // srg name -> mcp name
-            srgToMcp.write("MD: "+e.getValue()+" "+mcpName);
+            srgToMcp.write("MD: " + e.getValue() + " " + mcpName);
             srgToMcp.newLine();
 
             // mcp name -> srg name
-            mcpToSrg.write("MD: "+mcpName+" "+e.getValue());
+            mcpToSrg.write("MD: " + mcpName + " " + e.getValue());
             mcpToSrg.newLine();
 
             // output is notch
-            mcpToNotch.write("MD: "+mcpName+" "+e.getKey());
+            mcpToNotch.write("MD: " + mcpName + " " + e.getKey());
             mcpToNotch.newLine();
         }
 
@@ -285,8 +271,7 @@ public class GenSrgTask extends CachedTask
         mcpToNotch.close();
     }
 
-    private void writeOutExcs(Map<String, String> excRemap, Map<String, String> methods) throws IOException
-    {
+    private void writeOutExcs(Map<String, String> excRemap, Map<String, String> methods) throws IOException {
         // ensure folders exist
         Files.createParentDirs(getSrgExc());
         Files.createParentDirs(getMcpExc());
@@ -298,8 +283,7 @@ public class GenSrgTask extends CachedTask
         // read and write existing lines
         List<String> excLines = Files.readLines(getInExc(), Charsets.UTF_8);
         String[] split;
-        for (String line : excLines)
-        {
+        for (String line : excLines) {
             // its already in SRG names.
             srgOut.write(line);
             srgOut.newLine();
@@ -312,15 +296,14 @@ public class GenSrgTask extends CachedTask
             int dotIndex = split[0].indexOf('.');
 
             // not a method? wut?
-            if (sigIndex == -1 || dotIndex == -1)
-            {
+            if (sigIndex == -1 || dotIndex == -1) {
                 mcpOut.write(line);
                 mcpOut.newLine();
                 continue;
             }
 
             // get new name
-            String name = split[0].substring(dotIndex+1, sigIndex);
+            String name = split[0].substring(dotIndex + 1, sigIndex);
             if (methods.containsKey(name))
                 name = methods.get(name);
 
@@ -330,12 +313,10 @@ public class GenSrgTask extends CachedTask
 
         }
 
-        for (File f : getExtraExcs())
-        {
+        for (File f : getExtraExcs()) {
             List<String> lines = Files.readLines(f, Charsets.UTF_8);
 
-            for (String line : lines)
-            {
+            for (String line : lines) {
                 // these are in MCP names
                 mcpOut.write(line);
                 mcpOut.newLine();
@@ -348,15 +329,14 @@ public class GenSrgTask extends CachedTask
                 int dotIndex = split[0].indexOf('.');
 
                 // not a method? wut?
-                if (sigIndex == -1 || dotIndex == -1)
-                {
+                if (sigIndex == -1 || dotIndex == -1) {
                     srgOut.write(line);
                     srgOut.newLine();
                     continue;
                 }
 
                 // get new name
-                String name = split[0].substring(dotIndex+1, sigIndex);
+                String name = split[0].substring(dotIndex + 1, sigIndex);
                 if (excRemap.containsKey(name))
                     name = excRemap.get(name);
 
@@ -372,182 +352,157 @@ public class GenSrgTask extends CachedTask
         mcpOut.flush();
         mcpOut.close();
     }
-/*
-    private String remapMethodName(String qualified, String notchSig, Map<String, String> classMap, Map<MethodData, MethodData> methodMap)
-    {
 
-        for (MethodData data : methodMap.keySet())
+    /*
+        private String remapMethodName(String qualified, String notchSig, Map<String, String> classMap, Map<MethodData, MethodData> methodMap)
         {
-            if (data.name.equals(qualified))
-                return methodMap.get(data).name;
+
+            for (MethodData data : methodMap.keySet())
+            {
+                if (data.name.equals(qualified))
+                    return methodMap.get(data).name;
+            }
+
+            String cls = qualified.substring(0, qualified.lastIndexOf('/'));
+            String name = qualified.substring(cls.length() + 1);
+            getProject().getLogger().lifecycle(qualified);
+            getProject().getLogger().lifecycle(cls + " " + name);
+
+            String ret = classMap.get(cls);
+            if (ret != null)
+                cls = ret;
+
+            return cls + '/' + name;
         }
 
-        String cls = qualified.substring(0, qualified.lastIndexOf('/'));
-        String name = qualified.substring(cls.length() + 1);
-        getProject().getLogger().lifecycle(qualified);
-        getProject().getLogger().lifecycle(cls + " " + name);
-
-        String ret = classMap.get(cls);
-        if (ret != null)
-            cls = ret;
-
-        return cls + '/' + name;
-    }
-
-    private String remapSig(String sig, Map<String, String> classMap)
-    {
-        StringBuilder newSig = new StringBuilder(sig.length());
-
-        int last = 0;
-        int start = sig.indexOf('L');
-        while(start != -1)
+        private String remapSig(String sig, Map<String, String> classMap)
         {
-            newSig.append(sig.substring(last, start));
-            int next = sig.indexOf(';', start);
-            newSig.append('L').append(remap(sig.substring(start + 1, next), classMap)).append(';');
-            last = next + 1;
-            start = sig.indexOf('L', next);
+            StringBuilder newSig = new StringBuilder(sig.length());
+
+            int last = 0;
+            int start = sig.indexOf('L');
+            while(start != -1)
+            {
+                newSig.append(sig.substring(last, start));
+                int next = sig.indexOf(';', start);
+                newSig.append('L').append(remap(sig.substring(start + 1, next), classMap)).append(';');
+                last = next + 1;
+                start = sig.indexOf('L', next);
+            }
+            newSig.append(sig.substring(last));
+
+            return newSig.toString();
         }
-        newSig.append(sig.substring(last));
 
-        return newSig.toString();
-    }
-
-    private static String remap(String thing, Map<String, String> map)
-    {
-        if (map.containsKey(thing))
-            return map.get(thing);
-        else
-            return thing;
-    }
-*/
-    public File getInSrg()
-    {
+        private static String remap(String thing, Map<String, String> map)
+        {
+            if (map.containsKey(thing))
+                return map.get(thing);
+            else
+                return thing;
+        }
+    */
+    public File getInSrg() {
         return inSrg.call();
     }
 
-    public void setInSrg(DelayedFile inSrg)
-    {
+    public void setInSrg(DelayedFile inSrg) {
         this.inSrg = inSrg;
     }
 
-    public File getInExc()
-    {
+    public File getInExc() {
         return inExc.call();
     }
 
-    public void setInExc(DelayedFile inSrg)
-    {
+    public void setInExc(DelayedFile inSrg) {
         this.inExc = inSrg;
     }
 
-    public File getMethodsCsv()
-    {
+    public File getMethodsCsv() {
         return methodsCsv.call();
     }
 
-    public void setMethodsCsv(DelayedFile methodsCsv)
-    {
+    public void setMethodsCsv(DelayedFile methodsCsv) {
         this.methodsCsv = methodsCsv;
     }
 
-    public File getFieldsCsv()
-    {
+    public File getFieldsCsv() {
         return fieldsCsv.call();
     }
 
-    public void setFieldsCsv(DelayedFile fieldsCsv)
-    {
+    public void setFieldsCsv(DelayedFile fieldsCsv) {
         this.fieldsCsv = fieldsCsv;
     }
 
-    public File getNotchToSrg()
-    {
+    public File getNotchToSrg() {
         return notchToSrg.call();
     }
 
-    public void setNotchToSrg(DelayedFile deobfSrg)
-    {
+    public void setNotchToSrg(DelayedFile deobfSrg) {
         this.notchToSrg = deobfSrg;
     }
 
-    public File getNotchToMcp()
-    {
+    public File getNotchToMcp() {
         return notchToMcp.call();
     }
 
-    public void setNotchToMcp(DelayedFile deobfSrg)
-    {
+    public void setNotchToMcp(DelayedFile deobfSrg) {
         this.notchToMcp = deobfSrg;
     }
-    
-    public File getSrgToMcp()
-    {
+
+    public File getSrgToMcp() {
         return SrgToMcp.call();
     }
 
-    public void setSrgToMcp(DelayedFile deobfSrg)
-    {
+    public void setSrgToMcp(DelayedFile deobfSrg) {
         this.SrgToMcp = deobfSrg;
     }
 
-    public File getMcpToSrg()
-    {
+    public File getMcpToSrg() {
         return mcpToSrg.call();
     }
 
-    public void setMcpToSrg(DelayedFile reobfSrg)
-    {
+    public void setMcpToSrg(DelayedFile reobfSrg) {
         this.mcpToSrg = reobfSrg;
     }
 
-    public File getMcpToNotch()
-    {
+    public File getMcpToNotch() {
         return mcpToNotch.call();
     }
 
-    public void setMcpToNotch(DelayedFile reobfSrg)
-    {
+    public void setMcpToNotch(DelayedFile reobfSrg) {
         this.mcpToNotch = reobfSrg;
     }
 
-    public File getSrgExc()
-    {
+    public File getSrgExc() {
         return srgExc.call();
     }
 
-    public void setSrgExc(DelayedFile inSrg)
-    {
+    public void setSrgExc(DelayedFile inSrg) {
         this.srgExc = inSrg;
     }
 
-    public File getMcpExc()
-    {
+    public File getMcpExc() {
         return mcpExc.call();
     }
 
-    public void setMcpExc(DelayedFile inSrg)
-    {
+    public void setMcpExc(DelayedFile inSrg) {
         this.mcpExc = inSrg;
     }
 
-    public FileCollection getExtraExcs()
-    {
+    public FileCollection getExtraExcs() {
         return getProject().files(extraExcs);
     }
 
-    public void addExtraExc(File file)
-    {
+    public void addExtraExc(File file) {
         extraExcs.add(file);
     }
 
-    public FileCollection getExtraSrgs()
-    {
+    public FileCollection getExtraSrgs() {
         return getProject().files(extraSrgs);
     }
 
-    public void addExtraSrg(File file)
-    {
+    public void addExtraSrg(File file) {
         extraSrgs.add(file);
     }
 }

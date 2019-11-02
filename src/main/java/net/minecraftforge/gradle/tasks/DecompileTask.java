@@ -1,28 +1,14 @@
 package net.minecraftforge.gradle.tasks;
 
-import static net.minecraftforge.gradle.common.Constants.EXT_NAME_MC;
+import com.github.abrarsyed.jastyle.ASFormatter;
+import com.github.abrarsyed.jastyle.FileWildcardFilter;
+import com.github.abrarsyed.jastyle.OptParser;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import groovy.lang.Closure;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-
 import net.minecraftforge.gradle.common.BaseExtension;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -35,7 +21,6 @@ import net.minecraftforge.gradle.patching.ContextualPatch.HunkReport;
 import net.minecraftforge.gradle.patching.ContextualPatch.PatchReport;
 import net.minecraftforge.gradle.patching.ContextualPatch.PatchStatus;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
-
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.tasks.InputFile;
@@ -44,17 +29,17 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.process.JavaExecSpec;
 
-import com.github.abrarsyed.jastyle.ASFormatter;
-import com.github.abrarsyed.jastyle.FileWildcardFilter;
-import com.github.abrarsyed.jastyle.OptParser;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
-public class DecompileTask extends CachedTask
-{
+import static net.minecraftforge.gradle.common.Constants.EXT_NAME_MC;
+
+public class DecompileTask extends CachedTask {
     @InputFile
     private DelayedFile inJar;
 
@@ -70,19 +55,19 @@ public class DecompileTask extends CachedTask
     @Cached
     private DelayedFile outJar;
 
-    private HashMap<String, String> sourceMap   = new HashMap<String, String>();
+    private HashMap<String, String> sourceMap = new HashMap<String, String>();
     private HashMap<String, byte[]> resourceMap = new HashMap<String, byte[]>();
 
     private static final Pattern BEFORE = Pattern.compile("(?m)((case|default).+(?:\\r\\n|\\r|\\n))(?:\\r\\n|\\r|\\n)");
-    private static final Pattern AFTER  = Pattern.compile("(?m)(?:\\r\\n|\\r|\\n)((?:\\r\\n|\\r|\\n)[ \\t]+(case|default))");
+    private static final Pattern AFTER = Pattern.compile("(?m)(?:\\r\\n|\\r|\\n)((?:\\r\\n|\\r|\\n)[ \\t]+(case|default))");
 
     /**
      * This method outputs to the cleanSrc
+     *
      * @throws Throwable Let em throw anything.. I dont care.
      */
     @TaskAction
-    protected void doMCPStuff() throws Throwable
-    {
+    protected void doMCPStuff() throws Throwable {
         // define files.
         File temp = new File(getTemporaryDir(), getInJar().getName());
 
@@ -95,12 +80,9 @@ public class DecompileTask extends CachedTask
         saveJar(new File(getTemporaryDir(), getInJar().getName() + ".fixed.jar"));
 
         getLogger().info("Applying MCP patches");
-        if (getPatch().isFile())
-        {
+        if (getPatch().isFile()) {
             applySingleMcpPatch(getPatch());
-        }
-        else
-        {
+        } else {
             applyPatchDirectory(getPatch());
         }
 
@@ -113,14 +95,11 @@ public class DecompileTask extends CachedTask
         saveJar(getOutJar());
     }
 
-    private void decompile(final File inJar, final File outJar, final File fernFlower)
-    {
-        getProject().javaexec(new Closure<JavaExecSpec>(this)
-        {
+    private void decompile(final File inJar, final File outJar, final File fernFlower) {
+        getProject().javaexec(new Closure<JavaExecSpec>(this) {
             private static final long serialVersionUID = 4608694547855396167L;
 
-            public JavaExecSpec call()
-            {
+            public JavaExecSpec call() {
                 JavaExecSpec exec = (JavaExecSpec) getDelegate();
 
                 exec.args(
@@ -145,38 +124,31 @@ public class DecompileTask extends CachedTask
                 return exec;
             }
 
-            public JavaExecSpec call(Object obj)
-            {
+            public JavaExecSpec call(Object obj) {
                 return call();
             }
         });
     }
 
-    private void readJarAndFix(final File jar) throws IOException
-    {
+    private void readJarAndFix(final File jar) throws IOException {
         // begin reading jar
         final ZipInputStream zin = new ZipInputStream(new FileInputStream(jar));
         ZipEntry entry = null;
         String fileStr;
 
-        BaseExtension exten = (BaseExtension)getProject().getExtensions().getByName(EXT_NAME_MC);
+        BaseExtension exten = (BaseExtension) getProject().getExtensions().getByName(EXT_NAME_MC);
         boolean fixInterfaces = !exten.getVersion().equals("1.7.2");
 
-        while ((entry = zin.getNextEntry()) != null)
-        {
+        while ((entry = zin.getNextEntry()) != null) {
             // no META or dirs. wel take care of dirs later.
-            if (entry.getName().contains("META-INF"))
-            {
+            if (entry.getName().contains("META-INF")) {
                 continue;
             }
 
             // resources or directories.
-            if (entry.isDirectory() || !entry.getName().endsWith(".java"))
-            {
+            if (entry.isDirectory() || !entry.getName().endsWith(".java")) {
                 resourceMap.put(entry.getName(), ByteStreams.toByteArray(zin));
-            }
-            else
-            {
+            } else {
                 // source!
                 fileStr = new String(ByteStreams.toByteArray(zin), Charset.defaultCharset());
 
@@ -190,46 +162,35 @@ public class DecompileTask extends CachedTask
         zin.close();
     }
 
-    private void applySingleMcpPatch(File patchFile) throws Throwable
-    {
+    private void applySingleMcpPatch(File patchFile) throws Throwable {
         ContextualPatch patch = ContextualPatch.create(Files.toString(patchFile, Charset.defaultCharset()), new ContextProvider(sourceMap));
         printPatchErrors(patch.patch(false));
     }
 
-    private void printPatchErrors(List<PatchReport> errors) throws Throwable
-    {
+    private void printPatchErrors(List<PatchReport> errors) throws Throwable {
         boolean fuzzed = false;
-        for (PatchReport report : errors)
-        {
-            if (!report.getStatus().isSuccess())
-            {
+        for (PatchReport report : errors) {
+            if (!report.getStatus().isSuccess()) {
                 getLogger().log(LogLevel.ERROR, "Patching failed: " + report.getTarget(), report.getFailure());
 
-                for (HunkReport hunk : report.getHunks())
-                {
-                    if (!hunk.getStatus().isSuccess())
-                    {
+                for (HunkReport hunk : report.getHunks()) {
+                    if (!hunk.getStatus().isSuccess()) {
                         getLogger().error("Hunk " + hunk.getHunkID() + " failed!");
                     }
                 }
 
                 throw report.getFailure();
-            }
-            else if (report.getStatus() == PatchStatus.Fuzzed) // catch fuzzed patches
+            } else if (report.getStatus() == PatchStatus.Fuzzed) // catch fuzzed patches
             {
                 getLogger().log(LogLevel.INFO, "Patching fuzzed: " + report.getTarget(), report.getFailure());
                 fuzzed = true;
 
-                for (HunkReport hunk : report.getHunks())
-                {
-                    if (!hunk.getStatus().isSuccess())
-                    {
+                for (HunkReport hunk : report.getHunks()) {
+                    if (!hunk.getStatus().isSuccess()) {
                         getLogger().info("Hunk " + hunk.getHunkID() + " fuzzed " + hunk.getFuzz() + "!");
                     }
                 }
-            }
-            else
-            {
+            } else {
                 getLogger().debug("Patch succeeded: " + report.getTarget());
             }
         }
@@ -237,44 +198,34 @@ public class DecompileTask extends CachedTask
             getLogger().lifecycle("Patches Fuzzed!");
     }
 
-    private void applyPatchDirectory(File patchDir) throws Throwable
-    {
+    private void applyPatchDirectory(File patchDir) throws Throwable {
         Multimap<String, File> patches = ArrayListMultimap.create();
-        for (File f : patchDir.listFiles(new FileWildcardFilter("*.patch")))
-        {
+        for (File f : patchDir.listFiles(new FileWildcardFilter("*.patch"))) {
             String base = f.getName();
             patches.put(base, f);
-            for(File e : patchDir.listFiles(new FileWildcardFilter(base + ".*")))
-            {
+            for (File e : patchDir.listFiles(new FileWildcardFilter(base + ".*"))) {
                 patches.put(base, e);
             }
         }
 
-        for (String key : patches.keySet())
-        {
+        for (String key : patches.keySet()) {
             ContextualPatch patch = findPatch(patches.get(key));
-            if (patch == null)
-            {
+            if (patch == null) {
                 getLogger().lifecycle("Patch not found for set: " + key); //This should never happen, but whatever
-            }
-            else
-            {
+            } else {
                 printPatchErrors(patch.patch(false));
             }
         }
     }
 
-    private ContextualPatch findPatch(Collection<File> files) throws Throwable
-    {
+    private ContextualPatch findPatch(Collection<File> files) throws Throwable {
         ContextualPatch patch = null;
-        for (File f : files)
-        {
+        for (File f : files) {
             patch = ContextualPatch.create(Files.toString(f, Charset.defaultCharset()), new ContextProvider(sourceMap));
             List<PatchReport> errors = patch.patch(true);
 
             boolean success = true;
-            for (PatchReport rep : errors)
-            {
+            for (PatchReport rep : errors) {
                 if (!rep.getStatus().isSuccess()) success = false;
             }
             if (success) break;
@@ -282,8 +233,7 @@ public class DecompileTask extends CachedTask
         return patch;
     }
 
-    private void applyMcpCleanup(File conf) throws IOException
-    {
+    private void applyMcpCleanup(File conf) throws IOException {
         ASFormatter formatter = new ASFormatter();
         OptParser parser = new OptParser(formatter);
         parser.parseOptionFile(conf);
@@ -295,8 +245,7 @@ public class DecompileTask extends CachedTask
         ArrayList<String> files = new ArrayList<String>(sourceMap.keySet());
         Collections.sort(files); // Just to make sure we have the same order.. shouldn't matter on anything but lets be careful.
 
-        for (String file : files)
-        {
+        for (String file : files) {
             String text = sourceMap.get(file);
 
             getLogger().debug("Processing file: " + file);
@@ -331,21 +280,18 @@ public class DecompileTask extends CachedTask
         }
     }
 
-    private void saveJar(File output) throws IOException
-    {
+    private void saveJar(File output) throws IOException {
         ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(output));
 
         // write in resources
-        for (Map.Entry<String, byte[]> entry : resourceMap.entrySet())
-        {
+        for (Map.Entry<String, byte[]> entry : resourceMap.entrySet()) {
             zout.putNextEntry(new ZipEntry(entry.getKey()));
             zout.write(entry.getValue());
             zout.closeEntry();
         }
 
         // write in sources
-        for (Map.Entry<String, String> entry : sourceMap.entrySet())
-        {
+        for (Map.Entry<String, String> entry : sourceMap.entrySet()) {
             zout.putNextEntry(new ZipEntry(entry.getKey()));
             zout.write(entry.getValue().getBytes());
             zout.closeEntry();
@@ -354,122 +300,100 @@ public class DecompileTask extends CachedTask
         zout.close();
     }
 
-    public HashMap<String, String> getSourceMap()
-    {
+    public HashMap<String, String> getSourceMap() {
         return sourceMap;
     }
 
-    public void setSourceMap(HashMap<String, String> sourceMap)
-    {
+    public void setSourceMap(HashMap<String, String> sourceMap) {
         this.sourceMap = sourceMap;
     }
 
-    public File getAstyleConfig()
-    {
+    public File getAstyleConfig() {
         return astyleConfig.call();
     }
 
-    public void setAstyleConfig(DelayedFile astyleConfig)
-    {
+    public void setAstyleConfig(DelayedFile astyleConfig) {
         this.astyleConfig = astyleConfig;
     }
 
-    public File getFernFlower()
-    {
+    public File getFernFlower() {
         return fernFlower.call();
     }
 
-    public void setFernFlower(DelayedFile fernFlower)
-    {
+    public void setFernFlower(DelayedFile fernFlower) {
         this.fernFlower = fernFlower;
     }
 
-    public File getInJar()
-    {
+    public File getInJar() {
         return inJar.call();
     }
 
-    public void setInJar(DelayedFile inJar)
-    {
+    public void setInJar(DelayedFile inJar) {
         this.inJar = inJar;
     }
 
-    public File getOutJar()
-    {
+    public File getOutJar() {
         return outJar.call();
     }
 
-    public void setOutJar(DelayedFile outJar)
-    {
+    public void setOutJar(DelayedFile outJar) {
         this.outJar = outJar;
     }
 
     @InputFiles
-    public FileCollection getPatches()
-    {
-         File patches = patch.call();
-         if (patches.isDirectory())
-             return getProject().fileTree(patches);
-         else
-             return getProject().files(patches);
+    public FileCollection getPatches() {
+        File patches = patch.call();
+        if (patches.isDirectory())
+            return getProject().fileTree(patches);
+        else
+            return getProject().files(patches);
     }
 
-    public File getPatch()
-    {
+    public File getPatch() {
         return patch.call();
     }
 
-    public void setPatch(DelayedFile patch)
-    {
+    public void setPatch(DelayedFile patch) {
         this.patch = patch;
     }
 
-    public HashMap<String, byte[]> getResourceMap()
-    {
+    public HashMap<String, byte[]> getResourceMap() {
         return resourceMap;
     }
 
-    public void setResourceMap(HashMap<String, byte[]> resourceMap)
-    {
+    public void setResourceMap(HashMap<String, byte[]> resourceMap) {
         this.resourceMap = resourceMap;
     }
 
     /**
      * A private inner class to be used with the MCPPatches only.
      */
-    private class ContextProvider implements ContextualPatch.IContextProvider
-    {
+    private class ContextProvider implements ContextualPatch.IContextProvider {
         private Map<String, String> fileMap;
 
         private final int STRIP = 1;
 
-        public ContextProvider(Map<String, String> fileMap)
-        {
+        public ContextProvider(Map<String, String> fileMap) {
             this.fileMap = fileMap;
         }
 
-        private String strip(String target)
-        {
+        private String strip(String target) {
             target = target.replace('\\', '/');
             int index = 0;
-            for (int x = 0; x < STRIP; x++)
-            {
+            for (int x = 0; x < STRIP; x++) {
                 index = target.indexOf('/', index) + 1;
             }
             return target.substring(index);
         }
 
         @Override
-        public List<String> getData(String target)
-        {
+        public List<String> getData(String target) {
             target = strip(target);
 
-            if (fileMap.containsKey(target))
-            {
+            if (fileMap.containsKey(target)) {
                 String[] lines = fileMap.get(target).split("\r\n|\r|\n");
                 List<String> ret = new ArrayList<String>();
-                for (String line : lines)
-                {
+                for (String line : lines) {
                     ret.add(line);
                 }
                 return ret;
@@ -479,8 +403,7 @@ public class DecompileTask extends CachedTask
         }
 
         @Override
-        public void setData(String target, List<String> data)
-        {
+        public void setData(String target, List<String> data) {
             fileMap.put(strip(target), Joiner.on(Constants.NEWLINE).join(data));
         }
     }

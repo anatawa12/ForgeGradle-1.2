@@ -1,41 +1,36 @@
 package net.minecraftforge.gradle.user.patch;
 
-import static net.minecraftforge.gradle.user.patch.UserPatchConstants.*;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.tasks.ProcessJarTask;
 import net.minecraftforge.gradle.tasks.ProcessSrcJarTask;
 
-public class ForgeUserPlugin extends UserPatchBasePlugin
-{
+import static net.minecraftforge.gradle.user.patch.UserPatchConstants.*;
+
+public class ForgeUserPlugin extends UserPatchBasePlugin {
     @Override
-    public String getApiName()
-    {
+    public String getApiName() {
         return "forge";
     }
 
     @Override
-    protected String getApiGroup()
-    {
+    protected String getApiGroup() {
         return "net.minecraftforge";
     }
 
     @Override
-    protected void configureDeobfuscation(ProcessJarTask task)
-    {
+    protected void configureDeobfuscation(ProcessJarTask task) {
         task.addTransformerClean(delayedFile(FML_AT));
         task.addTransformerClean(delayedFile(FORGE_AT));
     }
 
     @Override
-    protected void configurePatching(ProcessSrcJarTask patch)
-    {
+    protected void configurePatching(ProcessSrcJarTask patch) {
         patch.addStage("fml", delayedFile(FML_PATCHES_ZIP), delayedFile(SRC_DIR), delayedFile(RES_DIR));
         patch.addStage("forge", delayedFile(FORGE_PATCHES_ZIP));
     }
 
     @Override
-    protected void doVersionChecks(String version, int buildNumber)
-    {
+    protected void doVersionChecks(String version, int buildNumber) {
         if (version.startsWith("10.")) {
             if (buildNumber < 1048) {
                 throw new IllegalArgumentException("ForgeGradle 1.2 only supports Forge 1.7 versions newer than 10.12.0.1048. Found: " + version);
@@ -50,8 +45,7 @@ public class ForgeUserPlugin extends UserPatchBasePlugin
     }
 
     @Override
-    protected String getVersionsJsonUrl()
-    {
+    protected String getVersionsJsonUrl() {
         // TODO Auto-generated method stub
         return Constants.FORGE_MAVEN + "/net/minecraftforge/forge/json";
     }
