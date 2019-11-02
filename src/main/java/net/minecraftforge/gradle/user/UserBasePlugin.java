@@ -772,13 +772,19 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void createExecTasks() {
-        JavaExec exec = makeTask("runClient", JavaExec.class);
+        // In gradle 4.2 or newer, workingDir be resolved immediately. So set workingDir in afterEvaluate.
         {
+            final JavaExec exec = makeTask("runClient", JavaExec.class);
+            project.afterEvaluate(new Action<Project>() {
+                @Override
+                public void execute(Project project) {
+                    exec.workingDir(delayedFile("{RUN_DIR}"));
+                }
+            });
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
             exec.setMain(GRADLE_START_CLIENT);
             //exec.jvmArgs("-Xincgc", "-Xmx1024M", "-Xms1024M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
             exec.args(getClientRunArgs());
-            exec.workingDir(delayedFile("{RUN_DIR}"));
             exec.setStandardOutput(System.out);
             exec.setErrorOutput(System.err);
 
@@ -788,12 +794,17 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             exec.dependsOn("makeStart");
         }
 
-        exec = makeTask("runServer", JavaExec.class);
         {
+            final JavaExec exec = makeTask("runServer", JavaExec.class);
+            project.afterEvaluate(new Action<Project>() {
+                @Override
+                public void execute(Project project) {
+                    exec.workingDir(delayedFile("{RUN_DIR}"));
+                }
+            });
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
             exec.setMain(GRADLE_START_SERVER);
             exec.jvmArgs("-Xincgc", "-Dfml.ignoreInvalidMinecraftCertificates=true");
-            exec.workingDir(delayedFile("{RUN_DIR}"));
             exec.args(getServerRunArgs());
             exec.setStandardOutput(System.out);
             exec.setStandardInput(System.in);
@@ -805,8 +816,15 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             exec.dependsOn("makeStart");
         }
 
-        exec = makeTask("debugClient", JavaExec.class);
         {
+
+            final JavaExec exec = makeTask("debugClient", JavaExec.class);
+            project.afterEvaluate(new Action<Project>() {
+                @Override
+                public void execute(final Project project) {
+                    exec.workingDir(delayedFile("{RUN_DIR}"));
+                }
+            });
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
             exec.doFirst(new Action() {
                 @Override
@@ -823,7 +841,6 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             exec.setMain(GRADLE_START_CLIENT);
             exec.jvmArgs("-Xincgc", "-Xmx1024M", "-Xms1024M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
             exec.args(getClientRunArgs());
-            exec.workingDir(delayedFile("{RUN_DIR}"));
             exec.setStandardOutput(System.out);
             exec.setErrorOutput(System.err);
             exec.setDebug(true);
@@ -834,8 +851,14 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             exec.dependsOn("makeStart");
         }
 
-        exec = makeTask("debugServer", JavaExec.class);
         {
+            final JavaExec exec = makeTask("debugServer", JavaExec.class);
+            project.afterEvaluate(new Action<Project>() {
+                @Override
+                public void execute(final Project project) {
+                    exec.workingDir(delayedFile("{RUN_DIR}"));
+                }
+            });
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
             exec.doFirst(new Action() {
                 @Override
@@ -851,7 +874,6 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             });
             exec.setMain(GRADLE_START_SERVER);
             exec.jvmArgs("-Xincgc", "-Dfml.ignoreInvalidMinecraftCertificates=true");
-            exec.workingDir(delayedFile("{RUN_DIR}"));
             exec.args(getServerRunArgs());
             exec.setStandardOutput(System.out);
             exec.setStandardInput(System.in);
