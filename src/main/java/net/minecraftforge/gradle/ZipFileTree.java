@@ -89,6 +89,11 @@ public class ZipFileTree implements MinimalFileTree {
         }
     }
 
+    @Override
+    public void visitTreeOrBackingFile(FileVisitor fileVisitor) {
+        visit(fileVisitor);
+    }
+
     private class DetailsImpl implements FileVisitDetails {
         private final ZipEntry entry;
         private final ZipFile zip;
