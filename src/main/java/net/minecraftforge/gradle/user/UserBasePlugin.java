@@ -101,8 +101,6 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                 TaskExecutionGraph graph = project.getGradle().getTaskGraph();
                 String path = project.getPath();
 
-                graph.getAllTasks().clear();
-
                 if (graph.hasTask(path + "setupDecompWorkspace")) {
                     getExtension().setDecomp();
                     configurePostDecomp(true, true);
