@@ -25,10 +25,7 @@ import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.specs.Spec;
-import org.gradle.api.tasks.GroovySourceSet;
-import org.gradle.api.tasks.JavaExec;
-import org.gradle.api.tasks.ScalaSourceSet;
-import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.bundling.Zip;
 import org.gradle.api.tasks.compile.GroovyCompile;
@@ -705,7 +702,15 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         Spec onlyIfCheck = new Spec() {
             @Override
             public boolean isSatisfiedBy(Object obj) {
-                boolean didWork = ((Task) obj).dependsOnTaskDidWork();
+                Task task = (Task)obj;
+                TaskDependency dependency = task.getTaskDependencies();
+                boolean didWork = false;
+                for (Task depTask : dependency.getDependencies(task)) {
+                    if (depTask.getDidWork()) {
+                        didWork = true;
+                        break;
+                    }
+                }
                 boolean exists = recomp.call().exists();
                 if (!exists)
                     return true;
