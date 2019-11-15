@@ -123,68 +123,57 @@ test {
 
 uploadArchives {
     repositories {
-        if (project.hasProperty("forgeMavenPass")) {
-            logger.info('Publishing to files server')
+        mavenDeployer {
+            configuration = configurations.deployerJars
 
-            mavenDeployer {
-                configuration = configurations.deployerJars
+            repository(url: "https://files.minecraftforge.net/maven/manage/upload") {
+                authentication(userName: "forge", password: project.getProperty('forgeMavenPass'))
+            }
 
-                repository(url: "https://files.minecraftforge.net/maven/manage/upload") {
-                    authentication(userName: "forge", password: project.getProperty('forgeMavenPass'))
-                }
+            pom {
+                groupId = project.group
+                version = project.version
+                artifactId = project.archivesBaseName
+                project {
+                    name project.archivesBaseName
+                    packaging 'jar'
+                    description 'Gradle plugin for Forge'
+                    url 'https://github.com/MinecraftForge/ForgeGradle'
 
-                pom {
-                    groupId = project.group
-                    version = project.version
-                    artifactId = project.archivesBaseName
-                    project {
-                        name project.archivesBaseName
-                        packaging 'jar'
-                        description 'Gradle plugin for Forge'
+                    scm {
                         url 'https://github.com/MinecraftForge/ForgeGradle'
+                        connection 'scm:git:git://github.com/MinecraftForge/ForgeGradle.git'
+                        developerConnection 'scm:git:git@github.com:MinecraftForge/ForgeGradle.git'
+                    }
 
-                        scm {
-                            url 'https://github.com/MinecraftForge/ForgeGradle'
-                            connection 'scm:git:git://github.com/MinecraftForge/ForgeGradle.git'
-                            developerConnection 'scm:git:git@github.com:MinecraftForge/ForgeGradle.git'
-                        }
+                    issueManagement {
+                        system 'github'
+                        url 'https://github.com/MinecraftForge/ForgeGradle/issues'
+                    }
 
-                        issueManagement {
-                            system 'github'
-                            url 'https://github.com/MinecraftForge/ForgeGradle/issues'
+                    licenses {
+                        license {
+                            name 'Lesser GNU Public License, Version 2.1'
+                            url 'https://www.gnu.org/licenses/lgpl-2.1.html'
+                            distribution 'repo'
                         }
+                    }
 
-                        licenses {
-                            license {
-                                name 'Lesser GNU Public License, Version 2.1'
-                                url 'https://www.gnu.org/licenses/lgpl-2.1.html'
-                                distribution 'repo'
-                            }
+                    developers {
+                        developer {
+                            id 'AbrarSyed'
+                            name 'Abrar Syed'
+                            roles { role 'developer' }
                         }
-
-                        developers {
-                            developer {
-                                id 'AbrarSyed'
-                                name 'Abrar Syed'
-                                roles { role 'developer' }
-                            }
-                        }
-                        developers {
-                            developer {
-                                id 'LexManos'
-                                name 'Lex Manos'
-                                roles { role 'developer' }
-                            }
+                    }
+                    developers {
+                        developer {
+                            id 'LexManos'
+                            name 'Lex Manos'
+                            roles { role 'developer' }
                         }
                     }
                 }
-            }
-        } else {
-            add project.repositories.mavenLocal()
-            logger.info('Publishing to repo folder')
-
-            mavenDeployer {
-                repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
             }
         }
     }
