@@ -173,6 +173,13 @@ uploadArchives {
                             roles { role 'developer' }
                         }
                     }
+                    developers {
+                        developer {
+                            id 'anatawa12'
+                            name 'anatawa12'
+                            roles { role 'developer' }
+                        }
+                    }
                 }
             }
         }
