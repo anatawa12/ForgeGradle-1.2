@@ -16,6 +16,7 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.Proxy;
 import java.security.DigestInputStream;
@@ -88,9 +89,14 @@ public class GradleStart extends GradleStartCommon {
 
         // hack the classloader now.
         try {
-            final Field sysPathsField = ClassLoader.class.getDeclaredField("sys_paths");
-            sysPathsField.setAccessible(true);
-            sysPathsField.set(null, null);
+            final Method initializePathMethod = ClassLoader.class.getDeclaredMethod("initializePath", String.class);
+            initializePathMethod.setAccessible(true);
+
+            final Object usrPathsValue = initializePathMethod.invoke(null, "java.library.path");
+
+            final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
+            usrPathsField.setAccessible(true);
+            usrPathsField.set(null, usrPathsValue);
         } catch (Throwable t) {
         }
         ;
