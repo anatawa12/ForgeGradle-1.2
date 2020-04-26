@@ -5,6 +5,8 @@ Minecraft mod development framework used by Forge and FML for the gradle build s
 
 this repository is only for ForgeGradle 1.2, ForgeGradle for minecraft 1.7.2, 1.7.10, and 1.8.
 
+This project is a fork of [ForgeGradle branch 'FG_1.2'](https://github.com/MinecraftForge/ForgeGradle/tree/FG_1.2).
+
 [Example project found here](https://github.com/anatawa12/ForgeGradle-example)
 
 [Documentation found here](http://forgegradle.readthedocs.org/)
