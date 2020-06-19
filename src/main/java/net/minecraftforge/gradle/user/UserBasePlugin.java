@@ -20,6 +20,7 @@ import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration.State;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.execution.TaskExecutionGraph;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
@@ -355,13 +356,12 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         // set compile not to take from libs
         JavaCompile compileTask = ((JavaCompile) project.getTasks().getByName(main.getCompileJavaTaskName()));
-        List<String> args = compileTask.getOptions().getCompilerArgs();
-        if (args == null || args.isEmpty()) {
-            args = Lists.newArrayList();
-        }
-        args.add("-sourcepath");
-        args.add(".");
-        compileTask.getOptions().setCompilerArgs(args);
+        FileCollection sourcePath = compileTask.getOptions().getSourcepath();
+        if (sourcePath == null)
+            sourcePath = project.files(".");
+        else 
+            sourcePath = sourcePath.plus(project.files("."));
+        compileTask.getOptions().setSourcepath(sourcePath);
     }
 
     private void readAndApplyJson(File file, String depConfig, String nativeConfig, Logger log) {
