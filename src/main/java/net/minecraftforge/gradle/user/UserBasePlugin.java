@@ -36,6 +36,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.scala.ScalaCompile;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.gradle.util.DeprecationLogger;
+import org.gradle.util.GUtil;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -344,12 +345,12 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         project.getDependencies().add(CONFIG_START, project.files(delayedFile(getStartDir())));
 
         // extra libs folder.
-        project.getDependencies().add("compile", project.fileTree("libs"));
+        project.getDependencies().add(CONFIG_COMPILE, project.fileTree("libs"));
 
         // make MC dependencies into normal compile classpath
-        project.getDependencies().add("compile", project.getConfigurations().getByName(CONFIG_DEPS));
-        project.getDependencies().add("compile", project.getConfigurations().getByName(CONFIG_MC));
-        project.getDependencies().add("runtime", project.getConfigurations().getByName(CONFIG_START));
+        project.getDependencies().add(CONFIG_COMPILE, project.getConfigurations().getByName(CONFIG_DEPS));
+        project.getDependencies().add(CONFIG_COMPILE, project.getConfigurations().getByName(CONFIG_MC));
+        project.getDependencies().add(CONFIG_RUNTIME, project.getConfigurations().getByName(CONFIG_START));
     }
 
     /**
@@ -370,8 +371,8 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         main.setCompileClasspath(main.getCompileClasspath().plus(api.getOutput()));
         test.setCompileClasspath(test.getCompileClasspath().plus(api.getOutput()));
 
-        project.getConfigurations().getByName("apiCompile").extendsFrom(project.getConfigurations().getByName("compile"));
-        project.getConfigurations().getByName("testCompile").extendsFrom(project.getConfigurations().getByName("apiCompile"));
+        project.getConfigurations().getByName(GUtil.toLowerCamelCase("api " + CONFIG_COMPILE)).extendsFrom(project.getConfigurations().getByName(CONFIG_COMPILE));
+        project.getConfigurations().getByName(GUtil.toLowerCamelCase("test " + CONFIG_COMPILE)).extendsFrom(project.getConfigurations().getByName(GUtil.toLowerCamelCase("api " + CONFIG_COMPILE)));
 
         // set compile not to take from libs
         /*
@@ -1089,28 +1090,28 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         JavaExec exec = (JavaExec) project.getTasks().getByName("runClient");
         {
-            exec.classpath(project.getConfigurations().getByName("runtime"));
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
             exec.classpath(jarTask.getArchivePath());
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("runServer");
         {
-            exec.classpath(project.getConfigurations().getByName("runtime"));
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
             exec.classpath(jarTask.getArchivePath());
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("debugClient");
         {
-            exec.classpath(project.getConfigurations().getByName("runtime"));
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
             exec.classpath(jarTask.getArchivePath());
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("debugServer");
         {
-            exec.classpath(project.getConfigurations().getByName("runtime"));
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
             exec.classpath(jarTask.getArchivePath());
             exec.dependsOn(jarTask);
         }

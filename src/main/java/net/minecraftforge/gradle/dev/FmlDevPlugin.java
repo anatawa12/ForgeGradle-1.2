@@ -252,7 +252,7 @@ public class FmlDevPlugin extends DevBasePlugin {
 
         ExtractS2SRangeTask task = makeTask("extractRange", ExtractS2SRangeTask.class);
         {
-            task.setLibsFromProject(delayedFile(DevConstants.ECLIPSE_FML + "/build.gradle"), "compile", true);
+            task.setLibsFromProject(delayedFile(DevConstants.ECLIPSE_FML + "/build.gradle"), CONFIG_COMPILE, true);
             task.addIn(delayedFile(DevConstants.ECLIPSE_FML_SRC));
             //task.addIn(delayedFile(DevConstants.FML_SOURCES));
             task.setExcOutput(delayedFile(DevConstants.EXC_MODIFIERS_DIRTY));
@@ -431,7 +431,7 @@ public class FmlDevPlugin extends DevBasePlugin {
 
         ExtractS2SRangeTask range = makeTask("userDevExtractRange", ExtractS2SRangeTask.class);
         {
-            range.setLibsFromProject(delayedFile(DevConstants.ECLIPSE_FML + "/build.gradle"), "compile", true);
+            range.setLibsFromProject(delayedFile(DevConstants.ECLIPSE_FML + "/build.gradle"), CONFIG_COMPILE, true);
             range.addIn(delayedFile(DevConstants.FML_SOURCES));
             range.setRangeMap(delayedFile(DevConstants.USERDEV_RANGEMAP));
             range.dependsOn("generateProjects", "extractFmlSources");

@@ -1,6 +1,7 @@
 package edu.sc.seis.launch4j;
 
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.user.UserConstants;
 import org.gradle.api.*;
 import org.gradle.api.file.CopySpec;
 import org.gradle.api.plugins.JavaPlugin;
@@ -107,7 +108,7 @@ public class Launch4jPlugin implements Plugin<Project> {
         Jar jar = (Jar) project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
 
         distSpec.from(jar);
-        distSpec.from(project.getConfigurations().getByName("runtime"));
+        distSpec.from(project.getConfigurations().getByName(UserConstants.CONFIG_RUNTIME));
 
         return distSpec;
     }

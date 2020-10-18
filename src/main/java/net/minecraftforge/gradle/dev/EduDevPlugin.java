@@ -292,7 +292,7 @@ public class EduDevPlugin extends DevBasePlugin {
 
         ExtractS2SRangeTask extractRange = makeTask("extractRangeMcEdu", ExtractS2SRangeTask.class);
         {
-            extractRange.setLibsFromProject(delayedFile(ECLIPSE_EDU + "/build.gradle"), "compile", true);
+            extractRange.setLibsFromProject(delayedFile(ECLIPSE_EDU + "/build.gradle"), CONFIG_COMPILE, true);
             extractRange.addIn(delayedFile(ECLIPSE_EDU_SRC));
             extractRange.setRangeMap(rangeMapDirty);
         }
@@ -319,7 +319,7 @@ public class EduDevPlugin extends DevBasePlugin {
 
         extractRange = makeTask("extractRangeClean", ExtractS2SRangeTask.class);
         {
-            extractRange.setLibsFromProject(delayedFile(ECLIPSE_CLEAN + "/build.gradle"), "compile", true);
+            extractRange.setLibsFromProject(delayedFile(ECLIPSE_CLEAN + "/build.gradle"), CONFIG_COMPILE, true);
             extractRange.addIn(delayedFile(REMAPPED_CLEAN));
             extractRange.setRangeMap(rangeMapClean);
         }

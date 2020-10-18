@@ -311,7 +311,7 @@ public class CauldronDevPlugin extends DevBasePlugin {
 
         ExtractS2SRangeTask extractRange = makeTask("extractRangeCauldron", ExtractS2SRangeTask.class);
         {
-            extractRange.setLibsFromProject(delayedFile(ECLIPSE_CDN + "/build.gradle"), "compile", true);
+            extractRange.setLibsFromProject(delayedFile(ECLIPSE_CDN + "/build.gradle"), CONFIG_COMPILE, true);
             extractRange.addIn(delayedFile(ECLIPSE_CDN_SRC));
             extractRange.setRangeMap(rangeMapDirty);
         }
@@ -338,7 +338,7 @@ public class CauldronDevPlugin extends DevBasePlugin {
 
         extractRange = makeTask("extractRangeClean", ExtractS2SRangeTask.class);
         {
-            extractRange.setLibsFromProject(delayedFile(ECLIPSE_CLEAN + "/build.gradle"), "compile", true);
+            extractRange.setLibsFromProject(delayedFile(ECLIPSE_CLEAN + "/build.gradle"), CONFIG_COMPILE, true);
             extractRange.addIn(delayedFile(REMAPPED_CLEAN));
             extractRange.setRangeMap(rangeMapClean);
         }
