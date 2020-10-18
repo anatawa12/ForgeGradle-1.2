@@ -58,10 +58,10 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
     @Override
     public void applyPlugin() {
         this.applyExternalPlugin("java");
-        GradleVersionUtils.ifBefore(project, "7.0", new Runnable() {
+        GradleVersionUtils.ifBefore("7.0", new Runnable() {
             @Override
             public void run() {
-                GradleVersionUtils.ifAfter(project, "6.0", new Runnable() {
+                GradleVersionUtils.ifAfter("6.0", new Runnable() {
                     @Override
                     public void run() {
                         if (project.getGradle().getStartParameter().getWarningMode() == WarningMode.All) {

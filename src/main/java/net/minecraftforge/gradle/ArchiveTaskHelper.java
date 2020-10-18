@@ -11,7 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class ArchiveTaskHelper {
-    private static AbstractArchiveTaskHelperBack back = GradleVersionUtils.choose(null, "5.1",
+    private static AbstractArchiveTaskHelperBack back = GradleVersionUtils.choose("5.1",
             new GradleVersionUtils.Callable<AbstractArchiveTaskHelperBack>() {
                 @Override
                 public AbstractArchiveTaskHelperBack call() {

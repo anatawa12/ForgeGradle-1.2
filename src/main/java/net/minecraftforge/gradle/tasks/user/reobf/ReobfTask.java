@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ReobfTask extends DefaultTask {
-    final private DomainObjectSet<ObfArtifact> obfOutput = GradleVersionUtils.choose(getProject(), "5.5",
+    final private DomainObjectSet<ObfArtifact> obfOutput = GradleVersionUtils.choose("5.5",
             new GradleVersionUtils.Callable<DefaultDomainObjectSet<ObfArtifact>>() {
                 @Override
                 public DefaultDomainObjectSet<ObfArtifact> call() {

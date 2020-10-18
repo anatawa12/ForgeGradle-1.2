@@ -392,7 +392,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                 repo.setName(name);
                 repo.setUrl(url);
                 if (!usePom) {
-                    GradleVersionUtils.ifAfter(proj, "4.5", new Runnable() {
+                    GradleVersionUtils.ifAfter("4.5", new Runnable() {
                         @Override
                         public void run() {
                             repo.metadataSources(new Action<MavenArtifactRepository.MetadataSources>() {
