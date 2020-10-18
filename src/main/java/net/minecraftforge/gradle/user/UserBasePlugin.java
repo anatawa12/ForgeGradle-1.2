@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -24,6 +25,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.configuration.WarningMode;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.*;
@@ -33,6 +35,7 @@ import org.gradle.api.tasks.compile.GroovyCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.scala.ScalaCompile;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
+import org.gradle.util.DeprecationLogger;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -57,7 +60,23 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
     @Override
     public void applyPlugin() {
         this.applyExternalPlugin("java");
-        this.applyExternalPlugin("maven");
+        GradleVersionUtils.ifBefore(project, "7.0", new Runnable() {
+            @Override
+            public void run() {
+                GradleVersionUtils.ifAfter(project, "6.0", new Runnable() {
+                    @Override
+                    public void run() {
+                        if (project.getGradle().getStartParameter().getWarningMode() == WarningMode.All) {
+                            project.getLogger().warn("The maven plugin is automatically applied by ForgeGradle and " +
+                                    "will not be applied since Gradle 7.0. " +
+                                    "If you're using maven plugin applied by ForgeGradle, " +
+                                    "please use 'maven-publish' instead and apply it yourself.");
+                        }
+                    }
+                });
+                applyExternalPlugin("maven");
+            }
+        });
         this.applyExternalPlugin("eclipse");
         this.applyExternalPlugin("idea");
 
@@ -360,7 +379,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         FileCollection sourcePath = compileTask.getOptions().getSourcepath();
         if (sourcePath == null)
             sourcePath = project.files(".");
-        else 
+        else
             sourcePath = sourcePath.plus(project.files("."));
         compileTask.getOptions().setSourcepath(sourcePath);
         // */
