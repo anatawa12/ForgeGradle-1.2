@@ -348,9 +348,9 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         project.getDependencies().add(CONFIG_COMPILE, project.fileTree("libs"));
 
         // make MC dependencies into normal compile classpath
-        project.getDependencies().add(CONFIG_COMPILE, project.getConfigurations().getByName(CONFIG_DEPS));
-        project.getDependencies().add(CONFIG_COMPILE, project.getConfigurations().getByName(CONFIG_MC));
-        project.getDependencies().add(CONFIG_RUNTIME, project.getConfigurations().getByName(CONFIG_START));
+        project.getConfigurations().getByName(CONFIG_COMPILE).extendsFrom(project.getConfigurations().getByName(CONFIG_DEPS));
+        project.getConfigurations().getByName(CONFIG_COMPILE).extendsFrom(project.getConfigurations().getByName(CONFIG_MC));
+        project.getConfigurations().getByName(CONFIG_RUNTIME).extendsFrom(project.getConfigurations().getByName(CONFIG_START));
     }
 
     /**
