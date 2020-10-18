@@ -6,7 +6,6 @@ import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
@@ -35,16 +34,16 @@ public class SubprojectTask extends DefaultTask {
             for (Task t : list) {
                 if (configureTask != null)
                     configureTask.execute(t);
-                executeTask((AbstractTask) t);
+                executeTask((DefaultTask) t);
             }
         }
 
         System.gc();
     }
 
-    private void executeTask(AbstractTask task) {
+    private void executeTask(DefaultTask task) {
         for (Object dep : task.getTaskDependencies().getDependencies(task)) {
-            executeTask((AbstractTask) dep);
+            executeTask((DefaultTask) dep);
         }
 
         if (!task.getState().getExecuted()) {

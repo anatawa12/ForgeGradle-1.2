@@ -14,7 +14,6 @@ import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.*;
@@ -47,8 +46,8 @@ public class ObfuscateTask extends DefaultTask {
                 act.execute(childProj);
         }
 
-        AbstractTask compileTask = (AbstractTask) childProj.getTasks().getByName("compileJava");
-        AbstractTask jarTask = (AbstractTask) childProj.getTasks().getByName(subTask);
+        DefaultTask compileTask = (DefaultTask) childProj.getTasks().getByName("compileJava");
+        DefaultTask jarTask = (DefaultTask) childProj.getTasks().getByName(subTask);
 
         // executing jar task
         getLogger().debug("Executing child " + subTask + " task...");
@@ -87,9 +86,9 @@ public class ObfuscateTask extends DefaultTask {
         obfuscate(inJar, (FileCollection) compileTask.property("classpath"), srg);
     }
 
-    private void executeTask(AbstractTask task) {
+    private void executeTask(DefaultTask task) {
         for (Object dep : task.getTaskDependencies().getDependencies(task)) {
-            executeTask((AbstractTask) dep);
+            executeTask((DefaultTask) dep);
         }
 
         if (!task.getState().getExecuted()) {

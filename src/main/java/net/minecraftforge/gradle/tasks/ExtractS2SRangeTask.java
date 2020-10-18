@@ -19,7 +19,6 @@ import net.minecraftforge.srg2source.util.io.ZipInputSupplier;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
@@ -260,7 +259,7 @@ public class ExtractS2SRangeTask extends DefaultTask {
             libs = proj.getConfigurations().getByName(projectConfig);
 
             if (includeJar) {
-                AbstractTask jarTask = (AbstractTask) proj.getTasks().getByName("jar");
+                DefaultTask jarTask = (DefaultTask) proj.getTasks().getByName("jar");
                 executeTask(jarTask);
                 File compiled = (File) jarTask.property("archivePath");
                 libs = getProject().files(compiled, libs);
@@ -274,9 +273,9 @@ public class ExtractS2SRangeTask extends DefaultTask {
         return libs;
     }
 
-    private void executeTask(AbstractTask task) {
+    private void executeTask(DefaultTask task) {
         for (Object dep : task.getTaskDependencies().getDependencies(task)) {
-            executeTask((AbstractTask) dep);
+            executeTask((DefaultTask) dep);
         }
 
         if (!task.getState().getExecuted()) {
