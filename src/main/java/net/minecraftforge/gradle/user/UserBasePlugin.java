@@ -4,9 +4,9 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
@@ -21,7 +21,6 @@ import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration.State;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.execution.TaskExecutionGraph;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
@@ -35,7 +34,6 @@ import org.gradle.api.tasks.compile.GroovyCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.scala.ScalaCompile;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
-import org.gradle.util.DeprecationLogger;
 import org.gradle.util.GUtil;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -51,7 +49,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import static net.minecraftforge.gradle.common.Constants.*;
 import static net.minecraftforge.gradle.user.UserConstants.*;
@@ -1060,8 +1057,8 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
             //done in the delayed configuration.
             File out = recomp.call();
-            repackageTask.setArchiveName(out.getName());
-            repackageTask.setDestinationDir(out.getParentFile());
+            ArchiveTaskHelper.setArchiveName(repackageTask, out.getName());
+            ArchiveTaskHelper.setDestinationDir(repackageTask, out.getParentFile());
         }
 
         {
@@ -1091,28 +1088,28 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         JavaExec exec = (JavaExec) project.getTasks().getByName("runClient");
         {
             exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
-            exec.classpath(jarTask.getArchivePath());
+            exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("runServer");
         {
             exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
-            exec.classpath(jarTask.getArchivePath());
+            exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("debugClient");
         {
             exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
-            exec.classpath(jarTask.getArchivePath());
+            exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("debugServer");
         {
             exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
-            exec.classpath(jarTask.getArchivePath());
+            exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }
 

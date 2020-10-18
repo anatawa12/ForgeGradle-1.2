@@ -3,6 +3,7 @@ package net.minecraftforge.gradle.dev;
 //import edu.sc.seis.launch4j.Launch4jPluginExtension;
 
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.CopyInto;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
@@ -351,7 +352,7 @@ public class FmlDevPlugin extends DevBasePlugin {
 
         final DelayedJar uni = makeTask("packageUniversal", DelayedJar.class);
         {
-            uni.setClassifier("universal");
+            ArchiveTaskHelper.setClassifier(uni, "universal");
             uni.getInputs().file(delayedFile(DevConstants.JSON_REL));
             uni.getOutputs().upToDateWhen(Constants.CALL_FALSE);
             uni.from(delayedZipTree(DevConstants.BINPATCH_TMP));
@@ -388,7 +389,7 @@ public class FmlDevPlugin extends DevBasePlugin {
             genInstallJson.addReplacement("@artifact@", delayedString("cpw.mods:fml:{MC_VERSION_SAFE}-{VERSION}"));
             genInstallJson.addReplacement("@universal_jar@", new Closure<String>(project) {
                 public String call() {
-                    return uni.getArchiveName();
+                    return ArchiveTaskHelper.getArchiveName(uni);
                 }
             });
             genInstallJson.addReplacement("@timestamp@", new Closure<String>(project) {
@@ -400,10 +401,10 @@ public class FmlDevPlugin extends DevBasePlugin {
 
         Zip inst = makeTask("packageInstaller", Zip.class);
         {
-            inst.setClassifier("installer");
+            ArchiveTaskHelper.setClassifier(inst,"installer");
             inst.from(new Closure<File>(project) {
                 public File call() {
-                    return uni.getArchivePath();
+                    return ArchiveTaskHelper.getArchivePath(uni);
                 }
             });
             inst.from(delayedFile(DevConstants.INSTALL_PROFILE));
@@ -413,20 +414,20 @@ public class FmlDevPlugin extends DevBasePlugin {
             inst.from(delayedFile(DevConstants.FML_LOGO));
             inst.from(delayedZipTree(DevConstants.INSTALLER_BASE), new CopyInto("/", "!*.json", "!*.png"));
             inst.dependsOn(uni, "downloadBaseInstaller", genInstallJson);
-            inst.setExtension("jar");
+            ArchiveTaskHelper.setExtension(inst,"jar");
         }
         project.getArtifacts().add("archives", inst);
 
         final Zip patchZip = makeTask("zipPatches", Zip.class);
         {
             patchZip.from(delayedFile(DevConstants.FML_PATCH_DIR));
-            patchZip.setArchiveName("fmlpatches.zip");
+            ArchiveTaskHelper.setArchiveName(patchZip, "fmlpatches.zip");
         }
 
         final Zip classZip = makeTask("jarClasses", Zip.class);
         {
             classZip.from(delayedZipTree(DevConstants.BINPATCH_TMP), new CopyInto("", "**/*.class"));
-            classZip.setArchiveName("binaries.jar");
+            ArchiveTaskHelper.setArchiveName(classZip, "binaries.jar");
         }
 
         ExtractS2SRangeTask range = makeTask("userDevExtractRange", ExtractS2SRangeTask.class);
@@ -458,16 +459,16 @@ public class FmlDevPlugin extends DevBasePlugin {
 
         Zip userDev = makeTask("packageUserDev", Zip.class);
         {
-            userDev.setClassifier("userdev");
+            ArchiveTaskHelper.setClassifier(userDev,"userdev");
             userDev.from(delayedFile(DevConstants.JSON_DEV));
             userDev.from(new Closure<File>(project) {
                 public File call() {
-                    return patchZip.getArchivePath();
+                    return ArchiveTaskHelper.getArchivePath(patchZip);
                 }
             });
             userDev.from(new Closure<File>(project) {
                 public File call() {
-                    return classZip.getArchivePath();
+                    return ArchiveTaskHelper.getArchivePath(classZip);
                 }
             });
             userDev.from(delayedFile(DevConstants.CHANGELOG));
@@ -488,13 +489,13 @@ public class FmlDevPlugin extends DevBasePlugin {
             userDev.setIncludeEmptyDirs(false);
             uni.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
             userDev.dependsOn("packageUniversal", crowdin, patchZip, classZip, "createVersionProperties", s2s);
-            userDev.setExtension("jar");
+            ArchiveTaskHelper.setExtension(userDev,"jar");
         }
         project.getArtifacts().add("archives", userDev);
 
         Zip src = makeTask("packageSrc", Zip.class);
         {
-            src.setClassifier("src");
+            ArchiveTaskHelper.setClassifier(src, "src");
             src.from(delayedFile(DevConstants.CHANGELOG));
             src.from(delayedFile(DevConstants.FML_LICENSE));
             src.from(delayedFile(DevConstants.FML_CREDITS));
@@ -508,7 +509,7 @@ public class FmlDevPlugin extends DevBasePlugin {
             src.from(delayedFile("{FML_DIR}/gradle/wrapper"), new CopyInto("gradle/wrapper"));
             src.rename(".+?\\.gradle", "build.gradle");
             src.dependsOn("createChangelog");
-            src.setExtension("zip");
+            ArchiveTaskHelper.setExtension(src,"zip");
         }
         project.getArtifacts().add("archives", src);
     }

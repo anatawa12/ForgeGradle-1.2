@@ -2,6 +2,7 @@ package net.minecraftforge.gradle.dev;
 
 import com.google.common.base.Throwables;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.CopyInto;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedBase;
@@ -429,7 +430,7 @@ public class ForgeDevPlugin extends DevBasePlugin {
 
         final DelayedJar uni = makeTask("packageUniversal", DelayedJar.class);
         {
-            uni.setClassifier("universal");
+            ArchiveTaskHelper.setClassifier(uni, "universal");
             uni.getInputs().file(delayedFile(JSON_REL));
             uni.getOutputs().upToDateWhen(Constants.CALL_FALSE);
             uni.from(delayedZipTree(BINPATCH_TMP));
@@ -462,13 +463,13 @@ public class ForgeDevPlugin extends DevBasePlugin {
                 @Override
                 public void execute(Task arg0) {
                     try {
-                        signJar(((DelayedJar) arg0).getArchivePath(), "forge", "*/*/**", "!paulscode/**");
+                        signJar(ArchiveTaskHelper.getArchivePath((DelayedJar) arg0), "forge", "*/*/**", "!paulscode/**");
                     } catch (Exception e) {
                         Throwables.propagate(e);
                     }
                 }
             });
-            uni.setDestinationDir(delayedFile("{BUILD_DIR}/distributions").call());
+            ArchiveTaskHelper.setDestinationDir(uni, delayedFile("{BUILD_DIR}/distributions").call());
             uni.dependsOn("genBinPatches", crowdin, makeChangelog, "createVersionPropertiesFML", vjson);
         }
         project.getArtifacts().add("archives", uni);
@@ -483,7 +484,7 @@ public class ForgeDevPlugin extends DevBasePlugin {
             genInstallJson.addReplacement("@artifact@", delayedString("net.minecraftforge:forge:{MC_VERSION_SAFE}-{VERSION}"));
             genInstallJson.addReplacement("@universal_jar@", new Closure<String>(project) {
                 public String call() {
-                    return uni.getArchiveName();
+                    return ArchiveTaskHelper.getArchiveName(uni);
                 }
             });
             genInstallJson.addReplacement("@timestamp@", new Closure<String>(project) {
@@ -495,10 +496,10 @@ public class ForgeDevPlugin extends DevBasePlugin {
 
         Zip inst = makeTask("packageInstaller", Zip.class);
         {
-            inst.setClassifier("installer");
+            ArchiveTaskHelper.setClassifier(inst, "installer");
             inst.from(new Closure<File>(project) {
                 public File call() {
-                    return uni.getArchivePath();
+                    return ArchiveTaskHelper.getArchivePath(uni);
                 }
             });
             inst.from(delayedFile(INSTALL_PROFILE));
@@ -513,29 +514,29 @@ public class ForgeDevPlugin extends DevBasePlugin {
             inst.from(delayedZipTree(INSTALLER_BASE), new CopyInto("", "!*.json", "!*.png"));
             inst.dependsOn(uni, "downloadBaseInstaller", genInstallJson);
             inst.rename("forge_logo\\.png", "big_logo.png");
-            inst.setExtension("jar");
+            ArchiveTaskHelper.setExtension(inst, "jar");
         }
         project.getArtifacts().add("archives", inst);
 
         final Zip patchZipFML = makeTask("zipFmlPatches", Zip.class);
         {
             patchZipFML.from(delayedFile(FML_PATCH_DIR));
-            patchZipFML.setArchiveName("fmlpatches.zip");
-            patchZipFML.setDestinationDir(delayedFile("{BUILD_DIR}/tmp/").call());
+            ArchiveTaskHelper.setArchiveName(patchZipFML,"fmlpatches.zip");
+            ArchiveTaskHelper.setDestinationDir(patchZipFML, delayedFile("{BUILD_DIR}/tmp/").call());
         }
 
         final Zip patchZipForge = makeTask("zipForgePatches", Zip.class);
         {
             patchZipForge.from(delayedFile(FORGE_PATCH_DIR));
-            patchZipForge.setArchiveName("forgepatches.zip");
-            patchZipForge.setDestinationDir(delayedFile("{BUILD_DIR}/tmp/").call());
+            ArchiveTaskHelper.setArchiveName(patchZipForge,"forgepatches.zip");
+            ArchiveTaskHelper.setDestinationDir(patchZipForge, delayedFile("{BUILD_DIR}/tmp/").call());
         }
 
         final Zip classZip = makeTask("jarClasses", Zip.class);
         {
             classZip.from(delayedZipTree(BINPATCH_TMP), new CopyInto("", "**/*.class"));
-            classZip.setArchiveName("binaries.jar");
-            classZip.setDestinationDir(delayedFile("{BUILD_DIR}/tmp/").call());
+            ArchiveTaskHelper.setArchiveName(classZip,"binaries.jar");
+            ArchiveTaskHelper.setDestinationDir(classZip, delayedFile("{BUILD_DIR}/tmp/").call());
         }
 
 
@@ -572,21 +573,21 @@ public class ForgeDevPlugin extends DevBasePlugin {
 
         Zip userDev = makeTask("packageUserDev", Zip.class);
         {
-            userDev.setClassifier("userdev");
+            ArchiveTaskHelper.setClassifier(userDev, "userdev");
             userDev.from(delayedFile(JSON_DEV));
             userDev.from(new Closure<File>(project) {
                 public File call() {
-                    return patchZipFML.getArchivePath();
+                    return ArchiveTaskHelper.getArchivePath(patchZipFML);
                 }
             });
             userDev.from(new Closure<File>(project) {
                 public File call() {
-                    return patchZipForge.getArchivePath();
+                    return ArchiveTaskHelper.getArchivePath(patchZipForge);
                 }
             });
             userDev.from(new Closure<File>(project) {
                 public File call() {
-                    return classZip.getArchivePath();
+                    return ArchiveTaskHelper.getArchivePath(classZip);
                 }
             });
             userDev.from(delayedFile(CHANGELOG));
@@ -608,13 +609,13 @@ public class ForgeDevPlugin extends DevBasePlugin {
             userDev.setIncludeEmptyDirs(false);
             uni.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
             userDev.dependsOn(uni, patchZipFML, patchZipForge, classZip, "createVersionPropertiesFML", s2s);
-            userDev.setExtension("jar");
+            ArchiveTaskHelper.setExtension(userDev, "jar");
         }
         project.getArtifacts().add("archives", userDev);
 
         Zip src = makeTask("packageSrc", Zip.class);
         {
-            src.setClassifier("src");
+            ArchiveTaskHelper.setClassifier(src, "src");
             src.from(delayedFile(CHANGELOG));
             src.from(delayedFile(FML_LICENSE));
             src.from(delayedFile(FML_CREDITS));
@@ -630,7 +631,7 @@ public class ForgeDevPlugin extends DevBasePlugin {
             src.from(delayedFile("{FML_DIR}/gradle/wrapper"), new CopyInto("gradle/wrapper"));
             src.rename(".+?\\.gradle", "build.gradle");
             src.dependsOn(makeChangelog);
-            src.setExtension("zip");
+            ArchiveTaskHelper.setExtension(src, "zip");
         }
         project.getArtifacts().add("archives", src);
     }

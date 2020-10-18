@@ -11,6 +11,7 @@ import com.google.gson.JsonParser;
 import edu.sc.seis.launch4j.Launch4jPluginExtension;
 import groovy.lang.Closure;
 import groovy.util.MapEntry;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -178,7 +179,7 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
         if (!hasInstaller())
             return;
 
-        final File installer = ((Zip) project.getTasks().getByName("packageInstaller")).getArchivePath();
+        final File installer = ArchiveTaskHelper.getArchivePath((Zip) project.getTasks().getByName("packageInstaller"));
 
         File output = new File(installer.getParentFile(), installer.getName().replace(".jar", "-win.exe"));
         project.getArtifacts().add("archives", output);

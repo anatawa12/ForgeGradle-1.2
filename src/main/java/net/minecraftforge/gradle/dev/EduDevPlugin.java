@@ -1,6 +1,7 @@
 package net.minecraftforge.gradle.dev;
 
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.tasks.*;
@@ -419,7 +420,7 @@ public class EduDevPlugin extends DevBasePlugin {
 
         final DelayedJar uni = makeTask("packageUniversal", DelayedJar.class);
         {
-            uni.setClassifier(delayedString("B{BUILD_NUM}").call());
+            ArchiveTaskHelper.setClassifier(uni, delayedString("B{BUILD_NUM}").call());
             uni.getInputs().file(delayedFile(EXTRA_JSON_REL));
             uni.getOutputs().upToDateWhen(Constants.CALL_FALSE);
             uni.from(delayedZipTree(BINPATCH_TMP));
@@ -466,7 +467,7 @@ public class EduDevPlugin extends DevBasePlugin {
 //                }
 //            });
 
-            uni.setDestinationDir(delayedFile("{BUILD_DIR}/distributions").call());
+            ArchiveTaskHelper.setDestinationDir(uni, delayedFile("{BUILD_DIR}/distributions").call());
             //uni.dependsOn("genBinPatches", "createChangelog", "createVersionPropertiesFML", "generateVersionJson");
             uni.dependsOn("genBinPatches", "createVersionPropertiesFML");
         }

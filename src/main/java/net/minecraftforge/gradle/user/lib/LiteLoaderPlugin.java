@@ -1,6 +1,7 @@
 package net.minecraftforge.gradle.user.lib;
 
 import com.google.common.base.Throwables;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.GradleConfigurationException;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.json.JsonFactory;
@@ -35,7 +36,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
         commonApply();
 
         // change main output to litemod
-        ((Jar) project.getTasks().getByName("jar")).setExtension(EXTENSION);
+        ArchiveTaskHelper.setExtension((Jar) project.getTasks().getByName("jar"), EXTENSION);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -77,11 +78,11 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
         // create apiJar task
         Jar jarTask = makeTask("jar" + cappedApiName, Jar.class);
         jarTask.from(javaConv.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME).getOutput());
-        jarTask.setClassifier(actualApiName());
-        jarTask.setExtension(EXTENSION);
+        ArchiveTaskHelper.setClassifier(jarTask, actualApiName());
+        ArchiveTaskHelper.setExtension(jarTask, EXTENSION);
 
         // configure otherPlugin task to have a classifier
-        ((Jar) project.getTasks().getByName("jar")).setClassifier(((UserBasePlugin) otherPlugin).getApiName());
+        ArchiveTaskHelper.setClassifier((Jar) project.getTasks().getByName("jar"), ((UserBasePlugin) otherPlugin).getApiName());
 
         //  configure reobf for litemod
         ((ReobfTask) project.getTasks().getByName("reobf")).reobf(jarTask, new Action<ArtifactSpec>() {

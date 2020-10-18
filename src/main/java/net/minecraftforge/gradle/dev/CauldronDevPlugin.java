@@ -1,6 +1,7 @@
 package net.minecraftforge.gradle.dev;
 
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.CopyInto;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -453,7 +454,7 @@ public class CauldronDevPlugin extends DevBasePlugin {
 
         final DelayedJar uni = makeTask("packageUniversal", DelayedJar.class);
         {
-            uni.setClassifier(delayedString("B{BUILD_NUM}").call());
+            ArchiveTaskHelper.setClassifier(uni, delayedString("B{BUILD_NUM}").call());
             uni.getInputs().file(delayedFile(EXTRA_JSON_REL));
             uni.getOutputs().upToDateWhen(Constants.CALL_FALSE);
             uni.from(delayedZipTree(BINPATCH_TMP));
@@ -500,7 +501,7 @@ public class CauldronDevPlugin extends DevBasePlugin {
 //                }
 //            });
 
-            uni.setDestinationDir(delayedFile("{BUILD_DIR}/distributions").call());
+            ArchiveTaskHelper.setDestinationDir(uni, delayedFile("{BUILD_DIR}/distributions").call());
             //uni.dependsOn("genBinPatches", "createChangelog", "createVersionPropertiesFML", "generateVersionJson");
             uni.dependsOn("genBinPatches", "createChangelog", "createVersionPropertiesFML");
         }
@@ -516,7 +517,7 @@ public class CauldronDevPlugin extends DevBasePlugin {
             task.addReplacement("@artifact@", delayedString("net.minecraftforge:forge:{MC_VERSION}-{VERSION}"));
             task.addReplacement("@universal_jar@", new Closure<String>(project) {
                 public String call() {
-                    return uni.getArchiveName();
+                    return ArchiveTaskHelper.getArchiveName(uni);
                 }
             });
             task.addReplacement("@timestamp@", new Closure<String>(project) {
@@ -528,10 +529,10 @@ public class CauldronDevPlugin extends DevBasePlugin {
 
         Zip inst = makeTask("packageInstaller", Zip.class);
         {
-            inst.setClassifier("installer");
+            ArchiveTaskHelper.setClassifier(inst, "installer");
             inst.from(new Closure<File>(project) {
                 public File call() {
-                    return uni.getArchivePath();
+                    return ArchiveTaskHelper.getArchivePath(uni);
                 }
             });
             inst.from(delayedFile(INSTALL_PROFILE));
@@ -546,7 +547,7 @@ public class CauldronDevPlugin extends DevBasePlugin {
             inst.from(delayedZipTree(INSTALLER_BASE), new CopyInto("", "!*.json", "!*.png"));
             inst.dependsOn("packageUniversal", "downloadBaseInstaller", "generateInstallJson");
             inst.rename("forge_logo\\.png", "big_logo.png");
-            inst.setExtension("jar");
+            ArchiveTaskHelper.setExtension(inst, "jar");
         }
         project.getArtifacts().add("archives", inst);
     }

@@ -1,6 +1,7 @@
 package net.minecraftforge.gradle.delayed;
 
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
@@ -15,7 +16,7 @@ public class DelayedThingy extends Closure<Object> {
 
     public Object call(Object... objects) {
         if (thing instanceof AbstractArchiveTask)
-            return ((AbstractArchiveTask) thing).getArchivePath();
+            return ArchiveTaskHelper.getArchivePath((AbstractArchiveTask) thing);
         else if ((thing instanceof PublishArtifact))
             return ((PublishArtifact) thing).getFile();
 
