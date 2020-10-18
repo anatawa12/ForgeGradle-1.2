@@ -355,6 +355,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         project.getConfigurations().getByName("testCompile").extendsFrom(project.getConfigurations().getByName("apiCompile"));
 
         // set compile not to take from libs
+        /*
         JavaCompile compileTask = ((JavaCompile) project.getTasks().getByName(main.getCompileJavaTaskName()));
         FileCollection sourcePath = compileTask.getOptions().getSourcepath();
         if (sourcePath == null)
@@ -362,6 +363,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         else 
             sourcePath = sourcePath.plus(project.files("."));
         compileTask.getOptions().setSourcepath(sourcePath);
+        // */
     }
 
     private void readAndApplyJson(File file, String depConfig, String nativeConfig, Logger log) {
