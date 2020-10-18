@@ -12,6 +12,7 @@ import com.google.gson.reflect.TypeToken;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.FileLogListenner;
 import net.minecraftforge.gradle.GradleConfigurationException;
+import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.delayed.DelayedBase.IDelayedResolver;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedFileTree;
@@ -384,17 +385,22 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         return addMavenRepo(proj, name, url, true);
     }
 
-    public MavenArtifactRepository addMavenRepo(Project proj, final String name, final String url, final boolean usePom) {
+    public MavenArtifactRepository addMavenRepo(final Project proj, final String name, final String url, final boolean usePom) {
         return proj.getRepositories().maven(new Action<MavenArtifactRepository>() {
             @Override
-            public void execute(MavenArtifactRepository repo) {
+            public void execute(final MavenArtifactRepository repo) {
                 repo.setName(name);
                 repo.setUrl(url);
                 if (!usePom) {
-                    repo.metadataSources(new Action<MavenArtifactRepository.MetadataSources>() {
+                    GradleVersionUtils.ifAfter(proj, "4.5", new Runnable() {
                         @Override
-                        public void execute(MavenArtifactRepository.MetadataSources metadataSources) {
-                            metadataSources.artifact();
+                        public void run() {
+                            repo.metadataSources(new Action<MavenArtifactRepository.MetadataSources>() {
+                                @Override
+                                public void execute(MavenArtifactRepository.MetadataSources metadataSources) {
+                                    metadataSources.artifact();
+                                }
+                            });
                         }
                     });
                 }
