@@ -202,12 +202,12 @@ public class ArchiveTaskHelper {
 
         @Override
         public String getStringProperty(AbstractArchiveTask task, StringProperties prop) {
-            return ArchiveTaskHelper.<Property<String>>call(prop.forOldGetMethod, task).getOrNull();
+            return ArchiveTaskHelper.<Property<String>>call(prop.forNewMethod, task).getOrNull();
         }
 
         @Override
         public void setStringProperty(AbstractArchiveTask task, StringProperties prop, String value) {
-            ArchiveTaskHelper.<Property<String>>call(prop.forOldGetMethod, task).set(value);
+            ArchiveTaskHelper.<Property<String>>call(prop.forNewMethod, task).set(value);
         }
     }
 
