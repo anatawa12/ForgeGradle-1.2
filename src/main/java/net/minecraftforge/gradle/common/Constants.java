@@ -4,7 +4,6 @@ import com.google.common.base.Joiner;
 import com.google.common.io.ByteStreams;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.StringUtils;
-import net.minecraftforge.gradle.dev.DevExtension;
 import net.minecraftforge.gradle.json.version.OS;
 import org.gradle.api.Project;
 
@@ -89,7 +88,7 @@ public class Constants {
     }
 
     public static List<String> getClassPath() {
-        URL[] urls = ((URLClassLoader) DevExtension.class.getClassLoader()).getURLs();
+        URL[] urls = ((URLClassLoader) Constants.class.getClassLoader()).getURLs();
 
         ArrayList<String> list = new ArrayList<String>();
         for (URL url : urls) {
