@@ -814,6 +814,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             exec.setDescription("Runs the Minecraft client");
 
             exec.dependsOn("makeStart");
+            project.getTasks().getByPath("reobf").mustRunAfter(exec);
         }
 
         {
@@ -836,6 +837,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             exec.setDescription("Runs the Minecraft Server");
 
             exec.dependsOn("makeStart");
+            project.getTasks().getByPath("reobf").mustRunAfter(exec);
         }
 
         {
@@ -871,6 +873,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             exec.setDescription("Runs the Minecraft client in debug mode");
 
             exec.dependsOn("makeStart");
+            project.getTasks().getByPath("reobf").mustRunAfter(exec);
         }
 
         {
@@ -906,6 +909,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             exec.setDescription("Runs the Minecraft serevr in debug mode");
 
             exec.dependsOn("makeStart");
+            project.getTasks().getByPath("reobf").mustRunAfter(exec);
         }
     }
 
