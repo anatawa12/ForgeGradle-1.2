@@ -1,6 +1,7 @@
 package net.minecraftforge.gradle.curseforge;
 
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.user.UserBasePlugin;
 import net.minecraftforge.gradle.user.UserExtension;
 import org.gradle.api.Action;
@@ -22,7 +23,7 @@ public class CursePlugin implements Plugin<Project> {
         upload.setArtifact(new Closure(null, null) {
             public Object call() {
                 if (project.getPlugins().hasPlugin("java"))
-                    return ((Jar) project.getTasks().getByName("jar")).getArchivePath();
+                    return ArchiveTaskHelper.getArchivePath((Jar) project.getTasks().getByName("jar"));
                 return null;
             }
 

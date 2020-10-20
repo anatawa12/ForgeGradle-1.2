@@ -1,6 +1,7 @@
 package net.minecraftforge.gradle;
 
 import com.google.common.io.Files;
+import org.gradle.BuildAdapter;
 import org.gradle.BuildListener;
 import org.gradle.BuildResult;
 import org.gradle.api.initialization.Settings;
@@ -13,7 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-public class FileLogListenner implements StandardOutputListener, BuildListener {
+public class FileLogListenner extends BuildAdapter implements StandardOutputListener, BuildListener {
     private final File out;
     private BufferedWriter writer;
 
@@ -37,14 +38,6 @@ public class FileLogListenner implements StandardOutputListener, BuildListener {
     }
 
     @Override
-    public void projectsLoaded(Gradle arg0) {
-    }
-
-    @Override
-    public void buildStarted(Gradle arg0) {
-    }
-
-    @Override
     public void onOutput(CharSequence arg0) {
         try {
             writer.write(arg0.toString());
@@ -61,13 +54,5 @@ public class FileLogListenner implements StandardOutputListener, BuildListener {
             e.printStackTrace();
         }
     }
-
-    @Override
-    public void projectsEvaluated(Gradle arg0) {
-    }  // nothing
-
-    @Override
-    public void settingsEvaluated(Settings arg0) {
-    } // nothing
 
 }

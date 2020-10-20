@@ -4,7 +4,7 @@ import groovy.lang.Closure;
 import net.minecraftforge.gradle.common.BaseExtension;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
-import org.gradle.api.internal.ClosureBackedAction;
+import org.gradle.util.ConfigureUtil;
 
 public class DevExtension extends BaseExtension {
     private String fmlDir;
@@ -80,7 +80,7 @@ public class DevExtension extends BaseExtension {
 
     @SuppressWarnings("rawtypes")
     public void subprojects(Closure subprojects) {
-        this.subprojects = new ClosureBackedAction<Project>(subprojects);
+        this.subprojects = ConfigureUtil.configureUsing(subprojects);
     }
 
     public Action<Project> getCleanProject() {
@@ -93,7 +93,7 @@ public class DevExtension extends BaseExtension {
 
     @SuppressWarnings("rawtypes")
     public void cleanProject(Closure subprojects) {
-        this.cleanProject = new ClosureBackedAction<Project>(subprojects);
+        this.cleanProject = ConfigureUtil.configureUsing(subprojects);
     }
 
     public Action<Project> getDirtyProject() {
@@ -106,7 +106,7 @@ public class DevExtension extends BaseExtension {
 
     @SuppressWarnings("rawtypes")
     public void dirtyProject(Closure subprojects) {
-        this.dirtyProject = new ClosureBackedAction<Project>(subprojects);
+        this.dirtyProject = ConfigureUtil.configureUsing(subprojects);
     }
 
     public boolean getMakeJavadoc() {

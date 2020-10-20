@@ -1,6 +1,7 @@
 package net.minecraftforge.gradle.dev;
 
 import net.minecraftforge.gradle.common.Constants;
+import net.minecraftforge.gradle.user.UserConstants;
 
 final class DevConstants {
     private DevConstants() {
@@ -154,4 +155,9 @@ final class DevConstants {
     // CrowdIn Stuff
     static final String CROWDIN_ZIP = "{BUILD_DIR}/crowdin-localizations.zip";
     static final String CROWDIN_FORGEID = "minecraft-forge";
+
+    // build configurations. same as in UserConstants
+    public static final String CONFIG_RUNTIME = UserConstants.CONFIG_RUNTIME;
+    public static final String CONFIG_RUNTIME_CLASSPATH = UserConstants.CONFIG_RUNTIME_CLASSPATH;
+    public static final String CONFIG_COMPILE = UserConstants.CONFIG_COMPILE;
 }

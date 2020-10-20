@@ -3,6 +3,7 @@ package net.minecraftforge.gradle.tasks.user.reobf;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.user.UserConstants;
@@ -56,32 +57,32 @@ public class ArtifactSpec {
         project = task.getProject();
         baseName = new Closure(null) {
             public Object call() {
-                return task.getBaseName();
+                return ArchiveTaskHelper.getBaseName(task);
             }
         };
         appendix = new Closure(null) {
             public Object call() {
-                return task.getAppendix();
+                return ArchiveTaskHelper.getAppendix(task);
             }
         };
         version = new Closure(null) {
             public Object call() {
-                return task.getVersion();
+                return ArchiveTaskHelper.getVersion(task);
             }
         };
         classifier = new Closure(null) {
             public Object call() {
-                return task.getClassifier();
+                return ArchiveTaskHelper.getClassifier(task);
             }
         };
         extension = new Closure(null) {
             public Object call() {
-                return task.getExtension();
+                return ArchiveTaskHelper.getExtension(task);
             }
         };
         archiveName = new Closure(null) {
             public Object call() {
-                return task.getArchiveName();
+                return ArchiveTaskHelper.getArchiveName(task);
             }
         };
         classpath = new Closure(null) {

@@ -8,6 +8,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectIntHashMap;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.StringUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -380,7 +381,7 @@ public class CurseUploadTask extends DefaultTask {
         if (object instanceof File) {
             return (File) object;
         } else if (object instanceof AbstractArchiveTask) {
-            return ((AbstractArchiveTask) object).getArchivePath();
+            return ArchiveTaskHelper.getArchivePath((AbstractArchiveTask) object);
         } else if (object instanceof DelayedFile) {
             return ((DelayedFile) object).call();
         } else {

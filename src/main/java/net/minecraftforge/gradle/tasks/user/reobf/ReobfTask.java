@@ -4,6 +4,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedString;
@@ -16,17 +17,53 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.DefaultDomainObjectSet;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
+import javax.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ReobfTask extends DefaultTask {
-    final private DefaultDomainObjectSet<ObfArtifact> obfOutput = new DefaultDomainObjectSet<ObfArtifact>(ObfArtifact.class);
+    final private DomainObjectSet<ObfArtifact> obfOutput = GradleVersionUtils.choose("5.5",
+            new GradleVersionUtils.Callable<DefaultDomainObjectSet<ObfArtifact>>() {
+                @Override
+                public DefaultDomainObjectSet<ObfArtifact> call() {
+                    return new DefaultDomainObjectSet<ObfArtifact>(ObfArtifact.class);
+                }
+            }, new GradleVersionUtils.Callable<DomainObjectSet<ObfArtifact>>() {
+                @Override
+                public DomainObjectSet<ObfArtifact> call() {
+                    return ObfOutputCreateHelper.domainObjectSet(getInjectedObjectFactory(), ObfArtifact.class);
+                }
+            });
+    private static class ObfOutputCreateHelper {
+        static Method method;
+
+        static {
+            try {
+                method = ObjectFactory.class.getMethod("domainObjectSet", Class.class);
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public static <T> DomainObjectSet<T> domainObjectSet(ObjectFactory factory, Class<T> elementType) {
+            try {
+                return (DomainObjectSet<T>) method.invoke(factory, elementType);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 
     @Input
     private boolean useRetroGuard = false;
@@ -77,6 +114,11 @@ public class ReobfTask extends DefaultTask {
                 return getObfuscatedFiles();
             }
         });
+    }
+
+    @Inject
+    protected ObjectFactory getInjectedObjectFactory() {
+        throw new IllegalStateException("must be injected");
     }
 
     public void reobf(Task task, Action<ArtifactSpec> artifactSpec) {
@@ -459,7 +501,7 @@ public class ReobfTask extends DefaultTask {
         this.methodCsv = methodCsv;
     }
 
-    public DefaultDomainObjectSet<ObfArtifact> getObfOutput() {
+    public DomainObjectSet<ObfArtifact> getObfOutput() {
         return obfOutput;
     }
 

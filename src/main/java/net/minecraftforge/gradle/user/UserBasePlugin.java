@@ -4,9 +4,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
+import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -20,10 +21,10 @@ import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration.State;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.execution.TaskExecutionGraph;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.configuration.WarningMode;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.*;
@@ -33,6 +34,7 @@ import org.gradle.api.tasks.compile.GroovyCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.scala.ScalaCompile;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
+import org.gradle.util.GUtil;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -47,7 +49,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import static net.minecraftforge.gradle.common.Constants.*;
 import static net.minecraftforge.gradle.user.UserConstants.*;
@@ -57,7 +58,23 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
     @Override
     public void applyPlugin() {
         this.applyExternalPlugin("java");
-        this.applyExternalPlugin("maven");
+        GradleVersionUtils.ifBefore("7.0", new Runnable() {
+            @Override
+            public void run() {
+                GradleVersionUtils.ifAfter("6.0", new Runnable() {
+                    @Override
+                    public void run() {
+                        if (project.getGradle().getStartParameter().getWarningMode() == WarningMode.All) {
+                            project.getLogger().warn("The maven plugin is automatically applied by ForgeGradle and " +
+                                    "will not be applied since Gradle 7.0. " +
+                                    "If you're using maven plugin applied by ForgeGradle, " +
+                                    "please use 'maven-publish' instead and apply it yourself.");
+                        }
+                    }
+                });
+                applyExternalPlugin("maven");
+            }
+        });
         this.applyExternalPlugin("eclipse");
         this.applyExternalPlugin("idea");
 
@@ -325,12 +342,12 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         project.getDependencies().add(CONFIG_START, project.files(delayedFile(getStartDir())));
 
         // extra libs folder.
-        project.getDependencies().add("compile", project.fileTree("libs"));
+        project.getDependencies().add(CONFIG_COMPILE, project.fileTree("libs"));
 
         // make MC dependencies into normal compile classpath
-        project.getDependencies().add("compile", project.getConfigurations().getByName(CONFIG_DEPS));
-        project.getDependencies().add("compile", project.getConfigurations().getByName(CONFIG_MC));
-        project.getDependencies().add("runtime", project.getConfigurations().getByName(CONFIG_START));
+        project.getConfigurations().getByName(CONFIG_COMPILE).extendsFrom(project.getConfigurations().getByName(CONFIG_DEPS));
+        project.getConfigurations().getByName(CONFIG_COMPILE).extendsFrom(project.getConfigurations().getByName(CONFIG_MC));
+        project.getConfigurations().getByName(CONFIG_RUNTIME).extendsFrom(project.getConfigurations().getByName(CONFIG_START));
     }
 
     /**
@@ -351,8 +368,8 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         main.setCompileClasspath(main.getCompileClasspath().plus(api.getOutput()));
         test.setCompileClasspath(test.getCompileClasspath().plus(api.getOutput()));
 
-        project.getConfigurations().getByName("apiCompile").extendsFrom(project.getConfigurations().getByName("compile"));
-        project.getConfigurations().getByName("testCompile").extendsFrom(project.getConfigurations().getByName("apiCompile"));
+        project.getConfigurations().getByName(GUtil.toLowerCamelCase("api " + CONFIG_COMPILE)).extendsFrom(project.getConfigurations().getByName(CONFIG_COMPILE));
+        project.getConfigurations().getByName(GUtil.toLowerCamelCase("test " + CONFIG_COMPILE)).extendsFrom(project.getConfigurations().getByName(GUtil.toLowerCamelCase("api " + CONFIG_COMPILE)));
 
         // set compile not to take from libs
         /*
@@ -360,7 +377,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         FileCollection sourcePath = compileTask.getOptions().getSourcepath();
         if (sourcePath == null)
             sourcePath = project.files(".");
-        else 
+        else
             sourcePath = sourcePath.plus(project.files("."));
         compileTask.getOptions().setSourcepath(sourcePath);
         // */
@@ -1040,8 +1057,8 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
             //done in the delayed configuration.
             File out = recomp.call();
-            repackageTask.setArchiveName(out.getName());
-            repackageTask.setDestinationDir(out.getParentFile());
+            ArchiveTaskHelper.setArchiveName(repackageTask, out.getName());
+            ArchiveTaskHelper.setDestinationDir(repackageTask, out.getParentFile());
         }
 
         {
@@ -1070,29 +1087,29 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         JavaExec exec = (JavaExec) project.getTasks().getByName("runClient");
         {
-            exec.classpath(project.getConfigurations().getByName("runtime"));
-            exec.classpath(jarTask.getArchivePath());
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME_CLASSPATH));
+            exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("runServer");
         {
-            exec.classpath(project.getConfigurations().getByName("runtime"));
-            exec.classpath(jarTask.getArchivePath());
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME_CLASSPATH));
+            exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("debugClient");
         {
-            exec.classpath(project.getConfigurations().getByName("runtime"));
-            exec.classpath(jarTask.getArchivePath());
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME_CLASSPATH));
+            exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("debugServer");
         {
-            exec.classpath(project.getConfigurations().getByName("runtime"));
-            exec.classpath(jarTask.getArchivePath());
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME_CLASSPATH));
+            exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }
 

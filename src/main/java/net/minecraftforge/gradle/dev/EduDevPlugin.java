@@ -1,6 +1,7 @@
 package net.minecraftforge.gradle.dev;
 
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.tasks.*;
@@ -292,7 +293,7 @@ public class EduDevPlugin extends DevBasePlugin {
 
         ExtractS2SRangeTask extractRange = makeTask("extractRangeMcEdu", ExtractS2SRangeTask.class);
         {
-            extractRange.setLibsFromProject(delayedFile(ECLIPSE_EDU + "/build.gradle"), "compile", true);
+            extractRange.setLibsFromProject(delayedFile(ECLIPSE_EDU + "/build.gradle"), CONFIG_COMPILE, true);
             extractRange.addIn(delayedFile(ECLIPSE_EDU_SRC));
             extractRange.setRangeMap(rangeMapDirty);
         }
@@ -319,7 +320,7 @@ public class EduDevPlugin extends DevBasePlugin {
 
         extractRange = makeTask("extractRangeClean", ExtractS2SRangeTask.class);
         {
-            extractRange.setLibsFromProject(delayedFile(ECLIPSE_CLEAN + "/build.gradle"), "compile", true);
+            extractRange.setLibsFromProject(delayedFile(ECLIPSE_CLEAN + "/build.gradle"), CONFIG_COMPILE, true);
             extractRange.addIn(delayedFile(REMAPPED_CLEAN));
             extractRange.setRangeMap(rangeMapClean);
         }
@@ -419,7 +420,7 @@ public class EduDevPlugin extends DevBasePlugin {
 
         final DelayedJar uni = makeTask("packageUniversal", DelayedJar.class);
         {
-            uni.setClassifier(delayedString("B{BUILD_NUM}").call());
+            ArchiveTaskHelper.setClassifier(uni, delayedString("B{BUILD_NUM}").call());
             uni.getInputs().file(delayedFile(EXTRA_JSON_REL));
             uni.getOutputs().upToDateWhen(Constants.CALL_FALSE);
             uni.from(delayedZipTree(BINPATCH_TMP));
@@ -466,7 +467,7 @@ public class EduDevPlugin extends DevBasePlugin {
 //                }
 //            });
 
-            uni.setDestinationDir(delayedFile("{BUILD_DIR}/distributions").call());
+            ArchiveTaskHelper.setDestinationDir(uni, delayedFile("{BUILD_DIR}/distributions").call());
             //uni.dependsOn("genBinPatches", "createChangelog", "createVersionPropertiesFML", "generateVersionJson");
             uni.dependsOn("genBinPatches", "createVersionPropertiesFML");
         }
