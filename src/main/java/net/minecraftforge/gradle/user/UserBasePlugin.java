@@ -1087,28 +1087,28 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         JavaExec exec = (JavaExec) project.getTasks().getByName("runClient");
         {
-            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME_CLASSPATH));
             exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("runServer");
         {
-            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME_CLASSPATH));
             exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("debugClient");
         {
-            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME_CLASSPATH));
             exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }
 
         exec = (JavaExec) project.getTasks().getByName("debugServer");
         {
-            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME));
+            exec.classpath(project.getConfigurations().getByName(CONFIG_RUNTIME_CLASSPATH));
             exec.classpath(ArchiveTaskHelper.getArchivePath(jarTask));
             exec.dependsOn(jarTask);
         }

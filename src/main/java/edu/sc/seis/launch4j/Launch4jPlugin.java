@@ -108,7 +108,7 @@ public class Launch4jPlugin implements Plugin<Project> {
         Jar jar = (Jar) project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
 
         distSpec.from(jar);
-        distSpec.from(project.getConfigurations().getByName(UserConstants.CONFIG_RUNTIME));
+        distSpec.from(project.getConfigurations().getByName(UserConstants.CONFIG_RUNTIME_CLASSPATH));
 
         return distSpec;
     }

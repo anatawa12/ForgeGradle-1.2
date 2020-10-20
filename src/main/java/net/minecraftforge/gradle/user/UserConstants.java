@@ -15,6 +15,7 @@ public final class UserConstants {
 
     // build configurations. same as in DevConstants
     public static final String CONFIG_RUNTIME = "runtimeOnly";
+    public static final String CONFIG_RUNTIME_CLASSPATH = "runtimeClasspath";
     public static final String CONFIG_COMPILE = "implementation";
 
     static final String FORGE_JAVADOC_URL = Constants.FORGE_MAVEN + "/net/minecraftforge/forge/{API_VERSION}/forge-{API_VERSION}-javadoc.zip";
