@@ -13,30 +13,6 @@ This project is a fork of [ForgeGradle branch 'FG_1.2'](https://github.com/Minec
 
 [Documentation found here](http://forgegradle.readthedocs.org/)
 
-## How to use this ForgeGradle instead of official ForgeGradle
+## How to replace ForgeGradle 1.2. with anatawa12's fork
 
-- add jcenter() if not added in repositories in buildscript block.
-- replace "net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT" with "com.anatawa12.forge:ForgeGradle:1.2-1.0.+"
-
-if you aren't add any libraries for buildscript, you may able to use buildscript block shown below:
-
-```groovy
-buildscript {
-    repositories {
-        jcenter()
-        maven { 
-            name = "forge"
-            url = "http://files.minecraftforge.net/maven"
-        }
-        maven {
-            name = "sonatype"
-            url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
-    }
-    dependencies {
-        classpath("com.anatawa12.forge:ForgeGradle:1.2-1.0.+") {
-            changing = true
-        }
-    }
-}
-```
+See [How to replace ForgeGradle 1.2. with anatawa12's fork in example project](https://github.com/anatawa12/ForgeGradle-example#how-to-replace-forgegradle-12-with-anatawa12s-fork)
