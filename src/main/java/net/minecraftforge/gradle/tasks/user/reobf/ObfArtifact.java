@@ -3,6 +3,7 @@ package net.minecraftforge.gradle.tasks.user.reobf;
 import COM.rl.NameProvider;
 import COM.rl.obf.RetroGuardImpl;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -20,7 +21,7 @@ import net.minecraftforge.gradle.extrastuff.ReobfExceptor;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.artifacts.publish.AbstractPublishArtifact;
+import org.gradle.api.tasks.TaskDependency;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
 import java.io.File;
@@ -39,7 +40,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-public class ObfArtifact extends AbstractPublishArtifact {
+public class ObfArtifact implements PublishArtifact {
     Object toObfArtifact;
 
     private String name;
@@ -56,6 +57,8 @@ public class ObfArtifact extends AbstractPublishArtifact {
     private final ReobfTask caller;
 
     final ArtifactSpec spec;
+
+    private final ImmutableTaskDependency taskDependency;
 
     /**
      * Creates an obfuscated artifact for the given public artifact.
@@ -116,10 +119,18 @@ public class ObfArtifact extends AbstractPublishArtifact {
      * @param task       The task(s) that will reobfuscate this jar.
      */
     public ObfArtifact(Closure<Object> toObf, ArtifactSpec outputSpec, ReobfTask task) {
-        super(task);
+        this.taskDependency = new ImmutableTaskDependency(ImmutableSet.of(task));
         this.caller = task;
         toObfGenerator = toObf;
         this.spec = outputSpec;
+    }
+
+    public TaskDependency getBuildDependencies() {
+        return this.taskDependency;
+    }
+
+    public String toString() {
+        return this.getClass().getSimpleName() + " " + this.getName() + ":" + this.getType() + ":" + this.getExtension() + ":" + this.getClassifier();
     }
 
     /**
