@@ -17,7 +17,6 @@ import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedThingy;
 import net.minecraftforge.gradle.extrastuff.ReobfExceptor;
-import net.minecraftforge.gradle.tasks.dev.ObfuscateTask;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.file.FileCollection;
@@ -28,6 +27,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -366,7 +367,7 @@ public class ObfArtifact extends AbstractPublishArtifact {
         JointProvider inheritanceProviders = new JointProvider();
         inheritanceProviders.add(new JarProvider(inputJar));
         if (classpath != null)
-            inheritanceProviders.add(new ClassLoaderProvider(new URLClassLoader(ObfuscateTask.toUrls(classpath))));
+            inheritanceProviders.add(new ClassLoaderProvider(new URLClassLoader(toUrls(classpath))));
         mapping.setFallbackInheritanceProvider(inheritanceProviders);
 
         // remap jar
@@ -449,7 +450,7 @@ public class ObfArtifact extends AbstractPublishArtifact {
         @SuppressWarnings("unused")
         ClassLoader loader = BasePlugin.class.getClassLoader(); // dunno.. maybe this will load the classes??
         if (classpath != null) {
-            loader = new URLClassLoader(ObfuscateTask.toUrls(classpath), BasePlugin.class.getClassLoader());
+            loader = new URLClassLoader(toUrls(classpath), BasePlugin.class.getClassLoader());
         }
 
         // the name provider
@@ -516,5 +517,14 @@ public class ObfArtifact extends AbstractPublishArtifact {
         };
 
         Files.write(Joiner.on(Constants.NEWLINE).join(lines), script, Charset.defaultCharset());
+    }
+
+    public static URL[] toUrls(FileCollection collection) throws MalformedURLException {
+        ArrayList<URL> urls = new ArrayList<URL>();
+
+        for (File file : collection.getFiles())
+            urls.add(file.toURI().toURL());
+
+        return urls.toArray(new URL[urls.size()]);
     }
 }
