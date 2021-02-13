@@ -113,20 +113,24 @@ public class ArchiveTaskHelper {
         }
 
         private void init(String oldGetName, String oldSetName, String newName) {
+            boolean isBefore = GradleVersionUtils.isBefore("5.1");
             try {
                 forOldGetMethod = AbstractArchiveTask.class.getMethod(oldGetName);
             } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+                if (isBefore)
+                    throw new RuntimeException(e);
             }
             try {
                 forOldSetMethod = AbstractArchiveTask.class.getMethod(oldSetName, String.class);
             } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+                if (isBefore)
+                    throw new RuntimeException(e);
             }
             try {
                 forNewMethod = AbstractArchiveTask.class.getMethod(newName);
             } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+                if (!isBefore) // if after
+                    throw new RuntimeException(e);
             }
         }
     }
