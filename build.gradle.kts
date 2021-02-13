@@ -1,183 +1,186 @@
 plugins {
-    id "com.jfrog.bintray" version "1.8.4"
+    id("com.jfrog.bintray") version "1.8.4"
+    java
+    idea
+    eclipse
+    `maven-publish`
 }
 
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: 'eclipse'
-apply plugin: 'maven-publish'
-
-group = 'com.anatawa12.forge'
+group = "com.anatawa12.forge"
 
 if (project.hasProperty("push_release")) {
-    version = '1.2-1.0.3'
+    version = "1.2-1.0.3"
 } else {
-    version = '1.2-1.0.4-SNAPSHOT'
+    version = "1.2-1.0.4-SNAPSHOT"
 }
 
-archivesBaseName = 'ForgeGradle'
-targetCompatibility = '1.6'
-sourceCompatibility = '1.6'
+base {
+    archivesBaseName = "ForgeGradle"
+}
+java {
+    targetCompatibility = JavaVersion.VERSION_1_6
+    sourceCompatibility = JavaVersion.VERSION_1_6
+}
 
 repositories {
     mavenLocal()
-    maven {
+    maven("http://files.minecraftforge.net/maven") {
         name = "forge"
-        url = "http://files.minecraftforge.net/maven"
     }
-    maven {
+    maven("https://repo.eclipse.org/content/groups/eclipse/") {
         // because Srg2Source needs an eclipse dependency.
         name = "eclipse"
-        url = "https://repo.eclipse.org/content/groups/eclipse/"
     }
-    maven {
+    maven("https://oss.sonatype.org/content/repositories/snapshots/") {
         // because SpecialSource doesnt have a full release
         name = "sonatype"
-        url = "https://oss.sonatype.org/content/repositories/snapshots/"
     }
     mavenCentral()
-    maven {
+    maven("https://libraries.minecraft.net/") {
         name = "mojang"
-        url = "https://libraries.minecraft.net/"
     }
 }
 
-jar {
+val jar by tasks.getting(Jar::class) {
     manifest {
-        attributes 'version': project.version, 'javaCompliance': project.targetCompatibility
-        attributes 'group': project.group
-        attributes 'Implementation-Version': project.version + getGitHash()
+        attributes(mapOf(
+            "version" to project.version,
+            "javaCompliance" to project.java.targetCompatibility,
+            "group" to project.group,
+            "Implementation-Version" to "${project.version}${getGitHash()}"
+        ))
     }
 }
 
-configurations {
-    deployerJars
-    compileOnly
-}
+val deployerJars by configurations.creating
 
 dependencies {
-    compile gradleApi()
+    compile(gradleApi())
 
     // moved to the beginning to be the overrider
-    compile 'org.ow2.asm:asm-debug-all:5.0.3'
-    compile 'com.google.guava:guava:18.0'
+    compile("org.ow2.asm:asm-debug-all:5.0.3")
+    compile("com.google.guava:guava:18.0")
 
-    compile 'net.sf.opencsv:opencsv:2.3' // reading CSVs.. also used by SpecialSource
-    compile 'com.cloudbees:diff4j:1.1' // for difing and patching
-    compile 'com.github.abrarsyed.jastyle:jAstyle:1.2' // formatting
-    compile 'net.sf.trove4j:trove4j:2.1.0' // because its awesome.
+    compile("net.sf.opencsv:opencsv:2.3") // reading CSVs.. also used by SpecialSource
+    compile("com.cloudbees:diff4j:1.1") // for difing and patching
+    compile("com.github.abrarsyed.jastyle:jAstyle:1.2") // formatting
+    compile("net.sf.trove4j:trove4j:2.1.0") // because its awesome.
 
-    compile 'com.github.jponge:lzma-java:1.3' // replaces the LZMA binary
-    compile 'com.nothome:javaxdelta:2.0.1' // GDIFF implementation for BinPatches
-    compile 'com.google.code.gson:gson:2.2.4' // Used instead of Argo for buuilding changelog.
-    compile 'com.github.tony19:named-regexp:0.2.3' // 1.7 Named regexp features
+    compile("com.github.jponge:lzma-java:1.3") // replaces the LZMA binary
+    compile("com.nothome:javaxdelta:2.0.1") // GDIFF implementation for BinPatches
+    compile("com.google.code.gson:gson:2.2.4") // Used instead of Argo for buuilding changelog.
+    compile("com.github.tony19:named-regexp:0.2.3") // 1.7 Named regexp features
 
-    compile 'net.md-5:SpecialSource:1.7.3' // deobf and reobs
+    compile("net.md-5:SpecialSource:1.7.3") // deobf and reobs
 
     // because curse
-    compile 'org.apache.httpcomponents:httpclient:4.3.3'
-    compile 'org.apache.httpcomponents:httpmime:4.3.3'
+    compile("org.apache.httpcomponents:httpclient:4.3.3")
+    compile("org.apache.httpcomponents:httpmime:4.3.3")
 
     // mcp stuff
-    compile 'de.oceanlabs.mcp:RetroGuard:3.6.6'
-    compile 'de.oceanlabs.mcp:mcinjector:3.2-SNAPSHOT'
-    compile 'net.minecraftforge.srg2source:Srg2Source:3.2-SNAPSHOT'
+    compile("de.oceanlabs.mcp:RetroGuard:3.6.6")
+    compile("de.oceanlabs.mcp:mcinjector:3.2-SNAPSHOT")
+    compile("net.minecraftforge.srg2source:Srg2Source:3.2-SNAPSHOT")
 
     // stupid maven
-    deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
+    deployerJars("org.apache.maven.wagon:wagon-ssh:2.2")
 
     //Stuff used in the GradleStart classes
-    compileOnly 'com.mojang:authlib:1.5.16'
-    compileOnly "net.minecraft:launchwrapper:1.11"
+    compileOnly("com.mojang:authlib:1.5.16")
+    compileOnly("net.minecraft:launchwrapper:1.11")
 
-    testCompile 'junit:junit:4.+'
+    testCompile("junit:junit:4.+")
 }
 
-compileJava {
-    options.deprecation = true
+val compileJava by tasks.getting(JavaCompile::class) {
+    options.isDeprecation = true
     //options.compilerArgs += ["-Werror", "-Xlint:unchecked"]
 }
 
-javadoc {
+val javadoc by tasks.getting(Javadoc::class) {
     classpath += configurations.compileOnly
 
     // linked javadoc urls.. why not...
-    options.addStringOption 'link', 'https://gradle.org/docs/current/javadoc/'
-    options.addStringOption 'link', 'http://docs.guava-libraries.googlecode.com/git-history/v18.0/javadoc'
-    options.addStringOption 'link', 'http://asm.ow2.org/asm50/javadoc/user/'
+
+    val options = options as StandardJavadocDocletOptions
+    options.links("https://gradle.org/docs/current/javadoc/")
+    options.links("http://docs.guava-libraries.googlecode.com/git-history/v18.0/javadoc")
+    options.links("http://asm.ow2.org/asm50/javadoc/user/")
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    from javadoc
+val javadocJar by tasks.creating(Jar::class) {
+    dependsOn(javadoc)
+    from(javadoc)
     classifier = "javadoc"
 }
 
-task sourcesJar(type: Jar, dependsOn: javadoc) {
-    from sourceSets.main.allSource
+val sourcesJar by tasks.creating(Jar::class) {
+    dependsOn(javadoc)
+    from(sourceSets["main"].allSource)
     classifier = "sources"
 }
 
 artifacts {
-    archives jar
-    archives javadocJar
+    archives(jar)
+    archives(javadocJar)
 }
 
-test {
+val test by tasks.getting(Test::class) {
     if (project.hasProperty("filesmaven")) // disable this test when on the forge jenkins
     {
-        exclude "**/ExtensionMcpMappingTest*"
-        exclude "**/ExtensionForgeVersionTest*"
+        exclude("**/ExtensionMcpMappingTest*")
+        exclude("**/ExtensionForgeVersionTest*")
     }
 }
 
 publishing {
     publications {
-        bintray(MavenPublication) {
-            from components.java
-            artifact sourcesJar
-            artifact javadocJar
+        val bintray by this.creating(MavenPublication::class) {
+            from(components["java"])
+            artifact(sourcesJar)
+            artifact(javadocJar)
 
             pom {
-                name = project.archivesBaseName
-                description = 'Gradle plugin for Forge'
-                url = 'https://github.com/anatawa12/ForgeGradle-1.2'
+                name.set(project.base.archivesBaseName)
+                description.set("Gradle plugin for Forge")
+                url.set("https://github.com/anatawa12/ForgeGradle-1.2")
 
                 scm {
-                    url = 'https://github.com/anatawa12/ForgeGradle-1.2'
-                    connection = 'scm:git:git://github.com/anatawa12/ForgeGradle-1.2.git'
-                    developerConnection = 'scm:git:git@github.com:anatawa12/ForgeGradle-1.2.git'
+                    url.set("https://github.com/anatawa12/ForgeGradle-1.2")
+                    connection.set("scm:git:git://github.com/anatawa12/ForgeGradle-1.2.git")
+                    developerConnection.set("scm:git:git@github.com:anatawa12/ForgeGradle-1.2.git")
                 }
 
                 issueManagement {
-                    system = 'github'
-                    url = 'https://github.com/anatawa12/ForgeGradle-1.2/issues'
+                    system.set("github")
+                    url.set("https://github.com/anatawa12/ForgeGradle-1.2/issues")
                 }
 
                 licenses {
                     license {
-                        name = 'Lesser GNU Public License, Version 2.1'
-                        url = 'https://www.gnu.org/licenses/lgpl-2.1.html'
-                        distribution = 'repo'
+                        name.set("Lesser GNU Public License, Version 2.1")
+                        url.set("https://www.gnu.org/licenses/lgpl-2.1.html")
+                        distribution.set("repo")
                     }
                 }
 
                 developers {
                     developer {
-                        id = 'AbrarSyed'
-                        name = 'Abrar Syed'
-                        roles = ['developer']
+                        id.set("AbrarSyed")
+                        name.set("Abrar Syed")
+                        roles.set(setOf("developer"))
                     }
 
                     developer {
-                        id = 'LexManos'
-                        name = 'Lex Manos'
-                        roles = ['developer']
+                        id.set("LexManos")
+                        name.set("Lex Manos")
+                        roles.set(setOf("developer"))
                     }
 
                     developer {
-                        id = 'anatawa12'
-                        name = 'anatawa12'
-                        roles = ['developer']
+                        id.set("anatawa12")
+                        name.set("anatawa12")
+                        roles.set(setOf("developer"))
                     }
                 }
             }
@@ -186,42 +189,42 @@ publishing {
     repositories {
         maven {
             // change URLs to point to your repos, e.g. http://my.org/repo
-            def releasesRepoUrl = "$buildDir/repos/releases"
-            def snapshotsRepoUrl = "$buildDir/repos/snapshots"
-            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            val releasesRepoUrl = "$buildDir/repos/releases"
+            val snapshotsRepoUrl = "$buildDir/repos/snapshots"
+            url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
         }
     }
 }
 
 if (project.hasProperty("push_release")) {
     bintray {
-        user = project.hasProperty("BINTRAY_USER") ? BINTRAY_USER : ""
-        key = project.hasProperty("BINTRAY_KEY") ? BINTRAY_KEY : ""
-        publications = ["bintray"]
+        user = project.findProperty("BINTRAY_USER")?.toString() ?: ""
+        key = project.findProperty("BINTRAY_KEY")?.toString() ?: ""
+        setPublications("bintray")
 
-        pkg {
+        pkg(closureOf<com.jfrog.bintray.gradle.BintrayExtension.PackageConfig> {
             repo = "maven"
-            name = group + "." + project.name
-            licenses = ["LGPL-2.1"]
+            name = "$group.${project.name}"
+            setLicenses("LGPL-2.1")
             websiteUrl = "https://github.com/anatawa12/ForgeGradle-1.2/"
             issueTrackerUrl = "https://github.com/anatawa12/ForgeGradle-1.2/issues"
             vcsUrl = "https://github.com/anatawa12/ForgeGradle-1.2.git"
             publicDownloadNumbers = true
-            version {
-                name = project.version
-            }
-        }
+            version.name = "${project.version}"
+        })
     }
 }
 
-bintrayUpload.dependsOn assemble
+val bintrayUpload by tasks.getting
+val assemble by tasks.getting
+bintrayUpload.dependsOn(assemble)
 
 // write out version so its convenient for doc deployment
-file('build').mkdirs()
-file('build/version.txt').text = version;
+file("build").mkdirs()
+file("build/version.txt").writeText("$version")
 
-def getGitHash() {
-    def process = 'git rev-parse --short HEAD'.execute()
+fun getGitHash(): String {
+    val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD").start()
     process.waitFor()
-    return '-' + (process.exitValue() ? 'unknown' : process.text.trim())
+    return "-" + (if (process.exitValue() != 0) "unknown" else process.inputStream.reader().use { it.readText() }.trim())
 }
