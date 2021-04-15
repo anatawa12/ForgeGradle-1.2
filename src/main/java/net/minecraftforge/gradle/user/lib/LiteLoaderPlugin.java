@@ -3,6 +3,7 @@ package net.minecraftforge.gradle.user.lib;
 import com.google.common.base.Throwables;
 import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.GradleConfigurationException;
+import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.json.JsonFactory;
 import net.minecraftforge.gradle.json.LiteLoaderJson;
@@ -130,7 +131,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
                     try {
                         readJsonDep(task.getFile());
                     } catch (IOException e) {
-                        Throwables.propagate(e);
+                        ThrowableUtils.propagate(e);
                     }
                 }
 
@@ -145,7 +146,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
                     try {
                         readJsonDep(json.call());
                     } catch (IOException e) {
-                        Throwables.propagate(e);
+                        ThrowableUtils.propagate(e);
                     }
                 }
             }

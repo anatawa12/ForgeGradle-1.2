@@ -8,6 +8,7 @@ import com.google.common.io.ByteStreams;
 import com.nothome.delta.GDiffPatcher;
 import lzma.sdk.lzma.Decoder;
 import lzma.streams.LzmaInputStream;
+import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedFileTree;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
@@ -126,7 +127,7 @@ public class ApplyBinPatchesTask extends CachedTask {
                             entries.add(name);
                         }
                     } catch (IOException e) {
-                        Throwables.propagateIfPossible(e);
+                        Throwables.throwIfUnchecked(e);
                     }
                 }
 
@@ -155,7 +156,7 @@ public class ApplyBinPatchesTask extends CachedTask {
             Pack200.newUnpacker().unpack(binpatchesDecompressed, jos);
             jis = new JarInputStream(new ByteArrayInputStream(jarBytes.toByteArray()));
         } catch (Exception e) {
-            throw Throwables.propagate(e);
+            throw ThrowableUtils.propagate(e);
         }
 
         log("Reading Patches:");

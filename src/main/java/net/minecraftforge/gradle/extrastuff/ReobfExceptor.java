@@ -41,7 +41,7 @@ public class ReobfExceptor {
             outSrg.delete();
 
         // rewrite it.
-        String fixed = Files.readLines(inSrg, Charset.defaultCharset(), new SrgLineProcessor(clsMap, access));
+        String fixed = Files.asCharSource(inSrg, Charset.defaultCharset()).readLines(new SrgLineProcessor(clsMap, access));
         Files.write(fixed.getBytes(), outSrg);
     }
 
@@ -74,7 +74,7 @@ public class ReobfExceptor {
         for (File f : csvs) {
             if (f == null) continue;
 
-            Files.readLines(f, Charset.defaultCharset(), new LineProcessor<Object>() {
+            Files.asCharSource(f, Charset.defaultCharset()).readLines(new LineProcessor<Object>() {
                 @Override
                 public boolean processLine(String line) throws IOException {
                     String[] s = line.split(",");
@@ -132,7 +132,7 @@ public class ReobfExceptor {
     }
 
     private Map<String, String> createClassMap(Map<String, String> markerMap, final List<String> interfaces) throws IOException {
-        Map<String, String> excMap = Files.readLines(excConfig, Charset.defaultCharset(), new LineProcessor<Map<String, String>>() {
+        Map<String, String> excMap = Files.asCharSource(excConfig, Charset.defaultCharset()).readLines(new LineProcessor<Map<String, String>>() {
             Map<String, String> tmp = Maps.newHashMap();
 
             @Override

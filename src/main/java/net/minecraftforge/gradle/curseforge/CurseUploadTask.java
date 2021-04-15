@@ -185,7 +185,7 @@ public class CurseUploadTask extends DefaultTask {
 
         String etag;
         if (etagFile.exists()) {
-            etag = Files.toString(etagFile, Charsets.UTF_8);
+            etag = Files.asCharSource(etagFile, Charsets.UTF_8).read();
         } else {
             etag = "";
         }
@@ -206,7 +206,7 @@ public class CurseUploadTask extends DefaultTask {
 
         if (statusCode == 304) // cached
         {
-            out = Files.toString(cache, Charsets.UTF_8);
+            out = Files.asCharSource(cache, Charsets.UTF_8).read();
         } else if (statusCode == 200) {
             InputStream stream = response.getEntity().getContent();
             byte[] data = ByteStreams.toByteArray(stream);
@@ -216,7 +216,7 @@ public class CurseUploadTask extends DefaultTask {
 
             Header etagHeader = response.getFirstHeader("ETag");
             if (etagHeader != null) {
-                Files.write(etagHeader.getValue(), etagFile, Charsets.UTF_8);
+                Files.asCharSink(etagFile, Charsets.UTF_8).write(etagHeader.getValue());
             }
         } else if (response.getEntity().getContentType().getValue().contains("json")) {
             InputStreamReader stream = new InputStreamReader(response.getEntity().getContent());

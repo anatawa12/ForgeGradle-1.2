@@ -163,7 +163,7 @@ public class DecompileTask extends CachedTask {
     }
 
     private void applySingleMcpPatch(File patchFile) throws Throwable {
-        ContextualPatch patch = ContextualPatch.create(Files.toString(patchFile, Charset.defaultCharset()), new ContextProvider(sourceMap));
+        ContextualPatch patch = ContextualPatch.create(Files.asCharSource(patchFile, Charset.defaultCharset()).read(), new ContextProvider(sourceMap));
         printPatchErrors(patch.patch(false));
     }
 
@@ -221,7 +221,7 @@ public class DecompileTask extends CachedTask {
     private ContextualPatch findPatch(Collection<File> files) throws Throwable {
         ContextualPatch patch = null;
         for (File f : files) {
-            patch = ContextualPatch.create(Files.toString(f, Charset.defaultCharset()), new ContextProvider(sourceMap));
+            patch = ContextualPatch.create(Files.asCharSource(f, Charset.defaultCharset()).read(), new ContextProvider(sourceMap));
             List<PatchReport> errors = patch.patch(true);
 
             boolean success = true;

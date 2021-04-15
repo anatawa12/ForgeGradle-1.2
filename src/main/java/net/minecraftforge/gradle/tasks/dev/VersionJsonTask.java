@@ -27,7 +27,7 @@ public class VersionJsonTask extends DefaultTask {
     @TaskAction
     public void doTask() throws IOException {
 
-        String data = Files.toString(getInput(), Charsets.UTF_8);
+        String data = Files.asCharSource(getInput(), Charsets.UTF_8).read();
         Map<String, Object> json = (Map<String, Object>) new Gson().fromJson(data, Map.class);
         json = (Map<String, Object>) json.get("versionInfo");
         data = GSON_FORMATTER.toJson(json);

@@ -513,7 +513,7 @@ public class ObfArtifact implements PublishArtifact {
         configOut.add("fullmap = 0");
         configOut.add("startindex = 0");
 
-        Files.write(Joiner.on(Constants.NEWLINE).join(configOut), config, Charset.defaultCharset());
+        Files.asCharSink(config, Charset.defaultCharset()).write(Joiner.on(Constants.NEWLINE).join(configOut));
 
         // the script.
         String[] lines = new String[]{
@@ -527,7 +527,7 @@ public class ObfArtifact implements PublishArtifact {
                 ".attribute Deprecated"
         };
 
-        Files.write(Joiner.on(Constants.NEWLINE).join(lines), script, Charset.defaultCharset());
+        Files.asCharSink(script, Charset.defaultCharset()).write(Joiner.on(Constants.NEWLINE).join(lines));
     }
 
     public static URL[] toUrls(FileCollection collection) throws MalformedURLException {

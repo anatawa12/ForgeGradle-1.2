@@ -8,6 +8,7 @@ import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.GradleVersionUtils;
+import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -389,7 +390,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                 version = JsonFactory.loadVersion(file, delayedFile(Constants.JSONS_DIR).call());
             } catch (Exception e) {
                 log.error("" + file + " could not be parsed");
-                Throwables.propagate(e);
+                ThrowableUtils.propagate(e);
             }
         }
 

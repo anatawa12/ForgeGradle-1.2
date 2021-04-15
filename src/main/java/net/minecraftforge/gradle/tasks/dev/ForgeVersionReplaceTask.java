@@ -17,7 +17,7 @@ public class ForgeVersionReplaceTask extends DefaultTask {
 
     @TaskAction
     public void doTask() throws IOException {
-        String data = Files.readLines(getOutputFile(), Charset.defaultCharset(), new LineProcessor<String>() {
+        String data = Files.asCharSource(getOutputFile(), Charset.defaultCharset()).readLines(new LineProcessor<String>() {
             StringBuilder buf = new StringBuilder();
 
             @Override
@@ -35,7 +35,7 @@ public class ForgeVersionReplaceTask extends DefaultTask {
                 return buf.toString();
             }
         });
-        Files.write(data, getOutputFile(), Charset.defaultCharset());
+        Files.asCharSink(getOutputFile(), Charset.defaultCharset()).write(data);
     }
 
     public void setOutputFile(DelayedFile output) {

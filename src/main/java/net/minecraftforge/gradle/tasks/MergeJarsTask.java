@@ -1,6 +1,7 @@
 package net.minecraftforge.gradle.tasks;
 
 import com.google.common.base.Function;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -511,7 +512,7 @@ public class MergeJarsTask extends CachedTask {
 
         @Override
         public String toString() {
-            return Objects.toStringHelper(this).add("name", node.name).add("desc", node.desc).add("server", server).add("client", client).toString();
+            return MoreObjects.toStringHelper(this).add("name", node.name).add("desc", node.desc).add("server", server).add("client", client).toString();
         }
     }
 

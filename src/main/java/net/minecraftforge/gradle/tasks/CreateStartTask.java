@@ -7,6 +7,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
@@ -54,7 +55,7 @@ public class CreateStartTask extends CachedTask {
             // write file
             File outFile = new File(resourceDir, resEntry.getKey());
             outFile.getParentFile().mkdirs();
-            Files.write(out, outFile, Charsets.UTF_8);
+            Files.asCharSink(outFile, Charsets.UTF_8).write(out);
         }
 
         // now compile, if im compiling.
@@ -90,7 +91,7 @@ public class CreateStartTask extends CachedTask {
         try {
             return Resources.toString(resource, Charsets.UTF_8);
         } catch (Exception e) {
-            Throwables.propagate(e);
+            ThrowableUtils.propagate(e);
             return "";
         }
     }
