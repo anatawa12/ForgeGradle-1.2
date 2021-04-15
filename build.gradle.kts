@@ -131,6 +131,7 @@ publishing {
     publications {
         val bintray by this.creating(MavenPublication::class) {
             from(components["java"])
+            artifactId = base.archivesBaseName
 
             pom {
                 name.set(project.base.archivesBaseName)
