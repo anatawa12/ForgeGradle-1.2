@@ -59,7 +59,8 @@ dependencies {
     compile(gradleApi())
 
     // moved to the beginning to be the overrider
-    compile("org.ow2.asm:asm-debug-all:5.0.3")
+    compile("org.ow2.asm:asm:9.1")
+    compile("org.ow2.asm:asm-tree:9.1")
     compile("com.google.guava:guava:18.0")
 
     compile("net.sf.opencsv:opencsv:2.3") // reading CSVs.. also used by SpecialSource
