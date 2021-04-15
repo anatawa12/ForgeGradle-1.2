@@ -59,7 +59,8 @@ dependencies {
     compile(gradleApi())
 
     // moved to the beginning to be the overrider
-    compile("org.ow2.asm:asm-debug-all:5.0.3")
+    compile("org.ow2.asm:asm:9.1")
+    compile("org.ow2.asm:asm-tree:9.1")
     compile("com.google.guava:guava:18.0")
 
     compile("net.sf.opencsv:opencsv:2.3") // reading CSVs.. also used by SpecialSource
@@ -72,7 +73,7 @@ dependencies {
     compile("com.google.code.gson:gson:2.2.4") // Used instead of Argo for buuilding changelog.
     compile("com.github.tony19:named-regexp:0.2.3") // 1.7 Named regexp features
 
-    compile("net.md-5:SpecialSource:1.7.3") // deobf and reobs
+    compile("net.md-5:SpecialSource:1.9.0") // deobf and reobs
 
     // because curse
     compile("org.apache.httpcomponents:httpclient:4.5.13")
