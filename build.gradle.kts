@@ -76,7 +76,7 @@ dependencies {
 
     // because curse
     compile("org.apache.httpcomponents:httpclient:4.3.3")
-    compile("org.apache.httpcomponents:httpmime:4.3.3")
+    compile("org.apache.httpcomponents:httpmime:4.5.13")
 
     // mcp stuff
     compile("de.oceanlabs.mcp:RetroGuard:3.6.6")
