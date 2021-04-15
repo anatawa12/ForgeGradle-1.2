@@ -13,6 +13,7 @@ import groovy.lang.Closure;
 import net.minecraftforge.gradle.FileLogListenner;
 import net.minecraftforge.gradle.GradleConfigurationException;
 import net.minecraftforge.gradle.GradleVersionUtils;
+import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.delayed.DelayedBase.IDelayedResolver;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedFileTree;
@@ -124,7 +125,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                             parseAssetIndex();
                     }
                 } catch (Exception e) {
-                    Throwables.propagate(e);
+                    ThrowableUtils.propagate(e);
                 }
 
                 finalCall();
@@ -264,7 +265,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                     try {
                         parseAssetIndex();
                     } catch (Exception e) {
-                        Throwables.propagate(e);
+                        ThrowableUtils.propagate(e);
                     }
                 }
             });
@@ -299,7 +300,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                         }
                         Files.write(buf.toString().getBytes(Charsets.UTF_8), json);
                     } catch (Throwable t) {
-                        Throwables.propagate(t);
+                        ThrowableUtils.propagate(t);
                     }
                     return true;
                 }
@@ -454,15 +455,15 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     protected String getWithEtag(String strUrl, File cache, File etagFile) {
         try {
             if (project.getGradle().getStartParameter().isOffline()) // dont even try the internet
-                return Files.toString(cache, Charsets.UTF_8);
+                return Files.asCharSource(cache, Charsets.UTF_8).read();
 
             // dude, its been less than 5 minutes since the last time..
             if (cache.exists() && cache.lastModified() + 300000 >= System.currentTimeMillis())
-                return Files.toString(cache, Charsets.UTF_8);
+                return Files.asCharSource(cache, Charsets.UTF_8).read();
 
             String etag;
             if (etagFile.exists()) {
-                etag = Files.toString(etagFile, Charsets.UTF_8);
+                etag = Files.asCharSource(etagFile, Charsets.UTF_8).read();
             } else {
                 etagFile.getParentFile().mkdirs();
                 etag = "";
@@ -484,7 +485,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             if (con.getResponseCode() == 304) {
                 // the existing file is good
                 Files.touch(cache); // touch it to update last-modified time
-                out = Files.toString(cache, Charsets.UTF_8);
+                out = Files.asCharSource(cache, Charsets.UTF_8).read();
             } else if (con.getResponseCode() == 200) {
                 InputStream stream = con.getInputStream();
                 byte[] data = ByteStreams.toByteArray(stream);
@@ -496,7 +497,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                 if (Strings.isNullOrEmpty(etag)) {
                     Files.touch(etagFile);
                 } else {
-                    Files.write(etag, etagFile, Charsets.UTF_8);
+                    Files.asCharSink(etagFile, Charsets.UTF_8).write(etag);
                 }
 
                 out = new String(data);
@@ -513,9 +514,9 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
 
         if (cache.exists()) {
             try {
-                return Files.toString(cache, Charsets.UTF_8);
+                return Files.asCharSource(cache, Charsets.UTF_8).read();
             } catch (IOException e) {
-                Throwables.propagate(e);
+                ThrowableUtils.propagate(e);
             }
         }
 

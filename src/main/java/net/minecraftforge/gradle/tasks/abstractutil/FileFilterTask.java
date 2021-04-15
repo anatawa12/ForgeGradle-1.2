@@ -30,7 +30,7 @@ public class FileFilterTask extends DefaultTask {
 
     @TaskAction
     public void doTask() throws IOException {
-        String input = Files.toString(getInputFile(), Charsets.UTF_8);
+        String input = Files.asCharSource(getInputFile(), Charsets.UTF_8).read();
 
         for (MapEntry e : replacements) {
             input = input.replaceAll(toString(e.getKey()), toString(e.getValue()));

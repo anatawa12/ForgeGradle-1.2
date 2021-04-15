@@ -93,13 +93,13 @@ public class SourceCopyTask extends DefaultTask {
 
                 if (isIncluded(file)) {
                     getLogger().debug("PARSING FILE IN >> " + file);
-                    String text = Files.toString(file, Charsets.UTF_8);
+                    String text = Files.asCharSource(file, Charsets.UTF_8).read();
 
                     for (Entry<String, String> entry : repl.entrySet())
                         text = text.replaceAll(entry.getKey(), entry.getValue());
 
                     getLogger().debug("PARSING FILE OUT >> " + dest);
-                    Files.write(text, dest, Charsets.UTF_8);
+                    Files.asCharSink(dest, Charsets.UTF_8).write(text);
                 } else {
                     Files.copy(file, dest);
                 }

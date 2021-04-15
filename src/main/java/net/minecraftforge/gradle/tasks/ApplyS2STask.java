@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import net.minecraftforge.gradle.SequencedInputSupplier;
+import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.srg2source.rangeapplier.RangeApplier;
@@ -226,7 +227,7 @@ public class ApplyS2STask extends DefaultTask {
 
             return getProject().files(files.toArray());
         } catch (IOException e) {
-            Throwables.propagate(e);
+            ThrowableUtils.propagate(e);
         }
 
         return null;

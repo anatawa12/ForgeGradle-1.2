@@ -209,7 +209,7 @@ public class GenDevProjectsTask extends DefaultTask {
                 "tasks.eclipseClasspath.dependsOn 'eclipseProject' //Make them run in correct order"
         );
 
-        Files.write(o.toString(), file, Charset.defaultCharset());
+        Files.asCharSink(file, Charset.defaultCharset()).write(o.toString());
     }
 
     private String relative(URI base, DelayedFile src) {

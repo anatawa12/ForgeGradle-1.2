@@ -139,7 +139,7 @@ public class ProcessJarTask extends CachedTask {
         final Map<String, String> renames = Maps.newHashMap();
         for (File f : new File[]{getFieldCsv(), getMethodCsv()}) {
             if (f == null) continue;
-            Files.readLines(f, Charsets.UTF_8, new LineProcessor<String>() {
+            Files.asCharSource(f, Charsets.UTF_8).readLines(new LineProcessor<String>() {
                 @Override
                 public boolean processLine(String line) throws IOException {
                     String[] pts = line.split(",");
@@ -259,7 +259,7 @@ public class ProcessJarTask extends CachedTask {
             for (File at : ats) {
                 getLogger().info("loading AT: " + at.getCanonicalPath());
 
-                Files.readLines(at, Charset.defaultCharset(), new LineProcessor<Object>() {
+                Files.asCharSource(at, Charset.defaultCharset()).readLines(new LineProcessor<Object>() {
                     @Override
                     public boolean processLine(String line) throws IOException {
                         if (line.indexOf('#') != -1) line = line.substring(0, line.indexOf('#'));

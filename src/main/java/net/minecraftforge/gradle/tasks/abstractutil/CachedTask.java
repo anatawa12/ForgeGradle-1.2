@@ -102,7 +102,7 @@ public abstract class CachedTask extends DefaultTask {
                             return true;
                         }
 
-                        String foundMD5 = Files.toString(getHashFile(file), Charset.defaultCharset());
+                        String foundMD5 = Files.asCharSource(getHashFile(file), Charset.defaultCharset()).read();
                         String calcMD5 = getHashes(field, inputList, task);
 
                         if (!calcMD5.equals(foundMD5)) {
@@ -144,7 +144,7 @@ public abstract class CachedTask extends DefaultTask {
                     File outFile = getProject().file(annot.getValue(task));
                     if (outFile.exists()) {
                         File hashFile = getHashFile(outFile);
-                        Files.write(getHashes(annot, inputList, task), hashFile, Charset.defaultCharset());
+                        Files.asCharSink(hashFile, Charset.defaultCharset()).write(getHashes(annot, inputList, task));
                     }
                 }
                 // error? spit it and do the task.

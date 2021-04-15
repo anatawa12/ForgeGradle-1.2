@@ -5,6 +5,7 @@ import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.common.Constants;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
@@ -84,7 +85,7 @@ public class CrowdinDownloadTask extends DefaultTask {
             con.connect();
         } catch (Throwable e) {
             // just in case people dont have internet at the moment.
-            Throwables.propagate(e);
+            ThrowableUtils.propagate(e);
         }
 
         int reponse = con.getResponseCode();
