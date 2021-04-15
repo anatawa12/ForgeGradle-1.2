@@ -72,7 +72,7 @@ dependencies {
     compile("com.google.code.gson:gson:2.2.4") // Used instead of Argo for buuilding changelog.
     compile("com.github.tony19:named-regexp:0.2.3") // 1.7 Named regexp features
 
-    compile("net.md-5:SpecialSource:1.7.3") // deobf and reobs
+    compile("net.md-5:SpecialSource:1.9.0") // deobf and reobs
 
     // because curse
     compile("org.apache.httpcomponents:httpclient:4.5.13")
