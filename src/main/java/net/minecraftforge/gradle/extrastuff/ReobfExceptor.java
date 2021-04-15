@@ -6,7 +6,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
-import de.oceanlabs.mcp.mcinjector.StringUtil;
+import net.minecraftforge.gradle.StringUtils;
 import org.objectweb.asm.*;
 
 import java.io.*;
@@ -252,7 +252,7 @@ public class ReobfExceptor {
                 m.appendTail(b);
                 split[4] = b.toString();
             }
-            out.append(StringUtil.joinString(Arrays.asList(split), " ")).append('\n');
+            out.append(StringUtils.joinString(Arrays.asList(split), " ")).append('\n');
             return true;
         }
 
