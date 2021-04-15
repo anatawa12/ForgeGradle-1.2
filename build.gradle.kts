@@ -81,7 +81,7 @@ dependencies {
 
     // mcp stuff
     compile("de.oceanlabs.mcp:RetroGuard:3.6.6")
-    compile("de.oceanlabs.mcp:mcinjector:3.2-SNAPSHOT")
+    compile("de.oceanlabs.mcp:mcinjector:3.6")
     compile("net.minecraftforge:Srg2Source:4.2.7")
 
     // stupid maven
