@@ -1,2 +1,2 @@
 
-rootProject.name = "ForgeGradle"
+rootProject.name = "ForgeGradle-1.2"
