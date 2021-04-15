@@ -70,7 +70,7 @@ dependencies {
 
     compile("com.github.jponge:lzma-java:1.3") // replaces the LZMA binary
     compile("com.nothome:javaxdelta:2.0.1") // GDIFF implementation for BinPatches
-    compile("com.google.code.gson:gson:2.2.4") // Used instead of Argo for buuilding changelog.
+    compile("com.google.code.gson:gson:2.8.6") // Used instead of Argo for buuilding changelog.
     compile("com.github.tony19:named-regexp:0.2.3") // 1.7 Named regexp features
 
     compile("net.md-5:SpecialSource:1.9.0") // deobf and reobs
