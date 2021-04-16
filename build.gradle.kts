@@ -82,7 +82,7 @@ dependencies {
     // mcp stuff
     compile("de.oceanlabs.mcp:RetroGuard:3.6.6")
     compile("de.oceanlabs.mcp:mcinjector:3.6")
-    compile("net.minecraftforge:Srg2Source:4.2.7")
+    compile("net.minecraftforge:Srg2Source:7.0.11")
 
     // stupid maven
     deployerJars("org.apache.maven.wagon:wagon-ssh:3.4.3")
