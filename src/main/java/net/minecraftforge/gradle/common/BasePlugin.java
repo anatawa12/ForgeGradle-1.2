@@ -28,6 +28,7 @@ import net.minecraftforge.gradle.tasks.abstractutil.DownloadTask;
 import net.minecraftforge.gradle.tasks.abstractutil.EtagDownloadTask;
 import org.gradle.api.*;
 import org.gradle.api.artifacts.ArtifactRepositoryContainer;
+import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.FlatDirectoryArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
@@ -194,6 +195,14 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             logger.warn("Please add the maven central repository to the repositories for");
             logger.warn("buildscript before or as a replacement of jcenter.");
         }
+        if (!hasMavenMinecraftForgeBeforeFilesMinecraftForge(project.getBuildscript().getRepositories())
+                || hasMavenMinecraftForgeBeforeFilesMinecraftForge(project.getRepositories())) {
+            logger.lifecycle("");
+            logger.warn("The minecraft forge's official maven repository has been moved to");
+            logger.warn("https://maven.minecraftforge.net/. Currently redirection from previous location");
+            logger.warn("previous location to new location is alive but we don't know");
+            logger.warn("when it will stop so I especially recommend to change repository url.");
+        }
         displayBanner = false;
     }
 
@@ -214,6 +223,20 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                 if (mvnRepo.getUrl().toString().equals("https://jcenter.bintray.com/"))
                     return false;
                 if (mvnRepo.getUrl().equals(mavenCentralUrl))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasMavenMinecraftForgeBeforeFilesMinecraftForge(RepositoryHandler repositories) {
+        for (ArtifactRepository repository : repositories) {
+            if (repository instanceof MavenArtifactRepository) {
+                MavenArtifactRepository mvnRepo = (MavenArtifactRepository) repository;
+                // requires before the jcenter
+                if (mvnRepo.getUrl().toString().contains("//files.minecraftforge.net/maven"))
+                    return false;
+                if (mvnRepo.getUrl().toString().equals("https://maven.minecraftforge.net/"))
                     return true;
             }
         }
