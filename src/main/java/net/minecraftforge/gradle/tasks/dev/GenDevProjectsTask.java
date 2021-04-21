@@ -81,7 +81,7 @@ public class GenDevProjectsTask extends DefaultTask {
                 "    maven",
                 "    {",
                 "        name 'forge'",
-                "        url 'https://files.minecraftforge.net/maven'",
+                "        url 'https://maven.minecraftforge.net'",
                 "    }",
                 "    mavenCentral()",
                 "    maven",
