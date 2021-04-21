@@ -8,6 +8,7 @@ import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.GradleVersionUtils;
+import net.minecraftforge.gradle.ProjectUtils;
 import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
@@ -59,9 +60,9 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
     @Override
     public void applyPlugin() {
         this.applyExternalPlugin("java");
-        GradleVersionUtils.ifBefore("7.0", new Runnable() {
-            @Override
-            public void run() {
+        if (!ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.no-maven-plugin")
+                && GradleVersionUtils.isBefore("7.0")) {
+            {
                 GradleVersionUtils.ifAfter("6.0", new Runnable() {
                     @Override
                     public void run() {
@@ -70,12 +71,15 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                                     "will not be applied since Gradle 7.0. " +
                                     "If you're using maven plugin applied by ForgeGradle, " +
                                     "please use 'maven-publish' instead and apply it yourself.");
+                            project.getLogger().warn("To disable applying maven plugin by ForgeGradle, please set " +
+                                    "'com.anatawa12.forge.gradle.no-maven-plugin' project property as 'true' in " +
+                                    "gradle.properties.");
                         }
                     }
                 });
                 applyExternalPlugin("maven");
             }
-        });
+        }
         this.applyExternalPlugin("eclipse");
         this.applyExternalPlugin("idea");
 
