@@ -109,28 +109,4 @@ public final class StringUtils {
         }
         return (String[]) collection.toArray(new String[collection.size()]);
     }
-
-    public static String joinString(List<String> list, String delimiter) {
-        return joinString(list, delimiter, 0);
-    }
-
-    public static String joinString(List<String> list, String delimiter, int least) {
-        if (list == null) return null;
-
-        list = new ArrayList<String>(list);
-
-        while (list.size() < least) list.add("");
-
-        StringBuilder out = new StringBuilder();
-
-        Iterator<String> iter = list.iterator();
-
-        while (iter.hasNext()) {
-            out.append(iter.next());
-
-            if (iter.hasNext()) out.append(delimiter);
-        }
-
-        return out.toString();
-    }
 }
