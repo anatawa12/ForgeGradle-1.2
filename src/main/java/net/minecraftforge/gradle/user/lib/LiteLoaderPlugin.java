@@ -105,7 +105,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
         // add repo
         project.allprojects(new Action<Project>() {
             public void execute(Project proj) {
-                addMavenRepo(proj, "liteloaderRepo", "http://dl.liteloader.com/versions/");
+                addMavenRepo(proj, "liteloaderRepo", "https://dl.liteloader.com/versions/");
             }
         });
 
@@ -114,7 +114,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
         {
 
             EtagDownloadTask task = makeTask("getLiteLoaderJson", EtagDownloadTask.class);
-            task.setUrl("http://dl.liteloader.com/versions/versions.json");
+            task.setUrl("https://dl.liteloader.com/versions/versions.json");
             task.setFile(json);
             task.setDieWithError(false);
 
