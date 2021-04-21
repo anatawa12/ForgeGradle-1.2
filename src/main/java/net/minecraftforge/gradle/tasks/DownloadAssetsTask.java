@@ -10,6 +10,7 @@ import net.minecraftforge.gradle.json.version.AssetIndex;
 import net.minecraftforge.gradle.json.version.AssetIndex.AssetEntry;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.xml.sax.SAXException;
 
@@ -26,7 +27,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class DownloadAssetsTask extends DefaultTask {
     DelayedFile assetsDir;
 
-    @Input
     Closure<AssetIndex> index;
 
     @Input
@@ -129,6 +129,7 @@ public class DownloadAssetsTask extends DefaultTask {
         return false;
     }
 
+    @OutputDirectory
     public File getAssetsDir() {
         return assetsDir.call();
     }
@@ -137,6 +138,7 @@ public class DownloadAssetsTask extends DefaultTask {
         this.assetsDir = assetsDir;
     }
 
+    @Input
     public AssetIndex getIndex() {
         return index.call();
     }

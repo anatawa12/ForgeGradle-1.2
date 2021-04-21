@@ -53,7 +53,7 @@ public class GenSrgTask extends CachedTask {
 
     @Cached
     @OutputFile
-    private DelayedFile SrgToMcp;
+    private DelayedFile srgToMcp;
 
     @Cached
     @OutputFile
@@ -451,11 +451,11 @@ public class GenSrgTask extends CachedTask {
     }
 
     public File getSrgToMcp() {
-        return SrgToMcp.call();
+        return srgToMcp.call();
     }
 
     public void setSrgToMcp(DelayedFile deobfSrg) {
-        this.SrgToMcp = deobfSrg;
+        this.srgToMcp = deobfSrg;
     }
 
     public File getMcpToSrg() {

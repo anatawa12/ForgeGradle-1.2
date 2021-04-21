@@ -53,7 +53,6 @@ public class ProcessJarTask extends CachedTask {
     @InputFile
     private DelayedFile exceptorCfg;
 
-    @Optional
     @Input
     private boolean stripSynthetics = false;
 
@@ -115,8 +114,6 @@ public class ProcessJarTask extends CachedTask {
         deobfJar(getInJar(), tempObfJar, getSrg(), ats);
 
         File log = getLog();
-        if (log == null)
-            log = new File(getTemporaryDir(), "exceptor.log");
 
         // apply exceptor
         getLogger().lifecycle("Applying Exceptor...");
@@ -405,9 +402,10 @@ public class ProcessJarTask extends CachedTask {
         this.inJar = inJar;
     }
 
+    @OutputFile
     public File getLog() {
         if (log == null)
-            return null;
+            return new File(getTemporaryDir(), "exceptor.log");
         else
             return log.call();
     }
@@ -424,6 +422,7 @@ public class ProcessJarTask extends CachedTask {
         this.srg = srg;
     }
 
+    @OutputFile
     public File getOutCleanJar() {
         return outCleanJar.call();
     }
@@ -432,6 +431,7 @@ public class ProcessJarTask extends CachedTask {
         this.outCleanJar = outJar;
     }
 
+    @OutputFile
     public File getOutDirtyJar() {
         return outDirtyJar.call();
     }
@@ -440,6 +440,7 @@ public class ProcessJarTask extends CachedTask {
         this.outDirtyJar = outDirtyJar;
     }
 
+    @Input
     public boolean isClean() {
         return isClean;
     }
@@ -450,6 +451,7 @@ public class ProcessJarTask extends CachedTask {
      *
      * @return DelayedFIle that will resolve to
      */
+    @Internal // included in isClean, outCleanJar, and outDirtyJar
     public DelayedFile getDelayedOutput() {
         return isClean ? outCleanJar : outDirtyJar;
     }
