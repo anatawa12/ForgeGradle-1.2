@@ -181,6 +181,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         logger.lifecycle("   https://github.com/anatawa12/ForgeGradle-1.2  ");
         logger.lifecycle("#################################################");
         logger.lifecycle("               Powered by MCP {}               ", this.delayedString("{MCP_VERSION}"));
+        //noinspection HttpUrlsUsage
         logger.lifecycle("             http://modcoderpack.com             ");
         logger.lifecycle("         by: Searge, ProfMobius, Fesh0r,         ");
         logger.lifecycle("         R4wk, ZeuX, IngisKahn, bspkrs           ");

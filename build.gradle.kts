@@ -25,7 +25,7 @@ java {
 
 repositories {
     mavenLocal()
-    maven("http://files.minecraftforge.net/maven") {
+    maven("https://files.minecraftforge.net/maven") {
         name = "forge"
     }
     maven("https://repo.eclipse.org/content/groups/eclipse/") {
@@ -106,7 +106,9 @@ val javadoc by tasks.getting(Javadoc::class) {
 
     val options = options as StandardJavadocDocletOptions
     options.links("https://gradle.org/docs/current/javadoc/")
+    @Suppress("HttpUrlsUsage") // TODO: dead link
     options.links("http://docs.guava-libraries.googlecode.com/git-history/v18.0/javadoc")
+    @Suppress("HttpUrlsUsage") // TODO: dead link
     options.links("http://asm.ow2.org/asm50/javadoc/user/")
 }
 
