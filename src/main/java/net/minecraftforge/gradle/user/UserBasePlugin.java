@@ -56,12 +56,15 @@ import static net.minecraftforge.gradle.common.Constants.*;
 import static net.minecraftforge.gradle.user.UserConstants.*;
 
 public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin<T> {
+    boolean mavenPluginEnabled = false;
+
     @SuppressWarnings("serial")
     @Override
     public void applyPlugin() {
         this.applyExternalPlugin("java");
-        if (!ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.no-maven-plugin")
-                && GradleVersionUtils.isBefore("7.0")) {
+        mavenPluginEnabled = !ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.no-maven-plugin")
+                && GradleVersionUtils.isBefore("7.0");
+        if (mavenPluginEnabled) {
             {
                 GradleVersionUtils.ifAfter("6.0", new Runnable() {
                     @Override
@@ -654,7 +657,8 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
             task.mustRunAfter("test");
             project.getTasks().getByName("assemble").dependsOn(task);
-            project.getTasks().getByName("uploadArchives").dependsOn(task);
+            if (mavenPluginEnabled)
+                project.getTasks().getByName("uploadArchives").dependsOn(task);
         }
 
         {
