@@ -228,7 +228,9 @@ file("build").mkdirs()
 file("build/version.txt").writeText("$version")
 
 fun getGitHash(): String {
-    val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD").start()
+    val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+        .directory(file("."))
+        .start()
     process.waitFor()
     return "-" + (if (process.exitValue() != 0) "unknown" else process.inputStream.reader().use { it.readText() }.trim())
 }
