@@ -106,10 +106,8 @@ val javadoc by tasks.getting(Javadoc::class) {
 
     val options = options as StandardJavadocDocletOptions
     options.links("https://gradle.org/docs/current/javadoc/")
-    @Suppress("HttpUrlsUsage") // TODO: dead link
-    options.links("http://docs.guava-libraries.googlecode.com/git-history/v18.0/javadoc")
-    @Suppress("HttpUrlsUsage") // TODO: dead link
-    options.links("http://asm.ow2.org/asm50/javadoc/user/")
+    options.links("https://guava.dev/releases/18.0/api/docs/")
+    options.links("https://asm.ow2.io/javadoc/index.html")
 }
 
 @Suppress("UnstableApiUsage")
