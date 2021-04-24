@@ -11,6 +11,7 @@ import org.gradle.api.file.FileTree;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.util.PatternSet;
@@ -177,6 +178,13 @@ public class SourceCopyTask extends DefaultTask {
         includes.addAll(strs);
     }
 
+    public ArrayList<String> getIncludes() {
+        return includes;
+    }
+
+    // this is typo
+    @Deprecated
+    @Internal
     public ArrayList<String> getIncudes() {
         return includes;
     }

@@ -56,33 +56,33 @@ val jar by tasks.getting(Jar::class) {
 val deployerJars by configurations.creating
 
 dependencies {
-    compile(gradleApi())
+    implementation(gradleApi())
 
     // moved to the beginning to be the overrider
-    compile("org.ow2.asm:asm:9.1")
-    compile("org.ow2.asm:asm-tree:9.1")
-    compile("com.google.guava:guava:18.0")
+    implementation("org.ow2.asm:asm:9.1")
+    implementation("org.ow2.asm:asm-tree:9.1")
+    implementation("com.google.guava:guava:18.0")
 
-    compile("net.sf.opencsv:opencsv:2.3") // reading CSVs.. also used by SpecialSource
-    compile("com.cloudbees:diff4j:1.3") // for difing and patching
-    compile("com.github.abrarsyed.jastyle:jAstyle:1.2") // formatting
-    compile("net.sf.trove4j:trove4j:2.1.0") // because its awesome.
+    implementation("net.sf.opencsv:opencsv:2.3") // reading CSVs.. also used by SpecialSource
+    implementation("com.cloudbees:diff4j:1.3") // for difing and patching
+    implementation("com.github.abrarsyed.jastyle:jAstyle:1.2") // formatting
+    implementation("net.sf.trove4j:trove4j:2.1.0") // because its awesome.
 
-    compile("com.github.jponge:lzma-java:1.3") // replaces the LZMA binary
-    compile("com.nothome:javaxdelta:2.0.1") // GDIFF implementation for BinPatches
-    compile("com.google.code.gson:gson:2.8.6") // Used instead of Argo for buuilding changelog.
-    compile("com.github.tony19:named-regexp:0.2.3") // 1.7 Named regexp features
+    implementation("com.github.jponge:lzma-java:1.3") // replaces the LZMA binary
+    implementation("com.nothome:javaxdelta:2.0.1") // GDIFF implementation for BinPatches
+    implementation("com.google.code.gson:gson:2.8.6") // Used instead of Argo for buuilding changelog.
+    implementation("com.github.tony19:named-regexp:0.2.3") // 1.7 Named regexp features
 
-    compile("net.md-5:SpecialSource:1.9.0") // deobf and reobs
+    implementation("net.md-5:SpecialSource:1.9.0") // deobf and reobs
 
     // because curse
-    compile("org.apache.httpcomponents:httpclient:4.5.13")
-    compile("org.apache.httpcomponents:httpmime:4.5.13")
+    implementation("org.apache.httpcomponents:httpclient:4.5.13")
+    implementation("org.apache.httpcomponents:httpmime:4.5.13")
 
     // mcp stuff
-    compile("de.oceanlabs.mcp:RetroGuard:3.6.6")
-    compile("de.oceanlabs.mcp:mcinjector:3.2-SNAPSHOT")
-    compile("net.minecraftforge:Srg2Source:4.2.7")
+    implementation("de.oceanlabs.mcp:RetroGuard:3.6.6")
+    implementation("de.oceanlabs.mcp:mcinjector:3.2-SNAPSHOT")
+    implementation("net.minecraftforge:Srg2Source:4.2.7")
 
     // stupid maven
     deployerJars("org.apache.maven.wagon:wagon-ssh:3.4.3")
@@ -91,7 +91,7 @@ dependencies {
     compileOnly("com.mojang:authlib:1.5.16")
     compileOnly("net.minecraft:launchwrapper:1.11")
 
-    testCompile("junit:junit:4.+")
+    testImplementation("junit:junit:4.+")
 }
 
 val compileJava by tasks.getting(JavaCompile::class) {
@@ -100,8 +100,6 @@ val compileJava by tasks.getting(JavaCompile::class) {
 }
 
 val javadoc by tasks.getting(Javadoc::class) {
-    classpath += configurations.compileOnly
-
     // linked javadoc urls.. why not...
 
     val options = options as StandardJavadocDocletOptions

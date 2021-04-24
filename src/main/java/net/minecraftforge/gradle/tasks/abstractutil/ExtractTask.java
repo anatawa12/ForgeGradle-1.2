@@ -36,8 +36,6 @@ public class ExtractTask extends CachedTask {
     @Input
     private boolean includeEmptyDirs = true;
 
-    @Input
-    @Optional
     private boolean clean = false;
 
     @Cached
@@ -197,6 +195,11 @@ public class ExtractTask extends CachedTask {
     }
 
     public boolean shouldClean() {
+        return clean;
+    }
+
+    @Input
+    public boolean isClean() {
         return clean;
     }
 

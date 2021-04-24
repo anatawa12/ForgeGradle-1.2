@@ -56,12 +56,15 @@ import static net.minecraftforge.gradle.common.Constants.*;
 import static net.minecraftforge.gradle.user.UserConstants.*;
 
 public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin<T> {
+    boolean mavenPluginEnabled = false;
+
     @SuppressWarnings("serial")
     @Override
     public void applyPlugin() {
         this.applyExternalPlugin("java");
-        if (!ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.no-maven-plugin")
-                && GradleVersionUtils.isBefore("7.0")) {
+        mavenPluginEnabled = !ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.no-maven-plugin")
+                && GradleVersionUtils.isBefore("7.0");
+        if (mavenPluginEnabled) {
             {
                 GradleVersionUtils.ifAfter("6.0", new Runnable() {
                     @Override
@@ -653,8 +656,10 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             task.setMcVersion(delayedString("{MC_VERSION}"));
 
             task.mustRunAfter("test");
+            task.mustRunAfter("repackMinecraft");
             project.getTasks().getByName("assemble").dependsOn(task);
-            project.getTasks().getByName("uploadArchives").dependsOn(task);
+            if (mavenPluginEnabled)
+                project.getTasks().getByName("uploadArchives").dependsOn(task);
         }
 
         {
@@ -985,6 +990,19 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                 version = getApiVersion(getExtension());
 
             doVersionChecks(version);
+        }
+
+        // avoid implicit_dependency warning
+        {
+            Task task;
+            task = project.getTasks().findByName("compileJava");
+            if (task != null) task.mustRunAfter("repackMinecraft");
+            task = project.getTasks().findByName("compileKotlin");
+            if (task != null) task.mustRunAfter("repackMinecraft");
+            task = project.getTasks().findByName("compileGroovy");
+            if (task != null) task.mustRunAfter("repackMinecraft");
+            task = project.getTasks().findByName("compileScala");
+            if (task != null) task.mustRunAfter("repackMinecraft");
         }
 
         // ensure plugin application sequence.. groovy or scala or wtvr first, then the forge/fml/liteloader plugins

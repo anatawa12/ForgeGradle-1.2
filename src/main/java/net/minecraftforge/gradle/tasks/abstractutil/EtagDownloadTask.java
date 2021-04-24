@@ -7,6 +7,8 @@ import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.common.Constants;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
@@ -86,6 +88,7 @@ public class EtagDownloadTask extends DefaultTask {
         }
     }
 
+    @Input
     @SuppressWarnings("rawtypes")
     public URL getUrl() throws MalformedURLException {
         while (url instanceof Closure) {
@@ -99,6 +102,7 @@ public class EtagDownloadTask extends DefaultTask {
         this.url = url;
     }
 
+    @OutputFile
     public File getFile() {
         return getProject().file(file);
     }
@@ -107,6 +111,7 @@ public class EtagDownloadTask extends DefaultTask {
         this.file = file;
     }
 
+    @Input
     public boolean isDieWithError() {
         return dieWithError;
     }

@@ -25,7 +25,6 @@ public class CreateStartTask extends CachedTask {
     @Input
     HashMap<String, String> resources = Maps.newHashMap();
 
-    @Input
     HashMap<String, Object> replacements = Maps.newHashMap();
 
     @Cached
@@ -136,5 +135,18 @@ public class CreateStartTask extends CachedTask {
 
     public void setStartOut(DelayedFile outputFile) {
         this.startOut = outputFile;
+    }
+
+    public HashMap<String, String> getResources() {
+        return resources;
+    }
+
+    @Input
+    public HashMap<String, String> getReplacements() throws IOException {
+        HashMap<String, String> result = new HashMap<String, String>();
+        for (Entry<String, Object> stringObjectEntry : replacements.entrySet()) {
+            result.put(stringObjectEntry.getKey(), resolveString(stringObjectEntry.getValue()));
+        }
+        return result;
     }
 }

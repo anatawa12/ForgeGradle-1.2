@@ -23,8 +23,10 @@ import net.minecraftforge.gradle.patching.ContextualPatch.PatchStatus;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.LogLevel;
+import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.process.JavaExecSpec;
@@ -300,6 +302,7 @@ public class DecompileTask extends CachedTask {
         zout.close();
     }
 
+    @Internal
     public HashMap<String, String> getSourceMap() {
         return sourceMap;
     }
@@ -349,6 +352,7 @@ public class DecompileTask extends CachedTask {
             return getProject().files(patches);
     }
 
+    @InputDirectory
     public File getPatch() {
         return patch.call();
     }
@@ -357,6 +361,7 @@ public class DecompileTask extends CachedTask {
         this.patch = patch;
     }
 
+    @Internal
     public HashMap<String, byte[]> getResourceMap() {
         return resourceMap;
     }
