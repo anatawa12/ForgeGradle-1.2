@@ -1,6 +1,8 @@
 ForgeGradle
 ===========
 
+Join Chat [![Discord](https://img.shields.io/discord/834256470580396043)](https://discord.gg/yzEdnuJMXv)
+
 Minecraft mod development framework used by Forge and FML for the gradle build system
 
 this repository is only for ForgeGradle 1.2, ForgeGradle for minecraft 1.7.2, 1.7.10, and 1.8.
