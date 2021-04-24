@@ -66,7 +66,7 @@ dependencies {
     implementation("net.sf.opencsv:opencsv:2.3") // reading CSVs.. also used by SpecialSource
     implementation("com.cloudbees:diff4j:1.3") // for difing and patching
     implementation("com.github.abrarsyed.jastyle:jAstyle:1.2") // formatting
-    implementation("net.sf.trove4j:trove4j:2.1.0") // because its awesome.
+    implementation("net.sf.trove4j:trove4j:3.0.3") // because its awesome.
 
     implementation("com.github.jponge:lzma-java:1.3") // replaces the LZMA binary
     implementation("com.nothome:javaxdelta:2.0.1") // GDIFF implementation for BinPatches
