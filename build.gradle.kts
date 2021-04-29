@@ -124,6 +124,9 @@ val test by tasks.getting(Test::class) {
         exclude("**/ExtensionMcpMappingTest*")
         exclude("**/ExtensionForgeVersionTest*")
     }
+    reports {
+        junitXml.isEnabled = true
+    }
 }
 
 publishing {
