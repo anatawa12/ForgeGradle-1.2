@@ -10,9 +10,9 @@ plugins {
 group = "com.anatawa12.forge"
 
 if (project.hasProperty("push_release")) {
-    version = "1.2-1.0.5"
+    version = "1.2-1.0.6"
 } else {
-    version = "1.2-1.0.6-SNAPSHOT"
+    version = "1.2-1.0.7-SNAPSHOT"
 }
 
 base {
