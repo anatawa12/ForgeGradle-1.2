@@ -9,10 +9,4 @@ allprojects {
     repositories {
         mavenLocal()
     }
-
-    tasks.all {
-        if (it instanceof org.gradle.plugins.signing.Sign) {
-            it.enabled = false
-        }
-    }
 }

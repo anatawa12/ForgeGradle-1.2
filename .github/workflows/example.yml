@@ -13,7 +13,7 @@ jobs:
         java-version: 1.8
 
     - name: Build with Gradle
-      run: ./gradlew publishToMavenLocal
+      run: ./gradlew --init-script=./scripts/disableSign.init.gradle publishToMavenLocal
 
     - name: copy useLocal.init.gradle
       run: cp ./scripts/useLocal.init.gradle ~/.m2/repository/
@@ -42,7 +42,7 @@ jobs:
         run: cp ~/.m2/repository/useLocal.init.gradle .
 
       - name: Run Build Task
-        run: ./gradlew build
+        run: ./gradlew --init-script=useLocal.init.gradle build
 
   example-setupDecompWorkspace:
     needs: build
@@ -63,10 +63,10 @@ jobs:
         run: cp ~/.m2/repository/useLocal.init.gradle .
 
       - name: Run SetupDecompWorkspace Task
-        run: ./gradlew setupDecompWorkspace
+        run: ./gradlew --init-script=useLocal.init.gradle setupDecompWorkspace
 
       - name: Run Build Task
-        run: ./gradlew build
+        run: ./gradlew --init-script=useLocal.init.gradle build
 
   example-setupDevWorkspace:
     needs: build
@@ -87,10 +87,10 @@ jobs:
         run: cp ~/.m2/repository/useLocal.init.gradle .
 
       - name: Run SetupDecompWorkspace Task
-        run: ./gradlew setupDevWorkspace
+        run: ./gradlew --init-script=useLocal.init.gradle --init-script= setupDevWorkspace
 
       - name: Run Build Task
-        run: ./gradlew build
+        run: ./gradlew --init-script=useLocal.init.gradle --init-script= build
 
   example-setupCiWorkspace:
     needs: build
@@ -111,7 +111,7 @@ jobs:
         run: cp ~/.m2/repository/useLocal.init.gradle .
 
       - name: Run SetupDecompWorkspace Task
-        run: ./gradlew setupCiWorkspace
+        run: ./gradlew --init-script=useLocal.init.gradle setupCiWorkspace
 
       - name: Run Build Task
-        run: ./gradlew build
+        run: ./gradlew --init-script=useLocal.init.gradle build
