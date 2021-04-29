@@ -1,0 +1,9 @@
+println("using disableSign.init.gradle")
+
+allprojects {
+    tasks.all {
+        if (it instanceof org.gradle.plugins.signing.Sign) {
+            it.enabled = false
+        }
+    }
+}

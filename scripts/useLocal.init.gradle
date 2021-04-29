@@ -1,0 +1,12 @@
+println("using useLocal.init.gradle")
+
+allprojects {
+    buildscript {
+        repositories {
+            mavenLocal()
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
