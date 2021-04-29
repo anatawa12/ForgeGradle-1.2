@@ -114,10 +114,12 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         {
             project.getConfigurations().create(SeparatedLauncher.configurationName);
             String version = getVersionString();
-            // remove git sha
-            version = version.substring(0, version.lastIndexOf('-'));
-            project.getDependencies().add(SeparatedLauncher.configurationName,
-                    "com.anatawa12.forge:separated:" + version);
+            if (version.indexOf('-') >= 0) {
+                // remove git sha
+                version = version.substring(0, version.lastIndexOf('-'));
+                project.getDependencies().add(SeparatedLauncher.configurationName,
+                        "com.anatawa12.forge:separated:" + version);
+            }
         }
 
         // after eval
