@@ -87,10 +87,10 @@ jobs:
         run: cp ~/.m2/repository/useLocal.init.gradle .
 
       - name: Run SetupDecompWorkspace Task
-        run: ./gradlew --init-script=useLocal.init.gradle --init-script= setupDevWorkspace
+        run: ./gradlew --init-script=useLocal.init.gradle setupDevWorkspace
 
       - name: Run Build Task
-        run: ./gradlew --init-script=useLocal.init.gradle --init-script= build
+        run: ./gradlew --init-script=useLocal.init.gradle build
 
   example-setupCiWorkspace:
     needs: build
