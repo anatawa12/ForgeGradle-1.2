@@ -1,0 +1,117 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+
+    - name: Build with Gradle
+      run: ./gradlew publishToMavenLocal
+
+    - name: copy useLocal.init.gradle
+      run: cp ./scripts/useLocal.init.gradle ~/.m2/repository/
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: maven-repository
+        path: ~/.m2/repository
+
+  example-no-setup:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: anatawa12/ForgeGradle-example
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - uses: actions/download-artifact@v2
+        with:
+          name: maven-repository
+          path: ~/.m2/repository
+      - name: copy useLocal.init.gradle
+        run: cp ~/.m2/repository/useLocal.init.gradle .
+
+      - name: Run Build Task
+        run: ./gradlew build
+
+  example-setupDecompWorkspace:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: anatawa12/ForgeGradle-example
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - uses: actions/download-artifact@v2
+        with:
+          name: maven-repository
+          path: ~/.m2/repository
+      - name: copy useLocal.init.gradle
+        run: cp ~/.m2/repository/useLocal.init.gradle .
+
+      - name: Run SetupDecompWorkspace Task
+        run: ./gradlew setupDecompWorkspace
+
+      - name: Run Build Task
+        run: ./gradlew build
+
+  example-setupDevWorkspace:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: anatawa12/ForgeGradle-example
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - uses: actions/download-artifact@v2
+        with:
+          name: maven-repository
+          path: ~/.m2/repository
+      - name: copy useLocal.init.gradle
+        run: cp ~/.m2/repository/useLocal.init.gradle .
+
+      - name: Run SetupDecompWorkspace Task
+        run: ./gradlew setupDevWorkspace
+
+      - name: Run Build Task
+        run: ./gradlew build
+
+  example-setupCiWorkspace:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: anatawa12/ForgeGradle-example
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - uses: actions/download-artifact@v2
+        with:
+          name: maven-repository
+          path: ~/.m2/repository
+      - name: copy useLocal.init.gradle
+        run: cp ~/.m2/repository/useLocal.init.gradle .
+
+      - name: Run SetupDecompWorkspace Task
+        run: ./gradlew setupCiWorkspace
+
+      - name: Run Build Task
+        run: ./gradlew build
