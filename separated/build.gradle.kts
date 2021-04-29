@@ -4,6 +4,8 @@ plugins {
     signing
 }
 
+group = project(":").group
+version = project(":").version
 
 @Suppress("UnstableApiUsage")
 java {
@@ -17,6 +19,7 @@ repositories {
 
 dependencies {
     implementation("org.ow2.asm:asm-debug-all:5.0.3")
+    implementation("com.google.guava:guava:18.0")
 }
 
 publishing {

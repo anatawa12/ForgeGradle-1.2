@@ -1,5 +1,6 @@
 package net.minecraftforge.gradle.common;
 
+import com.anatawa12.forge.gradle.separated.SeparatedLauncher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -108,6 +109,16 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         // do Mcp Snapshots Stuff
         setVersionInfoJson();
         project.getConfigurations().create(Constants.CONFIG_MCP_DATA);
+
+        // Separated module
+        {
+            project.getConfigurations().create(SeparatedLauncher.configurationName);
+            String version = getVersionString();
+            // remove git sha
+            version = version.substring(0, version.lastIndexOf('-'));
+            project.getDependencies().add(SeparatedLauncher.configurationName,
+                    "com.anatawa12.forge:separated:" + version);
+        }
 
         // after eval
         project.afterEvaluate(new Action<Project>() {
