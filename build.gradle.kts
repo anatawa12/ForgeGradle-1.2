@@ -1,5 +1,4 @@
 plugins {
-    id("com.jfrog.bintray") version "1.8.4"
     java
     idea
     eclipse
@@ -206,29 +205,6 @@ publishing {
 signing {
     sign(publishing.publications["bintray"])
 }
-
-if (project.hasProperty("push_release")) {
-    bintray {
-        user = project.findProperty("BINTRAY_USER")?.toString() ?: ""
-        key = project.findProperty("BINTRAY_KEY")?.toString() ?: ""
-        setPublications("bintray")
-
-        pkg(closureOf<com.jfrog.bintray.gradle.BintrayExtension.PackageConfig> {
-            repo = "maven"
-            name = "$group.${project.name}"
-            setLicenses("LGPL-2.1")
-            websiteUrl = "https://github.com/anatawa12/ForgeGradle-1.2/"
-            issueTrackerUrl = "https://github.com/anatawa12/ForgeGradle-1.2/issues"
-            vcsUrl = "https://github.com/anatawa12/ForgeGradle-1.2.git"
-            publicDownloadNumbers = true
-            version.name = "${project.version}"
-        })
-    }
-}
-
-val bintrayUpload by tasks.getting
-val assemble by tasks.getting
-bintrayUpload.dependsOn(assemble)
 
 // write out version so its convenient for doc deployment
 file("build").mkdirs()
