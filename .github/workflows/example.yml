@@ -59,7 +59,7 @@ jobs:
           rm empty
 
       - name: Run Setup Task
-        if: ${{ matrix.setting != "none" }}
+        if: ${{ matrix.setting != 'none' }}
         run: ./gradlew --init-script=useLocal.init.gradle ${{ matrix.setting }}
 
       - name: Run Build Task
