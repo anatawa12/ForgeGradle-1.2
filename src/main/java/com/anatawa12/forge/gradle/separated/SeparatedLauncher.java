@@ -36,7 +36,7 @@ public class SeparatedLauncher {
             @Override
             public void execute(JavaExecSpec javaExecSpec) {
                 javaExecSpec.classpath(project.getConfigurations().getByName(configurationName));
-                javaExecSpec.getMainClass().set("com.anatawa12.forge.gradle.separated." + name + ".Main");
+                javaExecSpec.setMainClassName("com.anatawa12.forge.gradle.separated." + name + ".Main");
                 javaExecSpec.args(args);
                 javaExecSpec.setIgnoreExitValue(false);
             }
