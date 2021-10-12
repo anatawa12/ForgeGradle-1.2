@@ -64,7 +64,15 @@ jobs:
 
       - name: Run Setup Task
         if: ${{ matrix.setting != 'none' }}
-        run: ./gradlew --init-script=useLocal.init.gradle ${{ matrix.setting }}
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 5
+          max_attempts: 5
+          command: ./gradlew --init-script=useLocal.init.gradle ${{ matrix.setting }}
 
       - name: Run Build Task
-        run: ./gradlew --init-script=useLocal.init.gradle build
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 5
+          max_attempts: 5
+          command: ./gradlew --init-script=useLocal.init.gradle build
