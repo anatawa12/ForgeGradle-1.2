@@ -142,6 +142,11 @@ public class BaseExtension {
         // mappings or mc version are null
         if (!mappingsSet || "null".equals(version) || Strings.isNullOrEmpty(version) || customVersion != null)
             return;
+        // mcp version mapping is not available
+        if (mcpJson == null) {
+            project.getLogger().warn("we couldn't check mcp version json.");
+            return;
+        }
 
         // check if it exists
         Map<String, int[]> versionMap = mcpJson.get(version);
