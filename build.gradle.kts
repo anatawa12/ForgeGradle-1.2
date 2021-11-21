@@ -2,6 +2,7 @@ plugins {
     java
     idea
     eclipse
+    `java-gradle-plugin`
     `maven-publish`
     signing
 }
@@ -200,6 +201,32 @@ publishing {
 
 signing {
     sign(publishing.publications["bintray"])
+}
+
+gradlePlugin {
+    isAutomatedPublishing = false
+    plugins {
+        create("curseforge") {
+            id = "curseforge"
+            implementationClass = "net.minecraftforge.gradle.curseforge.CursePlugin"
+        }
+        create("fml") {
+            id = "fml"
+            implementationClass = "net.minecraftforge.gradle.user.patch.FmlUserPlugin"
+        }
+        create("forge") {
+            id = "forge"
+            implementationClass = "net.minecraftforge.gradle.user.patch.ForgeUserPlugin"
+        }
+        create("launch4j") {
+            id = "launch4j"
+            implementationClass = "edu.sc.seis.launch4j.Launch4jPlugin"
+        }
+        create("liteloader") {
+            id = "liteloader"
+            implementationClass = "net.minecraftforge.gradle.user.lib.LiteLoaderPlugin"
+        }
+    }
 }
 
 // write out version so its convenient for doc deployment
