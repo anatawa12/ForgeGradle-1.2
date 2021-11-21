@@ -9,7 +9,7 @@ plugins {
 
 group = "com.anatawa12.forge"
 
-version = property("version")!!
+version = "1.2-${property("version")!!}"
 
 base {
     archivesBaseName = "ForgeGradle"
