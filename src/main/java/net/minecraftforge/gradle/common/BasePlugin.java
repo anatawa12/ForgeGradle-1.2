@@ -107,7 +107,6 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         });
 
         // do Mcp Snapshots Stuff
-        setVersionInfoJson();
         project.getConfigurations().create(Constants.CONFIG_MCP_DATA);
 
         // Separated module
@@ -167,15 +166,6 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     protected abstract DelayedFile getDevJson();
 
     private static boolean displayBanner = true;
-
-    private void setVersionInfoJson() {
-        File jsonCache = Constants.cacheFile(project, "caches", "minecraft", "McpMappings.json");
-        File etagFile = new File(jsonCache.getAbsolutePath() + ".etag");
-
-        getExtension().mcpJson = JsonFactory.GSON.fromJson(
-                getWithEtag(Constants.MCP_JSON_URL, jsonCache, etagFile),
-                new TypeToken<Map<String, Map<String, int[]>>>() {}.getType());
-    }
 
     public void afterEvaluate() {
         if (getExtension().mappingsSet()) {
