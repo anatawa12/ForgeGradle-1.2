@@ -14,6 +14,7 @@ import groovy.lang.Closure;
 import net.minecraftforge.gradle.FileLogListenner;
 import net.minecraftforge.gradle.GradleConfigurationException;
 import net.minecraftforge.gradle.GradleVersionUtils;
+import net.minecraftforge.gradle.ProjectUtils;
 import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.delayed.DelayedBase.IDelayedResolver;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -210,6 +211,8 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     }
 
     private boolean hasMavenCentralBeforeJCenterInBuildScriptRepositories() {
+        if (ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.no-maven-central-warn"))
+            return true;
         java.net.URI mavenCentralUrl;
         try {
             mavenCentralUrl = project.uri(ArtifactRepositoryContainer.class
@@ -233,6 +236,8 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     }
 
     private boolean hasMavenMinecraftForgeBeforeFilesMinecraftForge(RepositoryHandler repositories) {
+        if (ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.no-forge-maven-warn"))
+            return true;
         for (ArtifactRepository repository : repositories) {
             if (repository instanceof MavenArtifactRepository) {
                 MavenArtifactRepository mvnRepo = (MavenArtifactRepository) repository;
