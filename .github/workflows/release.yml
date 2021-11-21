@@ -1,0 +1,75 @@
+name: Publisher
+"on":
+  - workflow_dispatch
+jobs:
+  build:
+    environment: deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: "${{ secrets.ACTIONS_PAT }}"
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - uses: anatawa12/something-releaser@v2
+
+      - run: set-git-user anatawa12-bot
+
+      - name: Update Version
+        id: up
+        run: |
+          # set current version
+          VERSION="$(get-version)"
+          if ! [[ "$VERSION" = *-SNAPSHOT ]]; then
+            echo 'VERSION IS NOT SNAPSHOT' >&2
+            exit 1
+          fi
+          VERSION="$(version-unsnapshot "$VERSION")"
+          set-version "$VERSION"
+          # create changelog
+          generate-changelog -v "$VERSION"
+          # create changelog for this release
+          RELEASE_NOTE="$(mktemp)"
+          echo "::set-output name=RELEASE_NOTE::$RELEASE_NOTE"
+          generate-changelog -v "$VERSION" --unreleased-only >> "$RELEASE_NOTE"
+          # commit & tag
+          git add .
+          git commit -m "v$VERSION"
+          git tag "v$VERSION"
+
+      - name: Prepare Build
+        run: |
+          prepare-gradle-signing "$GPG_PRIVATE_KEY" "$GPG_PRIVATE_PASS"
+          prepare-gradle-maven "https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
+            --user "$SONATYPE_USER" \
+            --pass "$SONATYPE_PASS"
+        env:
+          GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
+          GPG_PRIVATE_PASS: "${{ secrets.GPG_PRIVATE_PASS }}"
+          SONATYPE_USER: "${{ secrets.SONATYPE_USER }}"
+          SONATYPE_PASS: "${{ secrets.SONATYPE_PASS }}"
+
+      - run: |
+          ./gradlew publish
+          git push && git push --tags
+
+      - name: Create New Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$(get-version)" \
+            --target "v$(get-version)" \
+            --notes-file "${{ steps.up.outputs.RELEASE_NOTE }}"
+
+      - name: Update To Next Version
+        run: |
+          VERSION="$(get-version)"
+          VERSION="$(version-next "$VERSION")"
+          set-version "$(version-snapshot "$VERSION")"
+          git add .
+          git commit -m "prepare for next version: $VERSION"
+          git push

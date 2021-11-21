@@ -1,7 +1,6 @@
 plugins {
     java
     `maven-publish`
-    signing
 }
 
 group = project(":").group
@@ -74,28 +73,4 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
-            // change URLs to point to your repos, e.g. http://my.org/repo
-            val releasesRepoUrl = "$buildDir/repos/releases"
-            val snapshotsRepoUrl = "$buildDir/repos/snapshots"
-            url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
-        }
-
-        maven {
-            name = "mavenCentral"
-            url = if (version.toString().endsWith("SNAPSHOT"))
-                uri("https://oss.sonatype.org/content/repositories/snapshots")
-            else uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-
-            credentials {
-                username = project.findProperty("com.anatawa12.sonatype.username")?.toString() ?: ""
-                password = project.findProperty("com.anatawa12.sonatype.passeord")?.toString() ?: ""
-            }
-        }
-    }
-}
-
-signing {
-    sign(publishing.publications["bintray"])
 }
