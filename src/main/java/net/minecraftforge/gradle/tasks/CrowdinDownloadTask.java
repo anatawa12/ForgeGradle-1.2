@@ -11,6 +11,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFiles;
 import org.gradle.api.tasks.TaskAction;
 
@@ -172,6 +173,7 @@ public class CrowdinDownloadTask extends DefaultTask {
             return getProject().files(getOutput());
     }
 
+    @Internal
     public File getOutput() {
         return getProject().file(output);
     }

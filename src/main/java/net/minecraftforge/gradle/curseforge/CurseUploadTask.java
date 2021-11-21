@@ -22,6 +22,11 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
@@ -248,6 +253,7 @@ public class CurseUploadTask extends DefaultTask {
         return obj.toString();
     }
 
+    @Input
     public String getProjectId() {
         return (String) (projectId = resolveString(projectId));
     }
@@ -256,6 +262,7 @@ public class CurseUploadTask extends DefaultTask {
         this.projectId = projectId;
     }
 
+    @Input
     public String getApiKey() {
         return apiKey;
     }
@@ -264,6 +271,7 @@ public class CurseUploadTask extends DefaultTask {
         this.apiKey = api_key;
     }
 
+    @Input
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Set<String> getGameVersions() {
         Set tVersions = new TreeSet<String>();
@@ -283,6 +291,7 @@ public class CurseUploadTask extends DefaultTask {
         Collections.addAll(this.gameVersions, gameVersions);
     }
 
+    @Input
     public String getReleaseType() {
         if (releaseType == null) {
             return null;
@@ -295,6 +304,7 @@ public class CurseUploadTask extends DefaultTask {
         this.releaseType = releaseType;
     }
 
+    @Input
     public String getChangelog() {
         if (changelog == null) {
             return "";
@@ -306,6 +316,7 @@ public class CurseUploadTask extends DefaultTask {
         this.changelog = changeLog;
     }
 
+    @InputFile
     public Object getArtifact() {
         return artifact;
     }
@@ -318,6 +329,8 @@ public class CurseUploadTask extends DefaultTask {
         this.artifact = artifact;
     }
 
+    @Optional
+    @Input
     public String getDisplayName() {
         if (displayName == null) {
             return null;
@@ -329,6 +342,7 @@ public class CurseUploadTask extends DefaultTask {
         this.displayName = displayName;
     }
 
+    @InputFiles
     public Collection<Object> getAdditionalArtifacts() {
         return additionalArtifacts;
     }
@@ -347,10 +361,12 @@ public class CurseUploadTask extends DefaultTask {
         }
     }
 
+    @Internal
     public int getFileId() {
         return fileIds.get(0);
     }
 
+    @Internal
     public int[] getFileIds() {
         return fileIds.toNativeArray();
     }
