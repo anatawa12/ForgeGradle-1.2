@@ -5,6 +5,8 @@ import groovy.lang.Closure;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputDirectory;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.process.ExecSpec;
 
@@ -87,6 +89,7 @@ public class SubmoduleChangelogTask extends DefaultTask {
         return out.toString().trim().split("\n");
     }
 
+    @InputDirectory
     public File getSubmodule() {
         return submodule.call();
     }
@@ -111,6 +114,7 @@ public class SubmoduleChangelogTask extends DefaultTask {
         this.prefix = prefix;
     }
 
+    @OutputFile
     public File getOutputFile() {
         return outputFile;
     }

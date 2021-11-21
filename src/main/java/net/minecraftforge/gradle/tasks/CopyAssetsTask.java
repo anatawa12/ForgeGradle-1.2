@@ -64,6 +64,7 @@ public class CopyAssetsTask extends DefaultTask {
         this.assetIndex = assetIndex;
     }
 
+    @OutputDirectory
     public File getAssetsDir() {
         return assetsDir.call();
     }

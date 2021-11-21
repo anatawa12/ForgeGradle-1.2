@@ -10,7 +10,10 @@ import net.minecraftforge.gradle.json.version.Library;
 import net.minecraftforge.gradle.json.version.Version;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputDirectory;
+import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
@@ -25,7 +28,6 @@ import static net.minecraftforge.gradle.common.Constants.NEWLINE;
 public class GenDevProjectsTask extends DefaultTask {
     protected DelayedFile targetDir;
 
-    @Input
     protected DelayedFile json;
 
     @Input
@@ -240,6 +242,7 @@ public class GenDevProjectsTask extends DefaultTask {
         };
     }
 
+    @OutputDirectory
     public File getTargetDir() {
         return targetDir.call();
     }
@@ -268,8 +271,14 @@ public class GenDevProjectsTask extends DefaultTask {
         return this;
     }
 
+    @InputFile
     public File getJson() {
         return json.call();
+    }
+
+    @InputDirectory
+    public File getJsonParentDir() {
+        return getJson().getParentFile();
     }
 
     public void setJson(DelayedFile json) {

@@ -5,6 +5,10 @@ import com.google.common.io.LineProcessor;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedString;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
@@ -42,6 +46,7 @@ public class ForgeVersionReplaceTask extends DefaultTask {
         this.outputFile = output;
     }
 
+    @InputFile
     public File getOutputFile() {
         return outputFile.call();
     }
@@ -50,6 +55,7 @@ public class ForgeVersionReplaceTask extends DefaultTask {
         this.replacement = value;
     }
 
+    @Input
     public String getReplacement() {
         return replacement.call();
     }

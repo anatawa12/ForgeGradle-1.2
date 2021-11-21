@@ -26,11 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 public class ApplyS2STask extends DefaultTask {
-    @InputFiles
     private final List<Object> srg = new LinkedList<Object>();
 
-    @Optional
-    @InputFiles
     private final List<Object> exc = new LinkedList<Object>();
 
     @InputFile
@@ -238,6 +235,7 @@ public class ApplyS2STask extends DefaultTask {
         return getProject().files(in);
     }
 
+    @InputFiles
     public List<File> getIn() {
         List<File> files = new LinkedList<File>();
         for (DelayedFile f : in)
@@ -258,6 +256,7 @@ public class ApplyS2STask extends DefaultTask {
             return getProject().files(outFile);
     }
 
+    @Internal
     public File getOut() {
         return out.call();
     }
@@ -266,6 +265,7 @@ public class ApplyS2STask extends DefaultTask {
         this.out = out;
     }
 
+    @InputFiles
     public FileCollection getSrgs() {
         return getProject().files(srg);
     }
@@ -282,6 +282,7 @@ public class ApplyS2STask extends DefaultTask {
         this.srg.add(srg);
     }
 
+    @InputFiles
     public FileCollection getExcs() {
         return getProject().files(exc);
     }
