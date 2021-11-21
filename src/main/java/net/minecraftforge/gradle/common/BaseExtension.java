@@ -4,6 +4,9 @@ import com.google.common.base.Strings;
 import net.minecraftforge.gradle.GradleConfigurationException;
 import org.gradle.api.Project;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Map;
@@ -16,7 +19,6 @@ public class BaseExtension {
     protected String runDir = "run";
     private LinkedList<String> srgExtra = new LinkedList<String>();
 
-    protected Map<String, Map<String, int[]>> mcpJson;
     protected boolean mappingsSet = false;
     protected String mappingsChannel = null;
     protected int mappingsVersion = -1;
@@ -142,49 +144,39 @@ public class BaseExtension {
         // mappings or mc version are null
         if (!mappingsSet || "null".equals(version) || Strings.isNullOrEmpty(version) || customVersion != null)
             return;
-        // mcp version mapping is not available
-        if (mcpJson == null) {
-            project.getLogger().warn("we couldn't check mcp version json.");
-            return;
-        }
-
-        // check if it exists
-        Map<String, int[]> versionMap = mcpJson.get(version);
-        if (versionMap == null)
-            throw new GradleConfigurationException("There are no mappings for MC " + version);
 
         String channel = getMappingsChannelNoSubtype();
-        int[] channelList = versionMap.get(channel);
-        if (channelList == null)
-            throw new GradleConfigurationException("There is no such MCP mapping channel named " + channel);
-
-        // all is well with the world
-        if (searchArray(channelList, mappingsVersion))
-            return;
-
-        // if it gets here.. it wasnt found. Now we try to actually find it..
-        for (Entry<String, Map<String, int[]>> mcEntry : mcpJson.entrySet()) {
-            for (Entry<String, int[]> channelEntry : mcEntry.getValue().entrySet()) {
-                // found it!
-                if (searchArray(channelEntry.getValue(), mappingsVersion)) {
-                    boolean rightMc = mcEntry.getKey().equals(version);
-                    boolean rightChannel = channelEntry.getKey().equals(channel);
-
-                    // right channel, but wrong mc
-                    if (rightChannel && !rightMc) {
-                        throw new GradleConfigurationException("This mapping '" + getMappings() + "' exists only for MC " + mcEntry.getKey() + "!");
-                    }
-
-                    // right MC , but wrong channel
-                    else if (rightMc && !rightChannel) {
-                        throw new GradleConfigurationException("This mapping '" + getMappings() + "' doesnt exist! perhaps you meant '" + channelEntry.getKey() + "_" + mappingsVersion + "'");
-                    }
-                }
-            }
+        if (!checkMappingsVersion(channel, version, mappingsVersion, "HEAD")
+                && !checkMappingsVersion(channel, version, mappingsVersion, "GET")) {
+            throw new GradleConfigurationException(
+                    "There is no such MCP version " + mappingsVersion + " in channel " + channel + " for " + version + "."
+            );
         }
+    }
 
-        // wasnt found
-        throw new GradleConfigurationException("The specified mapping '" + getMappings() + "' does not exist!");
+    private boolean checkMappingsVersion(String channel, String version, int mappingsVersion, String method) {
+        HttpURLConnection con = null;
+        try {
+            URL url = new URL(
+                    "https://maven.minecraftforge.net/de/oceanlabs/mcp" +
+                            "/mcp_" + channel +
+                            "/" + mappingsVersion + "-" + version +
+                            "/mcp_" + channel + "-" + mappingsVersion + "-" + version + ".zip"
+            );
+
+            con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod(method);
+            con.setInstanceFollowRedirects(true);
+            con.setRequestProperty("User-Agent", Constants.USER_AGENT);
+
+            con.connect();
+
+            return con.getResponseCode() == 200;
+        } catch (IOException e) {
+            return false;
+        } finally {
+            if (con != null) con.disconnect();
+        }
     }
 
     private static boolean searchArray(int[] array, int key) {
