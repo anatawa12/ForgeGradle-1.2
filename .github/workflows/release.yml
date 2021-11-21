@@ -35,7 +35,7 @@ jobs:
           # create changelog for this release
           RELEASE_NOTE="$(mktemp)"
           echo "::set-output name=RELEASE_NOTE::$RELEASE_NOTE"
-          generate-changelog -v "$VERSION" --unreleased-only >> "$RELEASE_NOTE"
+          generate-changelog -v "$VERSION" --unreleased-only --stdout >> "$RELEASE_NOTE"
           # commit & tag
           git add .
           git commit -m "v$VERSION"
@@ -62,7 +62,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v$(get-version)" \
-            --target "v$(get-version)" \
             --notes-file "${{ steps.up.outputs.RELEASE_NOTE }}"
 
       - name: Update To Next Version
