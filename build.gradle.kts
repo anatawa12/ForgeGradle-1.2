@@ -77,7 +77,7 @@ dependencies {
     // mcp stuff
     implementation("de.oceanlabs.mcp:RetroGuard:3.6.6")
     implementation("de.oceanlabs.mcp:mcinjector:3.2-SNAPSHOT")
-    implementation("net.minecraftforge:Srg2Source:4.2.7")
+    implementation("net.minecraftforge:Srg2Source:8.0.3")
 
     // stupid maven
     deployerJars("org.apache.maven.wagon:wagon-ssh:3.4.3")
