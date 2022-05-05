@@ -80,7 +80,7 @@ dependencies {
     implementation("net.minecraftforge:Srg2Source:4.2.7")
 
     // stupid maven
-    deployerJars("org.apache.maven.wagon:wagon-ssh:3.4.3")
+    deployerJars("org.apache.maven.wagon:wagon-ssh:3.5.1")
 
     //Stuff used in the GradleStart classes
     compileOnly("com.mojang:authlib:1.5.16")
