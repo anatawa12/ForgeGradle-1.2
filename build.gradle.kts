@@ -66,7 +66,7 @@ dependencies {
     implementation("com.github.jponge:lzma-java:1.3") // replaces the LZMA binary
     implementation("com.nothome:javaxdelta:2.0.1") // GDIFF implementation for BinPatches
     implementation("com.google.code.gson:gson:2.8.6") // Used instead of Argo for buuilding changelog.
-    implementation("com.github.tony19:named-regexp:0.2.3") // 1.7 Named regexp features
+    implementation("com.github.tony19:named-regexp:0.2.6") // 1.7 Named regexp features
 
     implementation("net.md-5:SpecialSource:1.9.0") // deobf and reobs
 
