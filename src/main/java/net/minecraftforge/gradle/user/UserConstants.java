@@ -57,4 +57,6 @@ public final class UserConstants {
     public static final String CLASSIFIER_DEOBF_SRG = "srg";
     public static final String CLASSIFIER_DECOMPILED = "decomp";
     public static final String CLASSIFIER_SOURCES = "sources";
+
+    public static final String WRAPPER_ARTIFACT_GROUP_ID = "net.minecraftforge.forgegradle.legacy";
 }
