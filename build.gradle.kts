@@ -68,7 +68,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.8.6") // Used instead of Argo for buuilding changelog.
     implementation("com.github.tony19:named-regexp:0.2.6") // 1.7 Named regexp features
 
-    implementation("net.md-5:SpecialSource:1.9.0") // deobf and reobs
+    implementation("net.md-5:SpecialSource:1.11.0") // deobf and reobs
 
     // because curse
     implementation("org.apache.httpcomponents:httpclient:4.5.13")
