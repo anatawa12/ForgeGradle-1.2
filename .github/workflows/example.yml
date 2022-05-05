@@ -41,6 +41,9 @@ jobs:
           - setupDecompWorkspace
           - setupDevWorkspace
           - setupCiWorkspace
+        useWrapper:
+          - true
+          - false
     steps:
       - uses: actions/checkout@v2
         with:
@@ -62,6 +65,11 @@ jobs:
           ./gradlew --build-file=empty wrapper --gradle-version=${{ matrix.gradle }}
           ./gradlew --build-file=empty wrapper
           rm empty
+
+      - name: setup for wrapper artifact
+        if: ${{ matrix.useWrapper == 'true' }}
+        run: |
+          echo "com.anatawa12.forge.gradle.wrapper-artifact=true" >> gradle.properties
 
       - name: Run Setup Task
         if: ${{ matrix.setting != 'none' }}

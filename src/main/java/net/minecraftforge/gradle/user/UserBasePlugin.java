@@ -2,7 +2,6 @@ package net.minecraftforge.gradle.user;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
@@ -12,6 +11,7 @@ import net.minecraftforge.gradle.ProjectUtils;
 import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
+import net.minecraftforge.gradle.delayed.DelayedBase;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.json.JsonFactory;
 import net.minecraftforge.gradle.tasks.*;
@@ -22,6 +22,9 @@ import net.minecraftforge.gradle.tasks.user.reobf.ReobfTask;
 import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration.State;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.artifacts.repositories.IvyArtifactRepository;
+import org.gradle.api.artifacts.repositories.IvyPatternRepositoryLayout;
+import org.gradle.api.artifacts.repositories.RepositoryContentDescriptor;
 import org.gradle.api.execution.TaskExecutionGraph;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.internal.plugins.DslObject;
@@ -51,12 +54,14 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 
 import static net.minecraftforge.gradle.common.Constants.*;
 import static net.minecraftforge.gradle.user.UserConstants.*;
 
 public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin<T> {
     boolean mavenPluginEnabled = false;
+    boolean wrapperArtifact = false;
 
     @SuppressWarnings("serial")
     @Override
@@ -64,6 +69,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         this.applyExternalPlugin("java");
         mavenPluginEnabled = !ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.no-maven-plugin")
                 && GradleVersionUtils.isBefore("7.0");
+        wrapperArtifact = ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.wrapper-artifact");
         if (mavenPluginEnabled) {
             {
                 GradleVersionUtils.ifAfter("6.0", new Runnable() {
@@ -104,18 +110,21 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         task.dependsOn("genSrgs", "deobfBinJar");
         task.setDescription("Sets up the bare minimum to build a minecraft mod. Idea for CI servers");
         task.setGroup("ForgeGradle");
+        if (wrapperArtifact) task.dependsOn("genWrapperArtifact");
         //configureCISetup(task);
 
         task = makeTask("setupDevWorkspace", DefaultTask.class);
         task.dependsOn("genSrgs", "deobfBinJar", "makeStart");
         task.setDescription("CIWorkspace + natives and assets to run and test Minecraft");
         task.setGroup("ForgeGradle");
+        if (wrapperArtifact) task.dependsOn("genWrapperArtifact");
         //configureDevSetup(task);
 
         task = makeTask("setupDecompWorkspace", DefaultTask.class);
         task.dependsOn("genSrgs", "makeStart", "repackMinecraft");
         task.setDescription("DevWorkspace + the deobfuscated Minecraft source linked as a source jar.");
         task.setGroup("ForgeGradle");
+        if (wrapperArtifact) task.dependsOn("genWrapperArtifact");
         //configureDecompSetup(task);
 
         project.getGradle().getTaskGraph().whenReady(new Closure<Object>(this, null) {
@@ -353,7 +362,8 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         project.getDependencies().add(CONFIG_COMPILE, project.fileTree("libs"));
 
         // make MC dependencies into normal compile classpath
-        project.getConfigurations().getByName(CONFIG_COMPILE).extendsFrom(project.getConfigurations().getByName(CONFIG_DEPS));
+        if (!wrapperArtifact)
+            project.getConfigurations().getByName(CONFIG_COMPILE).extendsFrom(project.getConfigurations().getByName(CONFIG_DEPS));
         project.getConfigurations().getByName(CONFIG_COMPILE).extendsFrom(project.getConfigurations().getByName(CONFIG_MC));
         project.getConfigurations().getByName(CONFIG_RUNTIME).extendsFrom(project.getConfigurations().getByName(CONFIG_START));
     }
@@ -603,6 +613,23 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             task.dependsOn("extractUserDev", "extractMcpData");
         }
 
+        if (wrapperArtifact) {
+            GenWrapperArtifactTask task = makeTask("genWrapperArtifact", GenWrapperArtifactTask.class);
+            task.setIvyXml(delayedDirtyFile("wrapper-of-{API_NAME}", "ivy", "xml"));
+            task.setEmptyJar(delayedDirtyFile("wrapper-of-{API_NAME}", "ivy", "jar"));
+            task.setModuleName(delayedString("{API_NAME}"));
+            task.setIsDecomp(new DelayedBase<Boolean>(null, null) {
+                @Override
+                public Boolean resolveDelayed() {
+                    return getExtension().isDecomp();
+                }
+            });
+            task.setSrcDepName(getSrcDepName());
+            task.setBinDepName(getBinDepName());
+            task.setVersion(delayedString(hasApiVersion() ? "{API_VERSION}" : "{MC_VERSION}"));
+            task.setConfiguration(project.getConfigurations().getByName(CONFIG_DEPS));
+        }
+
         {
             MergeJarsTask task = makeTask("mergeJars", MergeJarsTask.class);
             task.setClient(delayedFile(JAR_CLIENT_FRESH));
@@ -629,6 +656,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             task.setStripSynthetics(true);
             configureDeobfuscation(task);
             task.dependsOn("downloadMcpTools", "mergeJars", "genSrgs");
+            if (wrapperArtifact) task.dependsOn("genWrapperArtifact");
         }
 
         {
@@ -1026,6 +1054,37 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             public void execute(Project proj) {
                 addFlatRepo(proj, getApiName() + "FlatRepo", repoDir);
                 proj.getLogger().debug("Adding repo to " + proj.getPath() + " >> " + repoDir);
+                if (wrapperArtifact) {
+                    proj.getRepositories().ivy(new Action<IvyArtifactRepository>() {
+                        @Override
+                        public void execute(final IvyArtifactRepository r) {
+                            r.setName(getApiName() + "WrapperIvyRepo");
+                            try {
+                                r.setUrl(new File(repoDir).toURI().toURL());
+                            } catch (MalformedURLException e) {
+                                throw new RuntimeException(e);
+                            }
+                            GradleVersionUtils.ifAfter("5.1", new Runnable() {
+                                @Override
+                                public void run() {
+                                    r.content(new Action<RepositoryContentDescriptor>() {
+                                        @Override
+                                        public void execute(RepositoryContentDescriptor cd) {
+                                            cd.includeGroup(WRAPPER_ARTIFACT_GROUP_ID);
+                                        }
+                                    });
+                                }
+                            });
+                            r.patternLayout(new Action<IvyPatternRepositoryLayout>() {
+                                @Override
+                                public void execute(IvyPatternRepositoryLayout l) {
+                                    l.ivy("wrapper-of-[module]-[revision]-ivy.xml");
+                                    l.artifact("wrapper-of-[module]-[revision]-ivy.[ext]");
+                                }
+                            });
+                        }
+                    });
+                }
             }
         });
 
@@ -1175,8 +1234,9 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         if (hasApiVersion())
             version = getApiVersion(getExtension());
 
-
-        if (decomp) {
+        if (wrapperArtifact) {
+            project.getDependencies().add(CONFIG_MC, ImmutableMap.of("group", WRAPPER_ARTIFACT_GROUP_ID, "name", getApiName(), "version", version));
+        } else if (decomp) {
             project.getDependencies().add(CONFIG_MC, ImmutableMap.of("name", getSrcDepName(), "version", version));
             if (remove) {
                 project.getConfigurations().getByName(CONFIG_MC).exclude(ImmutableMap.of("module", getBinDepName()));

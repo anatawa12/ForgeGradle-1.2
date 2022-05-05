@@ -22,4 +22,19 @@ public class DelayedString extends DelayedBase<String> {
         resolveOnce = false;
         return this;
     }
+
+    public static DelayedString resolved(String value) {
+        return new ResolvedDelayedString(value);
+    }
+
+    private static class ResolvedDelayedString extends DelayedString {
+        public ResolvedDelayedString(String value) {
+            super(null, value);
+        }
+
+        @Override
+        public String resolveDelayed() {
+            return pattern;
+        }
+    }
 }
