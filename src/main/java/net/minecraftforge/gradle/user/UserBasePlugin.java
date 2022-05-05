@@ -362,7 +362,8 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         project.getDependencies().add(CONFIG_COMPILE, project.fileTree("libs"));
 
         // make MC dependencies into normal compile classpath
-        project.getConfigurations().getByName(CONFIG_COMPILE).extendsFrom(project.getConfigurations().getByName(CONFIG_DEPS));
+        if (!wrapperArtifact)
+            project.getConfigurations().getByName(CONFIG_COMPILE).extendsFrom(project.getConfigurations().getByName(CONFIG_DEPS));
         project.getConfigurations().getByName(CONFIG_COMPILE).extendsFrom(project.getConfigurations().getByName(CONFIG_MC));
         project.getConfigurations().getByName(CONFIG_RUNTIME).extendsFrom(project.getConfigurations().getByName(CONFIG_START));
     }
@@ -626,6 +627,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             task.setSrcDepName(getSrcDepName());
             task.setBinDepName(getBinDepName());
             task.setVersion(delayedString(hasApiVersion() ? "{API_VERSION}" : "{MC_VERSION}"));
+            task.setConfiguration(project.getConfigurations().getByName(CONFIG_DEPS));
         }
 
         {

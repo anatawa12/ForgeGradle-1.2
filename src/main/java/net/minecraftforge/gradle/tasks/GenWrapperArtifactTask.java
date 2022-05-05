@@ -4,7 +4,11 @@ import net.minecraftforge.gradle.delayed.DelayedBase;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedString;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
@@ -36,6 +40,10 @@ public class GenWrapperArtifactTask extends DefaultTask {
 
     @Input
     DelayedString version;
+
+    @InputFiles
+    @Optional
+    Configuration configuration;
 
     public File getIvyXml() {
         return ivyXml.call();
@@ -128,6 +136,14 @@ public class GenWrapperArtifactTask extends DefaultTask {
         this.version = version;
     }
 
+    public Configuration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
+    }
+
     @TaskAction
     public void execute() throws IOException {
         generateEmptyJar(getEmptyJar());
@@ -154,21 +170,39 @@ public class GenWrapperArtifactTask extends DefaultTask {
     }
 
     private void generateIvyXml(File ivyXml) throws IOException {
-        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<ivy-module version=\"2.0\">\n" +
-                "  <info organisation=\"" + WRAPPER_ARTIFACT_GROUP_ID + "\"\n" +
-                "        module=\"" + getModuleName() + "\"\n" +
-                "        revision=\"" + getVersion() + "\"/>\n" +
-                "  <dependencies>\n" +
-                "    <dependency name=\"" + (getIsDecomp() ? getSrcDepName() : getBinDepName()) + "\"\n" +
-                "                rev=\"" + getVersion() + "\"/>\n" +
-                "  </dependencies>\n" +
-                "</ivy-module>\n";
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.append("<ivy-module version=\"2.0\">\n");
+        xml.append("  <info organisation=\"" + WRAPPER_ARTIFACT_GROUP_ID + "\"\n");
+        xml.append("        module=\"").append(getModuleName()).append("\"\n");
+        xml.append("        revision=\"").append(getVersion()).append("\"/>\n");
+        xml.append("  <dependencies>\n");
+        xml.append("    <dependency org=\"\"\n");
+        xml.append("                name=\"").append(getIsDecomp() ? getSrcDepName() : getBinDepName()).append("\"\n");
+        xml.append("                rev=\"").append(getVersion()).append("\"/>\n");
+
+        Configuration config = getConfiguration();
+        if (config != null) {
+            for (Dependency dependency : config.getAllDependencies()) {
+                xml.append("    <dependency ");
+                if (dependency.getGroup() != null)
+                    xml.append("org=\"").append(dependency.getGroup()).append("\"\n                ");
+                else
+                    xml.append("org=\"\"\n                ");
+                xml.append("name=\"").append(dependency.getName()).append("\"");
+                if (dependency.getVersion() != null)
+                    xml.append("\n                ").append("rev=\"").append(dependency.getVersion()).append("\"");
+                xml.append("/>\n");
+            }
+        }
+
+        xml.append("  </dependencies>\n");
+        xml.append("</ivy-module>\n");
 
         FileOutputStream stream = null;
         try {
             stream = new FileOutputStream(ivyXml);
-            stream.write(xml.getBytes(Charset.forName("UTF-8")));
+            stream.write(xml.toString().getBytes(Charset.forName("UTF-8")));
         } finally {
             if (stream != null) stream.close();
         }
