@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.ow2.asm:asm-debug-all:5.0.3")
+    implementation("org.ow2.asm:asm-debug-all:5.2")
     implementation("com.google.guava:guava:23.0")
 }
 
