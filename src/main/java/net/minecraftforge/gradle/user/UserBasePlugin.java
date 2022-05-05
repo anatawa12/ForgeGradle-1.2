@@ -1235,7 +1235,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             version = getApiVersion(getExtension());
 
         if (wrapperArtifact) {
-            project.getDependencies().add(CONFIG_MC, ImmutableMap.of("group", WRAPPER_ARTIFACT_GROUP_ID, "name", getApiName(), "version", version));
+            project.getDependencies().add(CONFIG_COMPILE, ImmutableMap.of("group", WRAPPER_ARTIFACT_GROUP_ID, "name", getApiName(), "version", version));
         } else if (decomp) {
             project.getDependencies().add(CONFIG_MC, ImmutableMap.of("name", getSrcDepName(), "version", version));
             if (remove) {
