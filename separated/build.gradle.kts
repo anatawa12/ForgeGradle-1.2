@@ -18,7 +18,7 @@ repositories {
 
 dependencies {
     implementation("org.ow2.asm:asm-debug-all:5.0.3")
-    implementation("com.google.guava:guava:18.0")
+    implementation("com.google.guava:guava:23.0")
 }
 
 publishing {
