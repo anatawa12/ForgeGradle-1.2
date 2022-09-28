@@ -2,9 +2,7 @@ package net.minecraftforge.gradle.tasks.user.reobf;
 
 import COM.rl.NameProvider;
 import COM.rl.obf.RetroGuardImpl;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
@@ -26,7 +24,6 @@ import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -75,7 +72,7 @@ public class ObfArtifact implements PublishArtifact {
      */
     public ObfArtifact(AbstractArchiveTask toObf, ArtifactSpec artifactSpec, ReobfTask task) {
         this(new DelayedThingy(toObf), artifactSpec, task);
-        this.toObfArtifact = (PublishArtifact) toObf;
+        this.toObfArtifact = toObf;
     }
 
     /**
@@ -309,7 +306,7 @@ public class ObfArtifact implements PublishArtifact {
      * Obfuscates the file
      *
      * @throws IOException
-     * @throws org.gradle.api.InvalidUserDataException if the there is insufficient information available to generate the signature.
+     * @throws InvalidUserDataException if the there is insufficient information available to generate the signature.
      */
     void generate(ReobfExceptor exc, File defaultSrg, File extraSrg, FileCollection extraSrgFiles) throws Exception {
         File toObf = getToObf();
@@ -392,13 +389,13 @@ public class ObfArtifact implements PublishArtifact {
         File packedJar = new File(caller.getTemporaryDir(), "rgPackaged.jar");
         File outPackedJar = new File(caller.getTemporaryDir(), "rgOutPackaged.jar");
 
-        HashSet<String> modFiles = Sets.newHashSet();
+        HashSet<String> modFiles = new HashSet<>();
         { // pack in classPath
-            ZipOutputStream out = new ZipOutputStream(new FileOutputStream(packedJar));
-            ZipEntry entry = null;
+            ZipOutputStream out = new ZipOutputStream(java.nio.file.Files.newOutputStream(packedJar.toPath()));
+            ZipEntry entry;
 
             // pack input jar
-            ZipInputStream in = new ZipInputStream(new FileInputStream(input));
+            ZipInputStream in = new ZipInputStream(java.nio.file.Files.newInputStream(input.toPath()));
             while ((entry = in.getNextEntry()) != null) {
                 modFiles.add(entry.getName());
                 out.putNextEntry(entry);
@@ -408,10 +405,10 @@ public class ObfArtifact implements PublishArtifact {
             }
             in.close();
 
-            HashSet<String> antiDuplicate = Sets.newHashSet();
+            HashSet<String> antiDuplicate = new HashSet<>();
             for (File f : classpath) {
                 if (f.isDirectory()) {
-                    LinkedList<File> dirStack = new LinkedList<File>();
+                    LinkedList<File> dirStack = new LinkedList<>();
                     dirStack.push(f);
                     String root = f.getCanonicalPath();
 
@@ -434,7 +431,7 @@ public class ObfArtifact implements PublishArtifact {
                         }
                     }
                 } else if (f.getName().endsWith("jar") || f.getName().endsWith("zip")) {
-                    in = new ZipInputStream(new FileInputStream(f));
+                    in = new ZipInputStream(java.nio.file.Files.newInputStream(f.toPath()));
                     while ((entry = in.getNextEntry()) != null) {
                         if (antiDuplicate.contains(entry.getName()) || modFiles.contains(entry.getName()))
                             continue;
@@ -478,11 +475,11 @@ public class ObfArtifact implements PublishArtifact {
 
         // unpack jar.
         {
-            ZipOutputStream out = new ZipOutputStream(new FileOutputStream(output));
-            ZipEntry entry = null;
+            ZipOutputStream out = new ZipOutputStream(java.nio.file.Files.newOutputStream(output.toPath()));
+            ZipEntry entry;
 
             // pack input jar
-            ZipInputStream in = new ZipInputStream(new FileInputStream(outPackedJar));
+            ZipInputStream in = new ZipInputStream(java.nio.file.Files.newInputStream(outPackedJar.toPath()));
             while ((entry = in.getNextEntry()) != null) {
                 if (modFiles.contains(entry.getName())) {
                     out.putNextEntry(entry);
@@ -498,7 +495,7 @@ public class ObfArtifact implements PublishArtifact {
 
     private void generateRgConfig(File config, File script, File srg, File extraSrg, FileCollection extraSrgFiles) throws IOException {
         // the config
-        ArrayList<String> configOut = new ArrayList<String>(10);
+        ArrayList<String> configOut = new ArrayList<>(10);
 
         configOut.add("reob = " + srg.getCanonicalPath());
         configOut.add("reob = " + extraSrg.getCanonicalPath()); // because it should work
@@ -513,7 +510,7 @@ public class ObfArtifact implements PublishArtifact {
         configOut.add("fullmap = 0");
         configOut.add("startindex = 0");
 
-        Files.asCharSink(config, Charset.defaultCharset()).write(Joiner.on(Constants.NEWLINE).join(configOut));
+        Files.asCharSink(config, Charset.defaultCharset()).write(String.join(Constants.NEWLINE, configOut));
 
         // the script.
         String[] lines = new String[]{
@@ -527,15 +524,15 @@ public class ObfArtifact implements PublishArtifact {
                 ".attribute Deprecated"
         };
 
-        Files.asCharSink(script, Charset.defaultCharset()).write(Joiner.on(Constants.NEWLINE).join(lines));
+        Files.asCharSink(script, Charset.defaultCharset()).write(String.join(Constants.NEWLINE, lines));
     }
 
     public static URL[] toUrls(FileCollection collection) throws MalformedURLException {
-        ArrayList<URL> urls = new ArrayList<URL>();
+        ArrayList<URL> urls = new ArrayList<>();
 
         for (File file : collection.getFiles())
             urls.add(file.toURI().toURL());
 
-        return urls.toArray(new URL[urls.size()]);
+        return urls.toArray(new URL[0]);
     }
 }

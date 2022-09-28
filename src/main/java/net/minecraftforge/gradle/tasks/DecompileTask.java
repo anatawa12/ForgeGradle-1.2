@@ -3,7 +3,6 @@ package net.minecraftforge.gradle.tasks;
 import com.github.abrarsyed.jastyle.ASFormatter;
 import com.github.abrarsyed.jastyle.FileWildcardFilter;
 import com.github.abrarsyed.jastyle.OptParser;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
@@ -23,12 +22,7 @@ import net.minecraftforge.gradle.patching.ContextualPatch.PatchStatus;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.LogLevel;
-import org.gradle.api.tasks.InputDirectory;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 import org.gradle.process.JavaExecSpec;
 
 import java.io.*;
@@ -57,8 +51,8 @@ public class DecompileTask extends CachedTask {
     @Cached
     private DelayedFile outJar;
 
-    private HashMap<String, String> sourceMap = new HashMap<String, String>();
-    private HashMap<String, byte[]> resourceMap = new HashMap<String, byte[]>();
+    private HashMap<String, String> sourceMap = new HashMap<>();
+    private HashMap<String, byte[]> resourceMap = new HashMap<>();
 
     private static final Pattern BEFORE = Pattern.compile("(?m)((case|default).+(?:\\r\\n|\\r|\\n))(?:\\r\\n|\\r|\\n)");
     private static final Pattern AFTER = Pattern.compile("(?m)(?:\\r\\n|\\r|\\n)((?:\\r\\n|\\r|\\n)[ \\t]+(case|default))");
@@ -134,7 +128,7 @@ public class DecompileTask extends CachedTask {
 
     private void readJarAndFix(final File jar) throws IOException {
         // begin reading jar
-        final ZipInputStream zin = new ZipInputStream(new FileInputStream(jar));
+        final ZipInputStream zin = new ZipInputStream(java.nio.file.Files.newInputStream(jar.toPath()));
         ZipEntry entry = null;
         String fileStr;
 
@@ -228,7 +222,10 @@ public class DecompileTask extends CachedTask {
 
             boolean success = true;
             for (PatchReport rep : errors) {
-                if (!rep.getStatus().isSuccess()) success = false;
+                if (!rep.getStatus().isSuccess()) {
+                    success = false;
+                    break;
+                }
             }
             if (success) break;
         }
@@ -244,7 +241,7 @@ public class DecompileTask extends CachedTask {
         Writer writer;
 
         GLConstantFixer fixer = new GLConstantFixer();
-        ArrayList<String> files = new ArrayList<String>(sourceMap.keySet());
+        ArrayList<String> files = new ArrayList<>(sourceMap.keySet());
         Collections.sort(files); // Just to make sure we have the same order.. shouldn't matter on anything but lets be careful.
 
         for (String file : files) {
@@ -397,11 +394,7 @@ public class DecompileTask extends CachedTask {
 
             if (fileMap.containsKey(target)) {
                 String[] lines = fileMap.get(target).split("\r\n|\r|\n");
-                List<String> ret = new ArrayList<String>();
-                for (String line : lines) {
-                    ret.add(line);
-                }
-                return ret;
+                return new ArrayList<>(Arrays.asList(lines));
             }
 
             return null;
@@ -409,7 +402,7 @@ public class DecompileTask extends CachedTask {
 
         @Override
         public void setData(String target, List<String> data) {
-            fileMap.put(strip(target), Joiner.on(Constants.NEWLINE).join(data));
+            fileMap.put(strip(target), String.join(Constants.NEWLINE, data));
         }
     }
 }

@@ -3,9 +3,7 @@ package com.anatawa12.forge.gradle.separated.mergeJars;
 import com.anatawa12.forge.gradle.separated.ArgsParser;
 import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -15,23 +13,8 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -57,10 +40,10 @@ public class Main {
     @SuppressWarnings("rawtypes")
     private Class sideClass, sideOnlyClass;
 
-    private static final HashSet<String> copyToServer = new HashSet<String>();
-    private static final HashSet<String> copyToClient = new HashSet<String>();
-    private static final HashSet<String> dontAnnotate = new HashSet<String>();
-    private static final HashSet<String> dontProcess = new HashSet<String>();
+    private static final HashSet<String> copyToServer = new HashSet<>();
+    private static final HashSet<String> copyToClient = new HashSet<>();
+    private static final HashSet<String> dontAnnotate = new HashSet<>();
+    private static final HashSet<String> dontProcess = new HashSet<>();
     private static final boolean DEBUG = false;
 
     public void doTask() throws IOException {
@@ -135,10 +118,10 @@ public class Main {
             }
 
             // read in the jars, and initalize some variables
-            HashSet<String> resources = new HashSet<String>();
+            HashSet<String> resources = new HashSet<>();
             HashMap<String, ZipEntry> cClasses = getClassEntries(cInJar, outJar, resources);
             HashMap<String, ZipEntry> sClasses = getClassEntries(sInJar, outJar, resources);
-            HashSet<String> cAdded = new HashSet<String>();
+            HashSet<String> cAdded = new HashSet<>();
 
             // start processing
             for (Map.Entry<String, ZipEntry> entry : cClasses.entrySet()) {
@@ -147,16 +130,13 @@ public class Main {
                 ZipEntry sEntry = sClasses.get(name);
 
                 if (sEntry == null) {
-                    if (!copyToServer.contains(name)) {
-                        copyClass(cInJar, cEntry, outJar, true);
-                        cAdded.add(name);
-                    } else {
+                    if (copyToServer.contains(name)) {
                         if (DEBUG) {
                             System.out.println("Copy class c->s : " + name);
                         }
-                        copyClass(cInJar, cEntry, outJar, true);
-                        cAdded.add(name);
                     }
+                    copyClass(cInJar, cEntry, outJar, true);
+                    cAdded.add(name);
                     continue;
                 }
 
@@ -220,7 +200,7 @@ public class Main {
 
         if (!dontAnnotate.contains(classNode.name)) {
             if (classNode.visibleAnnotations == null) {
-                classNode.visibleAnnotations = new ArrayList<AnnotationNode>();
+                classNode.visibleAnnotations = new ArrayList<>();
             }
             classNode.visibleAnnotations.add(getSideAnn(isClientOnly));
         }
@@ -242,7 +222,7 @@ public class Main {
 
     private AnnotationNode getSideAnn(boolean isClientOnly) {
         AnnotationNode ann = new AnnotationNode(Type.getDescriptor(sideOnlyClass));
-        ann.values = new ArrayList<Object>();
+        ann.values = new ArrayList<>();
         ann.values.add("value");
         ann.values.add(new String[]{Type.getDescriptor(sideClass), isClientOnly ? "CLIENT" : "SERVER"});
         return ann;
@@ -253,10 +233,9 @@ public class Main {
      * @param outFile   The place to write resources and ignored classes
      * @param resources The registry to add resources to, and to check against.
      * @return HashMap of all the desired Classes and their ZipEntrys
-     * @throws IOException
      */
     private HashMap<String, ZipEntry> getClassEntries(ZipFile inFile, ZipOutputStream outFile, HashSet<String> resources) throws IOException {
-        HashMap<String, ZipEntry> ret = new HashMap<String, ZipEntry>();
+        HashMap<String, ZipEntry> ret = new HashMap<>();
         master:
         for (ZipEntry entry : Collections.list(inFile.entries())) {
             String entryName = entry.getName();
@@ -296,14 +275,8 @@ public class Main {
 
     // @TODO: rewrite.
     public static byte[] getClassBytes(String name) throws IOException {
-        InputStream classStream = null;
-        try {
-            classStream = Main.class.getResourceAsStream("/" + name.replace('.', '/').concat(".class"));
+        try (InputStream classStream = Main.class.getResourceAsStream("/" + name.replace('.', '/').concat(".class"))) {
             return ByteStreams.toByteArray(classStream);
-        } finally {
-            if (classStream != null) {
-                classStream.close();
-            }
         }
     }
 
@@ -356,7 +329,7 @@ public class Main {
                         }
                         if (!foundClientField) {
                             if (serverField.visibleAnnotations == null) {
-                                serverField.visibleAnnotations = new ArrayList<AnnotationNode>();
+                                serverField.visibleAnnotations = new ArrayList<>();
                             }
                             serverField.visibleAnnotations.add(getSideAnn(false));
                             cFields.add(clientFieldIdx, serverField);
@@ -365,7 +338,7 @@ public class Main {
                         }
                     } else {
                         if (clientField.visibleAnnotations == null) {
-                            clientField.visibleAnnotations = new ArrayList<AnnotationNode>();
+                            clientField.visibleAnnotations = new ArrayList<>();
                         }
                         clientField.visibleAnnotations.add(getSideAnn(true));
                         sFields.add(serverFieldIdx, clientField);
@@ -375,7 +348,7 @@ public class Main {
                 }
             } else {
                 if (clientField.visibleAnnotations == null) {
-                    clientField.visibleAnnotations = new ArrayList<AnnotationNode>();
+                    clientField.visibleAnnotations = new ArrayList<>();
                 }
                 clientField.visibleAnnotations.add(getSideAnn(true));
                 sFields.add(serverFieldIdx, clientField);
@@ -390,7 +363,7 @@ public class Main {
             for (int x = cFields.size(); x < sFields.size(); x++) {
                 FieldNode sF = sFields.get(x);
                 if (sF.visibleAnnotations == null) {
-                    sF.visibleAnnotations = new ArrayList<AnnotationNode>();
+                    sF.visibleAnnotations = new ArrayList<>();
                 }
                 sF.visibleAnnotations.add(getSideAnn(true));
                 cFields.add(x++, sF);
@@ -411,7 +384,7 @@ public class Main {
     private void processMethods(ClassNode cClass, ClassNode sClass) {
         List<MethodNode> cMethods = cClass.methods;
         List<MethodNode> sMethods = sClass.methods;
-        LinkedHashSet<MethodWrapper> allMethods = Sets.newLinkedHashSet();
+        LinkedHashSet<MethodWrapper> allMethods = new LinkedHashSet<>();
 
         int cPos = 0;
         int sPos = 0;
@@ -500,7 +473,7 @@ public class Main {
                 return false;
             }
             MethodWrapper mw = (MethodWrapper) obj;
-            boolean eq = Objects.equal(node.name, mw.node.name) && Objects.equal(node.desc, mw.node.desc);
+            boolean eq = Objects.equals(node.name, mw.node.name) && Objects.equals(node.desc, mw.node.desc);
             if (eq) {
                 mw.client = client | mw.client;
                 mw.server = server | mw.server;
@@ -515,7 +488,7 @@ public class Main {
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(node.name, node.desc);
+            return Objects.hash(node.name, node.desc);
         }
 
         @Override

@@ -1,6 +1,5 @@
 package net.minecraftforge.gradle.tasks.abstractutil;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -17,6 +16,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class EtagDownloadTask extends DefaultTask {
     Object url;
@@ -34,7 +34,7 @@ public class EtagDownloadTask extends DefaultTask {
 
         String etag;
         if (etagFile.exists()) {
-            etag = Files.asCharSource(etagFile, Charsets.UTF_8).read();
+            etag = Files.asCharSource(etagFile, StandardCharsets.UTF_8).read();
         } else {
             etag = "";
         }
@@ -64,7 +64,7 @@ public class EtagDownloadTask extends DefaultTask {
                     // write etag
                     etag = con.getHeaderField("ETag");
                     if (!Strings.isNullOrEmpty(etag)) {
-                        Files.asCharSink(etagFile, Charsets.UTF_8).write(etag);
+                        Files.asCharSink(etagFile, StandardCharsets.UTF_8).write(etag);
                     }
 
                     break;

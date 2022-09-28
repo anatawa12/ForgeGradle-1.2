@@ -4,14 +4,13 @@ import groovy.lang.Closure;
 import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.user.UserBasePlugin;
 import net.minecraftforge.gradle.user.UserExtension;
-import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.bundling.Jar;
 
 public class CursePlugin implements Plugin<Project> {
 
-    @SuppressWarnings({"rawtypes", "serial", "unchecked"})
+    @SuppressWarnings({"rawtypes", "serial"})
     @Override
     public void apply(final Project project) {
         // create task
@@ -30,20 +29,15 @@ public class CursePlugin implements Plugin<Project> {
         });
 
         // configure task extra.
-        project.afterEvaluate(new Action() {
+        project.afterEvaluate(arg0 -> {
+            // dont continue if its already failed!
+            if (project.getState().getFailure() != null)
+                return;
 
-            @Override
-            public void execute(Object arg0) {
-                // dont continue if its already failed!
-                if (project.getState().getFailure() != null)
-                    return;
+            UserBasePlugin plugin = userPluginApplied(project);
+            upload.addGameVersion(plugin.getExtension().getVersion());
 
-                UserBasePlugin plugin = userPluginApplied(project);
-                upload.addGameVersion(plugin.getExtension().getVersion());
-
-                upload.dependsOn("reobf");
-            }
-
+            upload.dependsOn("reobf");
         });
     }
 

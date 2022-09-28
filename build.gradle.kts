@@ -11,11 +11,11 @@ group = "com.anatawa12.forge"
 version = "1.2-${property("version")!!}"
 
 base {
-    archivesBaseName = "ForgeGradle"
+    archivesName.set("ForgeGradle")
 }
 java {
-    targetCompatibility = JavaVersion.VERSION_1_6
-    sourceCompatibility = JavaVersion.VERSION_1_6
+    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
 repositories {
@@ -56,7 +56,7 @@ dependencies {
     // moved to the beginning to be the overrider
     implementation("org.ow2.asm:asm:9.3")
     implementation("org.ow2.asm:asm-tree:9.3")
-    implementation("com.google.guava:guava:23.0")
+    implementation("com.google.guava:guava:31.1-jre")
 
     implementation("net.sf.opencsv:opencsv:2.3") // reading CSVs.. also used by SpecialSource
     implementation("com.cloudbees:diff4j:1.3") // for difing and patching
@@ -66,7 +66,7 @@ dependencies {
     implementation("com.github.jponge:lzma-java:1.3") // replaces the LZMA binary
     implementation("com.nothome:javaxdelta:2.0.1") // GDIFF implementation for BinPatches
     implementation("com.google.code.gson:gson:2.9.0") // Used instead of Argo for buuilding changelog.
-    implementation("com.github.tony19:named-regexp:0.2.6") // 1.7 Named regexp features
+    implementation("org.apache.commons:commons-compress:1.21") // because java removed pack200
 
     implementation("net.md-5:SpecialSource:1.11.0") // deobf and reobs
 
@@ -103,7 +103,6 @@ val javadoc by tasks.getting(Javadoc::class) {
     options.links("https://asm.ow2.io/javadoc/")
 }
 
-@Suppress("UnstableApiUsage")
 java {
     withJavadocJar()
     withSourcesJar()
@@ -120,7 +119,7 @@ val test by tasks.getting(Test::class) {
         exclude("**/ExtensionForgeVersionTest*")
     }
     reports {
-        junitXml.isEnabled = true
+        junitXml.required.set(true)
     }
 }
 
@@ -128,10 +127,10 @@ publishing {
     publications {
         val bintray by this.creating(MavenPublication::class) {
             from(components["java"])
-            artifactId = base.archivesBaseName
+            artifactId = base.archivesName.get()
 
             pom {
-                name.set(project.base.archivesBaseName)
+                name.set(project.base.archivesName.get())
                 description.set("Gradle plugin for Forge")
                 url.set("https://github.com/anatawa12/ForgeGradle-1.2")
 

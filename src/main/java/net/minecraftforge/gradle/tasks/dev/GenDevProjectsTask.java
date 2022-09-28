@@ -34,12 +34,12 @@ public class GenDevProjectsTask extends DefaultTask {
     @Optional
     private DelayedString mappingChannel, mappingVersion, mcVersion;
 
-    private List<DelayedFile> sources = new ArrayList<DelayedFile>();
-    private List<DelayedFile> resources = new ArrayList<DelayedFile>();
-    private List<DelayedFile> testSources = new ArrayList<DelayedFile>();
-    private List<DelayedFile> testResources = new ArrayList<DelayedFile>();
+    private List<DelayedFile> sources = new ArrayList<>();
+    private List<DelayedFile> resources = new ArrayList<>();
+    private List<DelayedFile> testSources = new ArrayList<>();
+    private List<DelayedFile> testResources = new ArrayList<>();
 
-    private final ArrayList<String> deps = new ArrayList<String>();
+    private final ArrayList<String> deps = new ArrayList<>();
 
     public GenDevProjectsTask() {
         this.getOutputs().file(getTargetFile());
@@ -56,7 +56,6 @@ public class GenDevProjectsTask extends DefaultTask {
 
         for (Library lib : version.getLibraries()) {
             if (lib.name.contains("fixed") || lib.natives != null || lib.extract != null) {
-                continue;
             } else {
                 deps.add(lib.getArtifactName());
             }

@@ -1,34 +1,27 @@
 package net.minecraftforge.gradle.tasks;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
 import net.minecraftforge.gradle.SequencedInputSupplier;
-import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.srg2source.rangeapplier.RangeApplier;
 import net.minecraftforge.srg2source.util.io.*;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.*;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Files;
+import java.util.*;
 
 public class ApplyS2STask extends DefaultTask {
-    private final List<Object> srg = new LinkedList<Object>();
+    private final List<Object> srg = new LinkedList<>();
 
-    private final List<Object> exc = new LinkedList<Object>();
+    private final List<Object> exc = new LinkedList<>();
 
     @InputFile
     private DelayedFile rangeMap;
@@ -38,7 +31,7 @@ public class ApplyS2STask extends DefaultTask {
     private DelayedFile excModifiers;
 
     // stuff defined on the tasks..
-    private final List<DelayedFile> in = new LinkedList<DelayedFile>();
+    private final List<DelayedFile> in = new LinkedList<>();
     private DelayedFile out;
 
     @TaskAction
@@ -123,11 +116,11 @@ public class ApplyS2STask extends DefaultTask {
         if (modifiers == null || !modifiers.exists())
             return currentExcs;
 
-        Map<String, Boolean> statics = Maps.newHashMap();
+        Map<String, Boolean> statics = new HashMap<>();
 
         try {
             getLogger().debug("  Reading Modifiers:");
-            for (String line : Files.readLines(modifiers, Charset.defaultCharset())) {
+            for (String line : Files.readAllLines(modifiers.toPath(), Charset.defaultCharset())) {
                 if (Strings.isNullOrEmpty(line) || line.startsWith("#"))
                     continue;
                 String[] args = line.split("=");
@@ -141,10 +134,10 @@ public class ApplyS2STask extends DefaultTask {
             temp.getParentFile().mkdirs();
             temp.createNewFile();
 
-            BufferedWriter writer = Files.newWriter(temp, Charsets.UTF_8);
+            BufferedWriter writer = Files.newBufferedWriter(temp.toPath());
             for (File f : srgs) {
                 getLogger().debug("  Reading SRG: " + f);
-                for (String line : Files.readLines(f, Charset.defaultCharset())) {
+                for (String line : Files.readAllLines(f.toPath(), Charset.defaultCharset())) {
                     if (Strings.isNullOrEmpty(line) || line.startsWith("#"))
                         continue;
 
@@ -159,8 +152,8 @@ public class ApplyS2STask extends DefaultTask {
                             getLogger().debug("    MD: " + line);
                             name = name.substring(5, name.indexOf('_', 5));
 
-                            List<String> params = Lists.newArrayList();
-                            int idx = isStatic == null || !isStatic.booleanValue() ? 1 : 0;
+                            List<String> params = new ArrayList<>();
+                            int idx = isStatic == null || !isStatic ? 1 : 0;
                             getLogger().debug("      Name: " + name + " Idx: " + idx);
 
                             int i = 0;
@@ -208,7 +201,7 @@ public class ApplyS2STask extends DefaultTask {
                                 writer.write(pts[2].substring(pts[2].lastIndexOf('/') + 1));
                                 writer.write(pts[3]);
                                 writer.write("=|");
-                                writer.write(Joiner.on(",").join(params));
+                                writer.write(String.join(",", params));
                                 writer.newLine();
                             }
                         }
@@ -217,17 +210,15 @@ public class ApplyS2STask extends DefaultTask {
             }
             writer.close();
 
-            List<File> files = Lists.newArrayList();
+            List<File> files = new ArrayList<>();
             files.add(temp);//Make sure the new one is first to allow others to override
             for (File f : currentExcs)
                 files.add(f);
 
             return getProject().files(files.toArray());
         } catch (IOException e) {
-            ThrowableUtils.propagate(e);
+            throw new RuntimeException(e);
         }
-
-        return null;
     }
 
     @InputFiles
@@ -237,7 +228,7 @@ public class ApplyS2STask extends DefaultTask {
 
     @InputFiles
     public List<File> getIn() {
-        List<File> files = new LinkedList<File>();
+        List<File> files = new LinkedList<>();
         for (DelayedFile f : in)
             files.add(f.call());
         return files;

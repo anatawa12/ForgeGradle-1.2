@@ -1,17 +1,14 @@
 package net.minecraftforge.gradle.extrastuff;
 
-import com.google.code.regexp.Matcher;
-import com.google.code.regexp.Pattern;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import net.minecraftforge.gradle.StringUtils;
 import net.minecraftforge.gradle.common.Constants;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FmlCleanup {
     //private static final Pattern METHOD_REG = Pattern.compile("^ {4}(\\w+\\s+\\S.*\\(.*|static)$");
@@ -23,16 +20,11 @@ public class FmlCleanup {
     private static final Pattern VAR_CALL = Pattern.compile("(?i)[a-z_$][a-z0-9_\\[\\]]+ var\\d+(?:x)*");
     private static final Pattern VAR = Pattern.compile("var\\d+(?:x)*");
 
-    private static final Comparator<String> COMPARATOR = new Comparator<String>() {
-        @Override
-        public int compare(String str1, String str2) {
-            return str2.length() - str1.length();
-        }
-    };
+    private static final Comparator<String> COMPARATOR = (str1, str2) -> str2.length() - str1.length();
 
     public static String renameClass(String text) {
         String[] lines = text.split("(\r\n|\r|\n)");
-        List<String> output = new ArrayList<String>(lines.length);
+        List<String> output = new ArrayList<>(lines.length);
         MethodInfo method = null;
 
         for (String line : lines) {
@@ -68,9 +60,7 @@ public class FmlCleanup {
                 method.lines.add(line);
 
                 if (method.parent == null) {
-                    for (String l : Splitter.on(Constants.NEWLINE).split(method.rename(null))) {
-                        output.add(l);
-                    }
+                    output.addAll(Arrays.asList(method.rename(null).split(Constants.NEWLINE)));
                 }
 
                 method = method.parent;
@@ -94,14 +84,14 @@ public class FmlCleanup {
             }
         }
 
-        return Joiner.on(Constants.NEWLINE).join(output);
+        return String.join(Constants.NEWLINE, output);
     }
 
     private static class MethodInfo {
-        private MethodInfo parent = null;
-        private List<Object> lines = Lists.newArrayList();
-        private List<String> vars = Lists.newArrayList();
-        private List<MethodInfo> children = Lists.newArrayList();
+        private MethodInfo parent;
+        private List<Object> lines = new ArrayList<>();
+        private List<String> vars = new ArrayList<>();
+        private List<MethodInfo> children = new ArrayList<>();
         private final String ENDING;
 
         private MethodInfo(MethodInfo parent, String indent) {
@@ -120,8 +110,8 @@ public class FmlCleanup {
         private String rename(FmlCleanup namer) {
             namer = namer == null ? new FmlCleanup() : new FmlCleanup(namer);
 
-            Map<String, String> renames = Maps.newHashMap();
-            Map<String, String> unnamed = Maps.newHashMap();
+            Map<String, String> renames = new HashMap<>();
+            Map<String, String> unnamed = new HashMap<>();
 
             for (String var : vars) {
                 String[] split = var.split(" ");
@@ -134,14 +124,11 @@ public class FmlCleanup {
 
             if (unnamed.size() > 0) {
                 // We sort the var## names because FF is non-deterministic and sometimes decompiles the declarations in different orders.
-                List<String> sorted = new ArrayList<String>(unnamed.keySet());
-                Collections.sort(sorted, new Comparator<String>() {
-                    @Override
-                    public int compare(String o1, String o2) {
-                        if (o1.length() < o2.length()) return -1;
-                        if (o1.length() > o2.length()) return 1;
-                        return o1.compareTo(o2);
-                    }
+                List<String> sorted = new ArrayList<>(unnamed.keySet());
+                sorted.sort((o1, o2) -> {
+                    if (o1.length() < o2.length()) return -1;
+                    if (o1.length() > o2.length()) return 1;
+                    return o1.compareTo(o2);
                 });
                 for (String s : sorted) {
                     renames.put(s, namer.getName(unnamed.get(s), s));
@@ -159,8 +146,8 @@ public class FmlCleanup {
             String body = buf.toString();
 
             if (renames.size() > 0) {
-                List<String> sortedKeys = new ArrayList<String>(renames.keySet());
-                Collections.sort(sortedKeys, COMPARATOR);
+                List<String> sortedKeys = new ArrayList<>(renames.keySet());
+                sortedKeys.sort(COMPARATOR);
 
                 // closure changes the sort, to sort by the return value of the closure.
                 for (String key : sortedKeys) {
@@ -178,7 +165,7 @@ public class FmlCleanup {
     HashMap<String, String> remap;
 
     private FmlCleanup() {
-        last = new HashMap<String, Holder>();
+        last = new HashMap<>();
         last.put("byte", new Holder(0, false, "b"));
         last.put("char", new Holder(0, false, "c"));
         last.put("short", new Holder(1, false, "short"));
@@ -196,21 +183,19 @@ public class FmlCleanup {
         last.put("Package", new Holder(0, true, "opackage"));
         last.put("Enum", new Holder(0, true, "oenum"));
 
-        remap = new HashMap<String, String>();
+        remap = new HashMap<>();
         remap.put("long", "int");
     }
 
     private FmlCleanup(FmlCleanup parent) {
-        last = Maps.newHashMap();
+        last = new HashMap<>();
         for (Entry<String, Holder> e : parent.last.entrySet()) {
             Holder v = e.getValue();
             last.put(e.getKey(), new Holder(v.id, v.skip_zero, v.names));
         }
 
-        remap = Maps.newHashMap();
-        for (Entry<String, String> e : parent.remap.entrySet()) {
-            remap.put(e.getKey(), e.getValue());
-        }
+        remap = new HashMap<>();
+        remap.putAll(parent.remap);
     }
 
     private String getName(String type, String var) {
@@ -275,7 +260,7 @@ public class FmlCleanup {
     private class Holder {
         public int id;
         public boolean skip_zero;
-        public final List<String> names = Lists.newArrayList();
+        public final List<String> names = new ArrayList<>();
 
         public Holder(int t1, boolean skip_zero, String... names) {
             this.id = t1;

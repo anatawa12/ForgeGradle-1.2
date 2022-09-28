@@ -1,6 +1,5 @@
 package net.minecraftforge.gradle.user;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
@@ -8,23 +7,19 @@ import groovy.lang.Closure;
 import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.ProjectUtils;
-import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedBase;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.json.JsonFactory;
+import net.minecraftforge.gradle.json.version.Library;
 import net.minecraftforge.gradle.tasks.*;
 import net.minecraftforge.gradle.tasks.abstractutil.ExtractTask;
 import net.minecraftforge.gradle.tasks.user.SourceCopyTask;
-import net.minecraftforge.gradle.tasks.user.reobf.ArtifactSpec;
 import net.minecraftforge.gradle.tasks.user.reobf.ReobfTask;
 import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration.State;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
-import org.gradle.api.artifacts.repositories.IvyArtifactRepository;
-import org.gradle.api.artifacts.repositories.IvyPatternRepositoryLayout;
-import org.gradle.api.artifacts.repositories.RepositoryContentDescriptor;
 import org.gradle.api.execution.TaskExecutionGraph;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.internal.plugins.DslObject;
@@ -55,6 +50,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 
 import static net.minecraftforge.gradle.common.Constants.*;
 import static net.minecraftforge.gradle.user.UserConstants.*;
@@ -72,18 +68,15 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         wrapperArtifact = ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.wrapper-artifact");
         if (mavenPluginEnabled) {
             {
-                GradleVersionUtils.ifAfter("6.0", new Runnable() {
-                    @Override
-                    public void run() {
-                        if (project.getGradle().getStartParameter().getWarningMode() == WarningMode.All) {
-                            project.getLogger().warn("The maven plugin is automatically applied by ForgeGradle and " +
-                                    "will not be applied since Gradle 7.0. " +
-                                    "If you're using maven plugin applied by ForgeGradle, " +
-                                    "please use 'maven-publish' instead and apply it yourself.");
-                            project.getLogger().warn("To disable applying maven plugin by ForgeGradle, please set " +
-                                    "'com.anatawa12.forge.gradle.no-maven-plugin' project property as 'true' in " +
-                                    "gradle.properties.");
-                        }
+                GradleVersionUtils.ifAfter("6.0", () -> {
+                    if (project.getGradle().getStartParameter().getWarningMode() == WarningMode.All) {
+                        project.getLogger().warn("The maven plugin is automatically applied by ForgeGradle and " +
+                                "will not be applied since Gradle 7.0. " +
+                                "If you're using maven plugin applied by ForgeGradle, " +
+                                "please use 'maven-publish' instead and apply it yourself.");
+                        project.getLogger().warn("To disable applying maven plugin by ForgeGradle, please set " +
+                                "'com.anatawa12.forge.gradle.no-maven-plugin' project property as 'true' in " +
+                                "gradle.properties.");
                     }
                 });
                 applyExternalPlugin("maven");
@@ -339,12 +332,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         extractUserDev.setConfig(CONFIG_USERDEV);
         extractUserDev.setDoesCache(true);
         extractUserDev.dependsOn("getVersionJson");
-        extractUserDev.doLast(new Action<Task>() {
-            @Override
-            public void execute(Task arg0) {
-                readAndApplyJson(getDevJson().call(), CONFIG_DEPS, CONFIG_NATIVES, arg0.getLogger());
-            }
-        });
+        extractUserDev.doLast(arg0 -> readAndApplyJson(getDevJson().call(), CONFIG_DEPS, CONFIG_NATIVES, arg0.getLogger()));
         project.getTasks().findByName("getAssetsIndex").dependsOn("extractUserDev");
 
         // special native stuff
@@ -407,7 +395,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                 version = JsonFactory.loadVersion(file, delayedFile(Constants.JSONS_DIR).call());
             } catch (Exception e) {
                 log.error("" + file + " could not be parsed");
-                ThrowableUtils.propagate(e);
+                throw new RuntimeException(e);
             }
         }
 
@@ -419,7 +407,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         // actual dependencies
         if (project.getConfigurations().getByName(depConfig).getState() == State.UNRESOLVED) {
-            for (net.minecraftforge.gradle.json.version.Library lib : version.getLibraries()) {
+            for (Library lib : version.getLibraries()) {
                 if (lib.natives == null)
                     handler.add(depConfig, lib.getArtifactName());
             }
@@ -428,7 +416,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         // the natives
         if (project.getConfigurations().getByName(nativeConfig).getState() == State.UNRESOLVED) {
-            for (net.minecraftforge.gradle.json.version.Library lib : version.getLibraries()) {
+            for (Library lib : version.getLibraries()) {
                 if (lib.natives != null)
                     handler.add(nativeConfig, lib.getArtifactName());
             }
@@ -450,57 +438,54 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         ideaConv.getModule().setInheritOutputDirs(true);
 
         Task task = makeTask("genIntellijRuns", DefaultTask.class);
-        task.doLast(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                try {
-                    String module = task.getProject().getProjectDir().getCanonicalPath();
+        task.doLast(task1 -> {
+            try {
+                String module = task1.getProject().getProjectDir().getCanonicalPath();
 
-                    File root = task.getProject().getProjectDir().getCanonicalFile();
-                    File file = null;
-                    while (file == null && !root.equals(task.getProject().getRootProject().getProjectDir().getCanonicalFile().getParentFile())) {
-                        file = new File(root, ".idea/workspace.xml");
-                        if (!file.exists()) {
-                            file = null;
-                            // find iws file
-                            for (File f : root.listFiles()) {
-                                if (f.isFile() && f.getName().endsWith(".iws")) {
-                                    file = f;
-                                    break;
-                                }
+                File root = task1.getProject().getProjectDir().getCanonicalFile();
+                File file = null;
+                while (file == null && !root.equals(task1.getProject().getRootProject().getProjectDir().getCanonicalFile().getParentFile())) {
+                    file = new File(root, ".idea/workspace.xml");
+                    if (!file.exists()) {
+                        file = null;
+                        // find iws file
+                        for (File f : root.listFiles()) {
+                            if (f.isFile() && f.getName().endsWith(".iws")) {
+                                file = f;
+                                break;
                             }
                         }
-
-                        root = root.getParentFile();
                     }
 
-                    if (file == null || !file.exists())
-                        throw new RuntimeException("Intellij workspace file could not be found! are you sure you imported the project into intellij?");
-
-                    DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-                    DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-                    Document doc = docBuilder.parse(file);
-
-                    injectIntellijRuns(doc, module);
-
-                    // write the content into xml file
-                    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-                    Transformer transformer = transformerFactory.newTransformer();
-                    transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-                    transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-                    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-                    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-                    //noinspection HttpUrlsUsage
-                    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-
-                    DOMSource source = new DOMSource(doc);
-                    StreamResult result = new StreamResult(file);
-                    //StreamResult result = new StreamResult(System.out);
-
-                    transformer.transform(source, result);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    root = root.getParentFile();
                 }
+
+                if (file == null || !file.exists())
+                    throw new RuntimeException("Intellij workspace file could not be found! are you sure you imported the project into intellij?");
+
+                DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+                Document doc = docBuilder.parse(file);
+
+                injectIntellijRuns(doc, module);
+
+                // write the content into xml file
+                TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                Transformer transformer = transformerFactory.newTransformer();
+                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+                transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformer.setOutputProperty(OutputKeys.ENCODING, StandardCharsets.UTF_8.name());
+                //noinspection HttpUrlsUsage
+                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+                DOMSource source = new DOMSource(doc);
+                StreamResult result = new StreamResult(file);
+                //StreamResult result = new StreamResult(System.out);
+
+                transformer.transform(source, result);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
 
@@ -543,14 +528,14 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                                         "Minecraft Client",
                                         GRADLE_START_CLIENT,
                                         "-Xincgc -Xmx1024M -Xms1024M",
-                                        Joiner.on(' ').join(getClientRunArgs())
+                                        String.join(" ", getClientRunArgs())
                                 },
                         new String[]
                                 {
                                         "Minecraft Server",
                                         GRADLE_START_SERVER,
                                         "-Xincgc -Dfml.ignoreInvalidMinecraftCertificates=true",
-                                        Joiner.on(' ').join(getServerRunArgs())
+                                        String.join(" ", getServerRunArgs())
                                 }
                 };
 
@@ -727,8 +712,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         createSourceCopyTasks();
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private final void createPostDecompTasks() {
+    private void createPostDecompTasks() {
         DelayedFile decompOut = delayedDirtyFile(null, CLASSIFIER_DECOMPILED, "jar", false);
         DelayedFile remapped = delayedDirtyFile(getSrcDepName(), CLASSIFIER_SOURCES, "jar");
         final DelayedFile recomp = delayedDirtyFile(getSrcDepName(), null, "jar");
@@ -757,24 +741,20 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             remap.dependsOn(decomp);
         }
 
-        Spec onlyIfCheck = new Spec() {
-            @Override
-            public boolean isSatisfiedBy(Object obj) {
-                Task task = (Task)obj;
-                TaskDependency dependency = task.getTaskDependencies();
-                boolean didWork = false;
-                for (Task depTask : dependency.getDependencies(task)) {
-                    if (depTask.getDidWork()) {
-                        didWork = true;
-                        break;
-                    }
+        Spec<? super Task> onlyIfCheck = task -> {
+            TaskDependency dependency = task.getTaskDependencies();
+            boolean didWork = false;
+            for (Task depTask : dependency.getDependencies(task)) {
+                if (depTask.getDidWork()) {
+                    didWork = true;
+                    break;
                 }
-                boolean exists = recomp.call().exists();
-                if (!exists)
-                    return true;
-                else
-                    return didWork;
             }
+            boolean exists = recomp.call().exists();
+            if (!exists)
+                return true;
+            else
+                return didWork;
         };
 
         ExtractTask extract = makeTask("extractMinecraftSrc", ExtractTask.class);
@@ -831,17 +811,11 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private void createExecTasks() {
         // In gradle 4.2 or newer, workingDir be resolved immediately. So set workingDir in afterEvaluate.
         {
             final JavaExec exec = makeTask("runClient", JavaExec.class);
-            project.afterEvaluate(new Action<Project>() {
-                @Override
-                public void execute(Project project) {
-                    exec.workingDir(delayedFile("{RUN_DIR}"));
-                }
-            });
+            project.afterEvaluate(project -> exec.workingDir(delayedFile("{RUN_DIR}")));
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
             exec.setMain(GRADLE_START_CLIENT);
             //exec.jvmArgs("-Xincgc", "-Xmx1024M", "-Xms1024M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
@@ -858,12 +832,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         {
             final JavaExec exec = makeTask("runServer", JavaExec.class);
-            project.afterEvaluate(new Action<Project>() {
-                @Override
-                public void execute(Project project) {
-                    exec.workingDir(delayedFile("{RUN_DIR}"));
-                }
-            });
+            project.afterEvaluate(project -> exec.workingDir(delayedFile("{RUN_DIR}")));
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
             exec.setMain(GRADLE_START_SERVER);
             exec.jvmArgs("-Xincgc", "-Dfml.ignoreInvalidMinecraftCertificates=true");
@@ -882,24 +851,16 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         {
 
             final JavaExec exec = makeTask("debugClient", JavaExec.class);
-            project.afterEvaluate(new Action<Project>() {
-                @Override
-                public void execute(final Project project) {
-                    exec.workingDir(delayedFile("{RUN_DIR}"));
-                }
-            });
+            project.afterEvaluate(project -> exec.workingDir(delayedFile("{RUN_DIR}")));
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
-            exec.doFirst(new Action() {
-                @Override
-                public void execute(Object o) {
-                    project.getLogger().error("");
-                    project.getLogger().error("THIS TASK WILL BE DEP RECATED SOON!");
-                    project.getLogger().error("Instead use the runClient task, with the --debug-jvm option");
-                    if (!project.getGradle().getGradleVersion().equals("1.12")) {
-                        project.getLogger().error("You may have to update to Gradle 1.12");
-                    }
-                    project.getLogger().error("");
+            exec.doFirst(o -> {
+                project.getLogger().error("");
+                project.getLogger().error("THIS TASK WILL BE DEPRECATED SOON!");
+                project.getLogger().error("Instead use the runClient task, with the --debug-jvm option");
+                if (!project.getGradle().getGradleVersion().equals("1.12")) {
+                    project.getLogger().error("You may have to update to Gradle 1.12");
                 }
+                project.getLogger().error("");
             });
             exec.setMain(GRADLE_START_CLIENT);
             exec.jvmArgs("-Xincgc", "-Xmx1024M", "-Xms1024M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
@@ -917,24 +878,16 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         {
             final JavaExec exec = makeTask("debugServer", JavaExec.class);
-            project.afterEvaluate(new Action<Project>() {
-                @Override
-                public void execute(final Project project) {
-                    exec.workingDir(delayedFile("{RUN_DIR}"));
-                }
-            });
+            project.afterEvaluate(project -> exec.workingDir(delayedFile("{RUN_DIR}")));
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
-            exec.doFirst(new Action() {
-                @Override
-                public void execute(Object o) {
-                    project.getLogger().error("");
-                    project.getLogger().error("THIS TASK WILL BE DEPRECATED SOON!");
-                    project.getLogger().error("Instead use the runServer task, with the --debug-jvm option");
-                    if (!project.getGradle().getGradleVersion().equals("1.12")) {
-                        project.getLogger().error("You may have to update to Gradle 1.12");
-                    }
-                    project.getLogger().error("");
+            exec.doFirst(o -> {
+                project.getLogger().error("");
+                project.getLogger().error("THIS TASK WILL BE DEPRECATED SOON!");
+                project.getLogger().error("Instead use the runServer task, with the --debug-jvm option");
+                if (!project.getGradle().getGradleVersion().equals("1.12")) {
+                    project.getLogger().error("You may have to update to Gradle 1.12");
                 }
+                project.getLogger().error("");
             });
             exec.setMain(GRADLE_START_SERVER);
             exec.jvmArgs("-Xincgc", "-Dfml.ignoreInvalidMinecraftCertificates=true");
@@ -952,7 +905,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         }
     }
 
-    private final void createSourceCopyTasks() {
+    private void createSourceCopyTasks() {
         JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
         SourceSet main = javaConv.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME);
 
@@ -1001,7 +954,6 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         }
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public final void afterEvaluate() {
         String mcversion = getMcVersion(getExtension());
@@ -1050,41 +1002,23 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         // add MC repo.
         final String repoDir = delayedDirtyFile("this", "doesnt", "matter").call().getParentFile().getAbsolutePath();
-        project.allprojects(new Action<Project>() {
-            public void execute(Project proj) {
-                addFlatRepo(proj, getApiName() + "FlatRepo", repoDir);
-                proj.getLogger().debug("Adding repo to " + proj.getPath() + " >> " + repoDir);
-                if (wrapperArtifact) {
-                    proj.getRepositories().ivy(new Action<IvyArtifactRepository>() {
-                        @Override
-                        public void execute(final IvyArtifactRepository r) {
-                            r.setName(getApiName() + "WrapperIvyRepo");
-                            try {
-                                r.setUrl(new File(repoDir).toURI().toURL());
-                            } catch (MalformedURLException e) {
-                                throw new RuntimeException(e);
-                            }
-                            GradleVersionUtils.ifAfter("5.1", new Runnable() {
-                                @Override
-                                public void run() {
-                                    r.content(new Action<RepositoryContentDescriptor>() {
-                                        @Override
-                                        public void execute(RepositoryContentDescriptor cd) {
-                                            cd.includeGroup(WRAPPER_ARTIFACT_GROUP_ID);
-                                        }
-                                    });
-                                }
-                            });
-                            r.patternLayout(new Action<IvyPatternRepositoryLayout>() {
-                                @Override
-                                public void execute(IvyPatternRepositoryLayout l) {
-                                    l.ivy("wrapper-of-[module]-[revision]-ivy.xml");
-                                    l.artifact("wrapper-of-[module]-[revision]-ivy.[ext]");
-                                }
-                            });
-                        }
+        project.allprojects(proj -> {
+            addFlatRepo(proj, getApiName() + "FlatRepo", repoDir);
+            proj.getLogger().debug("Adding repo to " + proj.getPath() + " >> " + repoDir);
+            if (wrapperArtifact) {
+                proj.getRepositories().ivy(r -> {
+                    r.setName(getApiName() + "WrapperIvyRepo");
+                    try {
+                        r.setUrl(new File(repoDir).toURI().toURL());
+                    } catch (MalformedURLException e) {
+                        throw new RuntimeException(e);
+                    }
+                    GradleVersionUtils.ifAfter("5.1", () -> r.content(cd -> cd.includeGroup(WRAPPER_ARTIFACT_GROUP_ID)));
+                    r.patternLayout(l -> {
+                        l.ivy("wrapper-of-[module]-[revision]-ivy.xml");
+                        l.artifact("wrapper-of-[module]-[revision]-ivy.[ext]");
                     });
-                }
+                });
             }
         });
 
@@ -1099,12 +1033,9 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         {
             // stop getting empty dirs
-            Action<ConventionTask> act = new Action() {
-                @Override
-                public void execute(Object arg0) {
-                    Zip task = (Zip) arg0;
-                    task.setIncludeEmptyDirs(false);
-                }
+            Action<ConventionTask> act = arg0 -> {
+                Zip task = (Zip) arg0;
+                task.setIncludeEmptyDirs(false);
             };
 
             project.getTasks().withType(Jar.class, act);
@@ -1115,18 +1046,13 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
     /**
      * Allows for the configuration of tasks in AfterEvaluate
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     protected void delayedTaskConfig() {
         // add extraSRG lines to reobf task
         {
             ReobfTask task = ((ReobfTask) project.getTasks().getByName("reobf"));
-            task.reobf(project.getTasks().getByName("jar"), new Action<ArtifactSpec>() {
-                @Override
-                public void execute(ArtifactSpec arg0) {
-                    JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
-                    arg0.setClasspath(javaConv.getSourceSets().getByName("main").getCompileClasspath());
-                }
-
+            task.reobf(project.getTasks().getByName("jar"), arg0 -> {
+                JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
+                arg0.setClasspath(javaConv.getSourceSets().getByName("main").getCompileClasspath());
             });
             task.setExtraSrg(getExtension().getSrgExtra());
         }

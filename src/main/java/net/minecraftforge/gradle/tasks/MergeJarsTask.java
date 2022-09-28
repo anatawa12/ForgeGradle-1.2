@@ -39,7 +39,7 @@ public class MergeJarsTask extends CachedTask {
                 .run(getProject());
     }
 
-    public static byte[] getClassBytes(String name) throws IOException {
+    public static byte[] getClassBytes(String name) {
         throw new UnsupportedOperationException("this method should not be called by external classes.");
     }
 

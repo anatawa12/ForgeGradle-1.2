@@ -3,9 +3,8 @@ package net.minecraftforge.gradle.tasks.abstractutil;
 import groovy.lang.Closure;
 import org.gradle.api.tasks.bundling.Jar;
 
-@SuppressWarnings("rawtypes")
 public class DelayedJar extends Jar {
-    private Closure closure = null;
+    private Closure<?> closure = null;
 
     @Override
     public void copy() {
@@ -15,7 +14,7 @@ public class DelayedJar extends Jar {
         super.copy();
     }
 
-    public void setManifest(Closure closure) {
+    public void setManifest(Closure<?> closure) {
         this.closure = closure;
     }
 }

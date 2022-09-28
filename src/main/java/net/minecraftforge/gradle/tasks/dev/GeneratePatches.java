@@ -3,7 +3,6 @@ package net.minecraftforge.gradle.tasks.dev;
 import com.cloudbees.diff.Diff;
 import com.cloudbees.diff.Hunk;
 import com.cloudbees.diff.PatchException;
-import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -21,7 +20,11 @@ import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.*;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class GeneratePatches extends DefaultTask {
     @OutputDirectory
@@ -39,7 +42,7 @@ public class GeneratePatches extends DefaultTask {
     @Input
     String changedPrefix = "";
 
-    private Set<File> created = new HashSet<File>();
+    private Set<File> created = new HashSet<>();
 
     @TaskAction
     public void doTask() throws IOException, PatchException {
@@ -61,8 +64,8 @@ public class GeneratePatches extends DefaultTask {
         return ret;
     }
 
-    private void removeOld(File dir) throws IOException {
-        final ArrayList<File> directories = new ArrayList<File>();
+    private void removeOld(File dir) {
+        final ArrayList<File> directories = new ArrayList<>();
         FileTree tree = getProject().fileTree(dir);
 
         tree.visit(new FileVisitor() {
@@ -82,14 +85,9 @@ public class GeneratePatches extends DefaultTask {
         });
 
         // We want things sorted in reverse order. Do that sub folders come before parents
-        Collections.sort(directories, new Comparator<File>() {
-            @Override
-            public int compare(File o1, File o2) {
-                int r = o1.compareTo(o2);
-                if (r < 0) return 1;
-                if (r > 0) return -1;
-                return 0;
-            }
+        directories.sort((o1, o2) -> {
+            int r = o1.compareTo(o2);
+            return Integer.compare(0, r);
         });
 
         for (File f : directories) {
@@ -104,13 +102,8 @@ public class GeneratePatches extends DefaultTask {
         List<String> paths = original.gatherAll("");
         for (String path : paths) {
             path = path.replace('\\', '/');
-            InputStream o = original.getInput(path);
-            InputStream c = changed.getInput(path);
-            try {
+            try (InputStream o = original.getInput(path); InputStream c = changed.getInput(path)) {
                 processFile(path, o, c);
-            } finally {
-                if (o != null) o.close();
-                if (c != null) c.close();
             }
         }
     }
@@ -129,28 +122,28 @@ public class GeneratePatches extends DefaultTask {
         byte[] oData = ByteStreams.toByteArray(original);
         byte[] cData = ByteStreams.toByteArray(changed);
 
-        Diff diff = Diff.diff(new InputStreamReader(new ByteArrayInputStream(oData), Charsets.UTF_8), new InputStreamReader(new ByteArrayInputStream(cData), Charsets.UTF_8), false);
+        Diff diff = Diff.diff(new InputStreamReader(new ByteArrayInputStream(oData), StandardCharsets.UTF_8), new InputStreamReader(new ByteArrayInputStream(cData), StandardCharsets.UTF_8), false);
 
         if (!relative.startsWith("/"))
             relative = "/" + relative;
 
         if (!diff.isEmpty()) {
             String unidiff = diff.toUnifiedDiff(originalPrefix + relative, changedPrefix + relative,
-                    new InputStreamReader(new ByteArrayInputStream(oData), Charsets.UTF_8),
-                    new InputStreamReader(new ByteArrayInputStream(cData), Charsets.UTF_8), 3);
+                    new InputStreamReader(new ByteArrayInputStream(oData), StandardCharsets.UTF_8),
+                    new InputStreamReader(new ByteArrayInputStream(cData), StandardCharsets.UTF_8), 3);
             unidiff = unidiff.replace("\r\n", "\n"); //Normalize lines
             unidiff = unidiff.replace("\n" + Hunk.ENDING_NEWLINE + "\n", "\n"); //We give 0 shits about this.
 
             String olddiff = "";
             if (patchFile.exists()) {
-                olddiff = Files.asCharSource(patchFile, Charsets.UTF_8).read();
+                olddiff = Files.asCharSource(patchFile, StandardCharsets.UTF_8).read();
             }
 
             if (!olddiff.equals(unidiff)) {
                 getLogger().debug("Writing patch: " + patchFile);
                 patchFile.getParentFile().mkdirs();
                 Files.touch(patchFile);
-                Files.asCharSink(patchFile, Charsets.UTF_8).write(unidiff);
+                Files.asCharSink(patchFile, StandardCharsets.UTF_8).write(unidiff);
             } else {
                 getLogger().debug("Patch did not change");
             }

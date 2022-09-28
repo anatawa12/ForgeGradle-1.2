@@ -1,14 +1,11 @@
 package net.minecraftforge.gradle.tasks.abstractutil;
 
-import com.google.common.base.Joiner;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.common.Constants;
-import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.*;
 
@@ -22,7 +19,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
@@ -31,10 +27,10 @@ import java.util.*;
 public abstract class CachedTask extends DefaultTask {
     private boolean doesCache = true;
     private boolean cacheSet = false;
-    private final ArrayList<Annotated> cachedList = new ArrayList<Annotated>();
-    private final ArrayList<Annotated> inputList = new ArrayList<Annotated>();
+    private final ArrayList<Annotated> cachedList = new ArrayList<>();
+    private final ArrayList<Annotated> inputList = new ArrayList<>();
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings("unchecked")
     public CachedTask() {
         super();
 
@@ -75,82 +71,73 @@ public abstract class CachedTask extends DefaultTask {
             clazz = (Class<? extends Task>) clazz.getSuperclass();
         }
 
-        this.onlyIf(new Spec() {
-            @Override
-            public boolean isSatisfiedBy(Object obj) {
-                Task task = (Task) obj;
+        this.onlyIf(task -> {
+            if (!doesCache())
+                return true;
 
-                if (!doesCache())
-                    return true;
+            if (cachedList.isEmpty())
+                return true;
 
-                if (cachedList.isEmpty())
-                    return true;
+            for (Annotated field : cachedList) {
 
-                for (Annotated field : cachedList) {
+                try {
+                    File file = getProject().file(field.getValue(task));
 
-                    try {
-                        File file = getProject().file(field.getValue(task));
-
-                        // not there? do the task.
-                        if (!file.exists()) {
-                            return true;
-                        }
-
-                        File hashFile = getHashFile(file);
-                        if (!hashFile.exists()) {
-                            file.delete(); // Kill the output file if the hash doesn't exist, else gradle will think it's up-to-date
-                            return true;
-                        }
-
-                        String foundMD5 = Files.asCharSource(getHashFile(file), Charset.defaultCharset()).read();
-                        String calcMD5 = getHashes(field, inputList, task);
-
-                        if (!calcMD5.equals(foundMD5)) {
-                            getProject().getLogger().info(" Corrupted Cache!");
-                            getProject().getLogger().info("Checksums found: " + foundMD5);
-                            getProject().getLogger().info("Checksums calculated: " + calcMD5);
-                            file.delete();
-                            getHashFile(file).delete();
-                            return true;
-                        }
-
-                        getProject().getLogger().debug("Checksums found: " + foundMD5);
-                        getProject().getLogger().debug("Checksums calculated: " + calcMD5);
-
-                    }
-                    // error? spit it and do the task.
-                    catch (Exception e) {
-                        e.printStackTrace();
+                    // not there? do the task.
+                    if (!file.exists()) {
                         return true;
                     }
-                }
 
-                // no problems? all of em are here? skip the task.
-                return false;
+                    File hashFile = getHashFile(file);
+                    if (!hashFile.exists()) {
+                        file.delete(); // Kill the output file if the hash doesn't exist, else gradle will think it's up-to-date
+                        return true;
+                    }
+
+                    String foundMD5 = Files.asCharSource(getHashFile(file), Charset.defaultCharset()).read();
+                    String calcMD5 = getHashes(field, inputList, task);
+
+                    if (!calcMD5.equals(foundMD5)) {
+                        getLogger().info(" Corrupted Cache!");
+                        getLogger().info("Checksums found: " + foundMD5);
+                        getLogger().info("Checksums calculated: " + calcMD5);
+                        file.delete();
+                        getHashFile(file).delete();
+                        return true;
+                    }
+
+                    getLogger().debug("Checksums found: " + foundMD5);
+                    getLogger().debug("Checksums calculated: " + calcMD5);
+                }
+                // error? spit it and do the task.
+                catch (Exception e) {
+                    e.printStackTrace();
+                    return true;
+                }
             }
+
+            // no problems? all of em are here? skip the task.
+            return false;
         });
     }
 
     private void addCachedOutput(final Annotated annot) {
         cachedList.add(annot);
 
-        this.doLast(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                if (!doesCache())
-                    return;
+        this.doLast(task -> {
+            if (!doesCache())
+                return;
 
-                try {
-                    File outFile = getProject().file(annot.getValue(task));
-                    if (outFile.exists()) {
-                        File hashFile = getHashFile(outFile);
-                        Files.asCharSink(hashFile, Charset.defaultCharset()).write(getHashes(annot, inputList, task));
-                    }
+            try {
+                File outFile = getProject().file(annot.getValue(task));
+                if (outFile.exists()) {
+                    File hashFile = getHashFile(outFile);
+                    Files.asCharSink(hashFile, Charset.defaultCharset()).write(getHashes(annot, inputList, task));
                 }
-                // error? spit it and do the task.
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
+            }
+            // error? spit it and do the task.
+            catch (Exception e) {
+                e.printStackTrace();
             }
         });
     }
@@ -163,10 +150,8 @@ public abstract class CachedTask extends DefaultTask {
     }
 
     @SuppressWarnings("rawtypes")
-    private String getHashes(Annotated output, List<Annotated> inputs, Object instance) throws NoSuchFieldException, IllegalAccessException, NoSuchAlgorithmException, NoSuchMethodException, SecurityException, IllegalArgumentException, InvocationTargetException {
-        LinkedList<String> hashes = new LinkedList<String>();
-
-        hashes.addAll(Constants.hashAll(getProject().file(output.getValue(instance))));
+    private String getHashes(Annotated output, List<Annotated> inputs, Object instance) throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, SecurityException, IllegalArgumentException, InvocationTargetException {
+        LinkedList<String> hashes = new LinkedList<>(Constants.hashAll(getProject().file(output.getValue(instance))));
 
         for (Annotated input : inputs) {
             AnnotatedElement m = input.getElement();
@@ -197,7 +182,7 @@ public abstract class CachedTask extends DefaultTask {
 
                 if (obj instanceof String) {
                     hashes.add(Constants.hash((String) obj));
-                    getLogger().debug(Constants.hash((String) obj) + " " + (String) obj);
+                    getLogger().debug(Constants.hash((String) obj) + " " + obj);
                 } else if (obj instanceof File) {
                     File file = (File) obj;
                     if (file.isDirectory()) {
@@ -218,7 +203,7 @@ public abstract class CachedTask extends DefaultTask {
             }
         }
 
-        return Joiner.on(Constants.NEWLINE).join(hashes);
+        return String.join(Constants.NEWLINE, hashes);
     }
 
     @Target({ElementType.FIELD, ElementType.METHOD})
@@ -270,7 +255,7 @@ public abstract class CachedTask extends DefaultTask {
                 methodName += new String(name);
 
                 try {
-                    method = taskClass.getMethod(methodName, new Class[0]);
+                    method = taskClass.getMethod(methodName);
                 } catch (NoSuchMethodException e) {
                     // method not found. Grab the field via reflection
                     f.setAccessible(true);
@@ -278,7 +263,7 @@ public abstract class CachedTask extends DefaultTask {
                 }
             }
 
-            return method.invoke(instance, new Object[0]);
+            return method.invoke(instance);
         }
     }
 

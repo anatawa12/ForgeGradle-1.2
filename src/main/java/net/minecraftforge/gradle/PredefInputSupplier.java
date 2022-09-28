@@ -1,20 +1,19 @@
 package net.minecraftforge.gradle;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import net.minecraftforge.srg2source.util.io.InputSupplier;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 public class PredefInputSupplier implements InputSupplier {
-    private final Map<String, byte[]> fileMap = Maps.newHashMap();
-    private final Map<String, String> rootMap = Maps.newHashMap();
+    private final Map<String, byte[]> fileMap = new HashMap<>();
+    private final Map<String, String> rootMap = new HashMap<>();
 
     @Override
     public void close() throws IOException {
@@ -33,7 +32,7 @@ public class PredefInputSupplier implements InputSupplier {
 
     @Override
     public List<String> gatherAll(String endFilter) {
-        LinkedList<String> out = Lists.newLinkedList();
+        LinkedList<String> out = new LinkedList<>();
         for (String s : fileMap.keySet()) {
             if (s.endsWith(endFilter)) {
                 out.add(s);

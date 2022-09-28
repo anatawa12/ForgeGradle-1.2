@@ -37,8 +37,7 @@ public class CopyAssetsTask extends DefaultTask {
                 File out = new File(outputDir, e.getKey());
 
                 // check existing
-                if (out.exists() && out.length() == e.getValue().size)
-                    continue;
+                if (out.exists() && out.length() == e.getValue().size) {}
                 else {
                     out.getParentFile().mkdirs();
                     Files.copy(in, out);
@@ -48,7 +47,6 @@ public class CopyAssetsTask extends DefaultTask {
             // CRASH!
             getLogger().error("Something went wrong with the assets copying");
             this.setDidWork(false);
-            return;
         }
     }
 
@@ -57,7 +55,7 @@ public class CopyAssetsTask extends DefaultTask {
     }
 
     public AssetIndex getAssetIndex() {
-        return (AssetIndex) assetIndex.call();
+        return assetIndex.call();
     }
 
     public void setAssetIndex(Closure<AssetIndex> assetIndex) {

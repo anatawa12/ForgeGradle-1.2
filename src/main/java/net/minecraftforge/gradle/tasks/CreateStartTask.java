@@ -1,13 +1,9 @@
 package net.minecraftforge.gradle.tasks;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import groovy.lang.Closure;
-import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
@@ -18,14 +14,15 @@ import org.gradle.api.tasks.TaskAction;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
 public class CreateStartTask extends CachedTask {
     @Input
-    HashMap<String, String> resources = Maps.newHashMap();
+    HashMap<String, String> resources = new HashMap<>();
 
-    HashMap<String, Object> replacements = Maps.newHashMap();
+    HashMap<String, Object> replacements = new HashMap<>();
 
     @Cached
     @OutputDirectory
@@ -54,7 +51,7 @@ public class CreateStartTask extends CachedTask {
             // write file
             File outFile = new File(resourceDir, resEntry.getKey());
             outFile.getParentFile().mkdirs();
-            Files.asCharSink(outFile, Charsets.UTF_8).write(out);
+            Files.asCharSink(outFile, StandardCharsets.UTF_8).write(out);
         }
 
         // now compile, if im compiling.
@@ -68,7 +65,7 @@ public class CreateStartTask extends CachedTask {
                     .put("failonerror", true)
                     .put("includeantruntime", false)
                     .put("classpath", getProject().getConfigurations().getByName(classpath).getAsPath())
-                    .put("encoding", "utf-8")
+                    .put("encoding", StandardCharsets.UTF_8)
                     .put("source", "1.6")
                     .put("target", "1.6")
                     .build());
@@ -88,10 +85,9 @@ public class CreateStartTask extends CachedTask {
 
     private String getResource(URL resource) {
         try {
-            return Resources.toString(resource, Charsets.UTF_8);
+            return Resources.toString(resource, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            ThrowableUtils.propagate(e);
-            return "";
+            throw new RuntimeException(e);
         }
     }
 
@@ -143,7 +139,7 @@ public class CreateStartTask extends CachedTask {
 
     @Input
     public HashMap<String, String> getReplacements() throws IOException {
-        HashMap<String, String> result = new HashMap<String, String>();
+        HashMap<String, String> result = new HashMap<>();
         for (Entry<String, Object> stringObjectEntry : replacements.entrySet()) {
             result.put(stringObjectEntry.getKey(), resolveString(stringObjectEntry.getValue()));
         }

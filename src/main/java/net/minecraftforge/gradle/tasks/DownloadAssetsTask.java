@@ -34,8 +34,8 @@ public class DownloadAssetsTask extends DefaultTask {
 
     private boolean errored = false;
     private File virtualRoot = null;
-    private final ConcurrentLinkedQueue<Asset> filesLeft = new ConcurrentLinkedQueue<Asset>();
-    private final ArrayList<AssetsThread> threads = new ArrayList<AssetsThread>();
+    private final ConcurrentLinkedQueue<Asset> filesLeft = new ConcurrentLinkedQueue<>();
+    private final ArrayList<AssetsThread> threads = new ArrayList<>();
     private final File minecraftDir = new File(Constants.getMinecraftDirectory(), "assets/objects");
 
     private static final int MAX_THREADS = Runtime.getRuntime().availableProcessors();

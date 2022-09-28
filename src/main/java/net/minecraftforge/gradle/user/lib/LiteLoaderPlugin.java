@@ -1,9 +1,7 @@
 package net.minecraftforge.gradle.user.lib;
 
-import com.google.common.base.Throwables;
 import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.GradleConfigurationException;
-import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.json.JsonFactory;
 import net.minecraftforge.gradle.json.LiteLoaderJson;
@@ -11,12 +9,9 @@ import net.minecraftforge.gradle.json.LiteLoaderJson.Artifact;
 import net.minecraftforge.gradle.json.LiteLoaderJson.VersionObject;
 import net.minecraftforge.gradle.tasks.CreateStartTask;
 import net.minecraftforge.gradle.tasks.abstractutil.EtagDownloadTask;
-import net.minecraftforge.gradle.tasks.user.reobf.ArtifactSpec;
 import net.minecraftforge.gradle.tasks.user.reobf.ReobfTask;
 import net.minecraftforge.gradle.user.UserBasePlugin;
 import net.minecraftforge.gradle.user.UserConstants;
-import org.gradle.api.Action;
-import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
@@ -40,7 +35,6 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
         ArchiveTaskHelper.setExtension((Jar) project.getTasks().getByName("jar"), EXTENSION);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public void applyOverlayPlugin() {
         // add in extension
@@ -59,14 +53,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
         configurePackaging();
 
         // ensure we get basic things from the other extension
-        project.afterEvaluate(new Action() {
-
-            @Override
-            public void execute(Object arg0) {
-                getOverlayExtension().copyFrom(otherPlugin.getExtension());
-            }
-
-        });
+        project.afterEvaluate(arg0 -> getOverlayExtension().copyFrom(otherPlugin.getExtension()));
 
         commonApply();
     }
@@ -86,28 +73,19 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
         ArchiveTaskHelper.setClassifier((Jar) project.getTasks().getByName("jar"), ((UserBasePlugin) otherPlugin).getApiName());
 
         //  configure reobf for litemod
-        ((ReobfTask) project.getTasks().getByName("reobf")).reobf(jarTask, new Action<ArtifactSpec>() {
-            @Override
-            public void execute(ArtifactSpec spec) {
-                spec.setSrgMcp();
+        ((ReobfTask) project.getTasks().getByName("reobf")).reobf(jarTask, spec -> {
+            spec.setSrgMcp();
 
-                JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
-                spec.setClasspath(javaConv.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath());
-            }
-
+            JavaPluginConvention javaConv1 = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
+            spec.setClasspath(javaConv1.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath());
         });
 
         project.getArtifacts().add("archives", jarTask);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private void commonApply() {
         // add repo
-        project.allprojects(new Action<Project>() {
-            public void execute(Project proj) {
-                addMavenRepo(proj, "liteloaderRepo", "https://dl.liteloader.com/versions/");
-            }
-        });
+        project.allprojects(proj -> addMavenRepo(proj, "liteloaderRepo", "https://dl.liteloader.com/versions/"));
 
         final DelayedFile json = delayedFile("{CACHE_DIR}/minecraft/liteloader.json");
 
@@ -123,38 +101,28 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
             project.getTasks().getByName("setupDevWorkspace").dependsOn(task);
             project.getTasks().getByName("setupDecompWorkspace").dependsOn(task);
 
-            task.doLast(new Action() {
-
-                @Override
-                public void execute(Object arg0) {
-                    EtagDownloadTask task = (EtagDownloadTask) arg0;
-                    try {
-                        readJsonDep(task.getFile());
-                    } catch (IOException e) {
-                        ThrowableUtils.propagate(e);
-                    }
+            task.doLast(arg0 -> {
+                EtagDownloadTask task1 = (EtagDownloadTask) arg0;
+                try {
+                    readJsonDep(task1.getFile());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-
             });
         }
 
-        project.afterEvaluate(new Action() {
-
-            @Override
-            public void execute(Object arg0) {
-                if (json.call().exists()) {
-                    try {
-                        readJsonDep(json.call());
-                    } catch (IOException e) {
-                        ThrowableUtils.propagate(e);
-                    }
+        project.afterEvaluate(arg0 -> {
+            if (json.call().exists()) {
+                try {
+                    readJsonDep(json.call());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
-
         });
     }
 
-    private final void readJsonDep(File json) throws IOException {
+    private void readJsonDep(File json) throws IOException {
         if (llArtifact != null) {
             // its already set.. why parse again?
             return;
@@ -181,7 +149,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
 
     @Override
     protected Iterable<String> getClientRunArgs() {
-        return new ArrayList<String>(0);
+        return new ArrayList<>(0);
     }
 
     @Override
@@ -191,7 +159,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
 
     @Override
     protected Iterable<String> getServerRunArgs() {
-        return new ArrayList<String>(0);
+        return new ArrayList<>(0);
     }
 
     @Override

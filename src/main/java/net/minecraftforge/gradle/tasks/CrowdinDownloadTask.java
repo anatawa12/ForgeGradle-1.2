@@ -1,15 +1,12 @@
 package net.minecraftforge.gradle.tasks;
 
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
-import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.common.Constants;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFiles;
@@ -36,31 +33,25 @@ public class CrowdinDownloadTask extends DefaultTask {
     private static final String EXPORT_URL = "https://api.crowdin.net/api/project/%s/export?key=%s";
     private static final String DOWNLOAD_URL = "https://api.crowdin.net/api/project/%s/download/all.zip?key=%s";
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public CrowdinDownloadTask() {
         super();
 
-        this.onlyIf(new Spec() {
+        this.onlyIf(arg0 -> {
+            CrowdinDownloadTask task = (CrowdinDownloadTask) arg0;
 
-            @Override
-            public boolean isSatisfiedBy(Object arg0) {
-                CrowdinDownloadTask task = (CrowdinDownloadTask) arg0;
-
-                // no API key? skip
-                if (Strings.isNullOrEmpty(task.getApiKey())) {
-                    getLogger().lifecycle("Crowdin api key is null, skipping task.");
-                    return false;
-                }
-
-                // offline? skip.
-                if (getProject().getGradle().getStartParameter().isOffline()) {
-                    getLogger().lifecycle("Gradle is in offline mode, skipping task.");
-                    return false;
-                }
-
-                return true;
+            // no API key? skip
+            if (Strings.isNullOrEmpty(task.getApiKey())) {
+                getLogger().lifecycle("Crowdin api key is null, skipping task.");
+                return false;
             }
 
+            // offline? skip.
+            if (getProject().getGradle().getStartParameter().isOffline()) {
+                getLogger().lifecycle("Gradle is in offline mode, skipping task.");
+                return false;
+            }
+
+            return true;
         });
     }
 
@@ -84,9 +75,9 @@ public class CrowdinDownloadTask extends DefaultTask {
 
         try {
             con.connect();
-        } catch (Throwable e) {
+        } catch (IOException e) {
             // just in case people dont have internet at the moment.
-            ThrowableUtils.propagate(e);
+            throw new RuntimeException(e);
         }
 
         int reponse = con.getResponseCode();

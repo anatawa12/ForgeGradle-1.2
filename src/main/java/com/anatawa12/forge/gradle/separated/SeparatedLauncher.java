@@ -1,8 +1,6 @@
 package com.anatawa12.forge.gradle.separated;
 
-import org.gradle.api.Action;
 import org.gradle.api.Project;
-import org.gradle.process.JavaExecSpec;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,7 +14,7 @@ public class SeparatedLauncher {
 
     public SeparatedLauncher(String name) {
         this.name = name;
-        this.args = new ArrayList<String>();
+        this.args = new ArrayList<>();
     }
 
     public SeparatedLauncher arg(File file) {
@@ -32,14 +30,11 @@ public class SeparatedLauncher {
     }
 
     public void run(final Project project) {
-        project.javaexec(new Action<JavaExecSpec>() {
-            @Override
-            public void execute(JavaExecSpec javaExecSpec) {
-                javaExecSpec.classpath(project.getConfigurations().getByName(configurationName));
-                javaExecSpec.setMain("com.anatawa12.forge.gradle.separated." + name + ".Main");
-                javaExecSpec.args(args);
-                javaExecSpec.setIgnoreExitValue(false);
-            }
+        project.javaexec(javaExecSpec -> {
+            javaExecSpec.classpath(project.getConfigurations().getByName(configurationName));
+            javaExecSpec.setMain("com.anatawa12.forge.gradle.separated." + name + ".Main");
+            javaExecSpec.args(args);
+            javaExecSpec.setIgnoreExitValue(false);
         });
     }
 }

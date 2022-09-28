@@ -62,7 +62,7 @@ public class JsonFactory {
 
     public static Map<String, MCInjectorStruct> loadMCIJson(File json) throws IOException {
         FileReader reader = new FileReader(json);
-        Map<String, MCInjectorStruct> ret = new LinkedHashMap<String, MCInjectorStruct>();
+        Map<String, MCInjectorStruct> ret = new LinkedHashMap<>();
 
         JsonObject object = (JsonObject) JsonParser.parseReader(reader);
         reader.close();

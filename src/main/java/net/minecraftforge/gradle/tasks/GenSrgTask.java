@@ -1,8 +1,6 @@
 package net.minecraftforge.gradle.tasks;
 
 import au.com.bytecode.opencsv.CSVReader;
-import com.google.common.base.Charsets;
-import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
@@ -30,9 +28,9 @@ public class GenSrgTask extends CachedTask {
     private DelayedFile inExc;
 
     @InputFiles
-    private final LinkedList<File> extraExcs = new LinkedList<File>();
+    private final LinkedList<File> extraExcs = new LinkedList<>();
     @InputFiles
-    private final LinkedList<File> extraSrgs = new LinkedList<File>();
+    private final LinkedList<File> extraSrgs = new LinkedList<>();
 
     @InputFile
     private DelayedFile methodsCsv;
@@ -70,8 +68,8 @@ public class GenSrgTask extends CachedTask {
     @TaskAction
     public void doTask() throws IOException {
         // csv data.  SRG -> MCP
-        HashMap<String, String> methods = new HashMap<String, String>();
-        HashMap<String, String> fields = new HashMap<String, String>();
+        HashMap<String, String> methods = new HashMap<>();
+        HashMap<String, String> fields = new HashMap<>();
         readCSVs(getMethodsCsv(), getFieldsCsv(), methods, fields);
 
         // Do SRG stuff
@@ -100,7 +98,7 @@ public class GenSrgTask extends CachedTask {
     }
 
     private Map<String, String> readExtraSrgs(FileCollection extras, SrgContainer inSrg) {
-        return Maps.newHashMap(); //Nop this out.
+        return new HashMap<>(); //Nop this out.
         /*
         SrgContainer extraSrg = new SrgContainer().readSrgs(extras);
         // Need to convert these to Notch-SRG names. and add them to the other one.
@@ -137,11 +135,11 @@ public class GenSrgTask extends CachedTask {
         Files.createParentDirs(getMcpToNotch());
 
         // create streams
-        BufferedWriter notchToSrg = Files.newWriter(getNotchToSrg(), Charsets.UTF_8);
-        BufferedWriter notchToMcp = Files.newWriter(getNotchToMcp(), Charsets.UTF_8);
-        BufferedWriter srgToMcp = Files.newWriter(getSrgToMcp(), Charsets.UTF_8);
-        BufferedWriter mcpToSrg = Files.newWriter(getMcpToSrg(), Charsets.UTF_8);
-        BufferedWriter mcpToNotch = Files.newWriter(getMcpToNotch(), Charsets.UTF_8);
+        BufferedWriter notchToSrg = java.nio.file.Files.newBufferedWriter(getNotchToSrg().toPath());
+        BufferedWriter notchToMcp = java.nio.file.Files.newBufferedWriter(getNotchToMcp().toPath());
+        BufferedWriter srgToMcp = java.nio.file.Files.newBufferedWriter(getSrgToMcp().toPath());
+        BufferedWriter mcpToSrg = java.nio.file.Files.newBufferedWriter(getMcpToSrg().toPath());
+        BufferedWriter mcpToNotch = java.nio.file.Files.newBufferedWriter(getMcpToNotch().toPath());
 
         String line, temp, mcpName;
         // packages
@@ -277,11 +275,11 @@ public class GenSrgTask extends CachedTask {
         Files.createParentDirs(getMcpExc());
 
         // create streams
-        BufferedWriter srgOut = Files.newWriter(getSrgExc(), Charsets.UTF_8);
-        BufferedWriter mcpOut = Files.newWriter(getMcpExc(), Charsets.UTF_8);
+        BufferedWriter srgOut = java.nio.file.Files.newBufferedWriter(getSrgExc().toPath());
+        BufferedWriter mcpOut = java.nio.file.Files.newBufferedWriter(getMcpExc().toPath());
 
         // read and write existing lines
-        List<String> excLines = Files.readLines(getInExc(), Charsets.UTF_8);
+        List<String> excLines = java.nio.file.Files.readAllLines(getInExc().toPath());
         String[] split;
         for (String line : excLines) {
             // its already in SRG names.
@@ -314,7 +312,7 @@ public class GenSrgTask extends CachedTask {
         }
 
         for (File f : getExtraExcs()) {
-            List<String> lines = Files.readLines(f, Charsets.UTF_8);
+            List<String> lines = java.nio.file.Files.readAllLines(f.toPath());
 
             for (String line : lines) {
                 // these are in MCP names

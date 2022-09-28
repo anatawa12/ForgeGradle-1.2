@@ -38,7 +38,7 @@ public class LiteLoaderJson {
         @Override
         public VersionObject deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             VersionObject obj = new VersionObject();
-            obj.artifacts = new LinkedList<Artifact>();
+            obj.artifacts = new LinkedList<>();
 
             JsonObject groupLevel = json.getAsJsonObject().getAsJsonObject("artefacts");
 

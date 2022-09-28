@@ -1,7 +1,5 @@
 package net.minecraftforge.gradle.tasks.user;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import org.gradle.api.DefaultTask;
@@ -9,15 +7,14 @@ import org.gradle.api.file.DirectoryTree;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.file.SourceDirectorySet;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.OutputDirectory;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.util.PatternSet;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,10 +27,10 @@ public class SourceCopyTask extends DefaultTask {
     SourceDirectorySet source;
 
     @Input
-    HashMap<String, Object> replacements = new HashMap<String, Object>();
+    HashMap<String, Object> replacements = new HashMap<>();
 
     @Input
-    ArrayList<String> includes = new ArrayList<String>();
+    ArrayList<String> includes = new ArrayList<>();
 
     @OutputDirectory
     DelayedFile output;
@@ -58,7 +55,7 @@ public class SourceCopyTask extends DefaultTask {
         out = out.getCanonicalFile();
 
         // resolve replacements
-        HashMap<String, String> repl = new HashMap<String, String>(replacements.size());
+        HashMap<String, String> repl = new HashMap<>(replacements.size());
         for (Entry<String, Object> e : replacements.entrySet()) {
             if (e.getKey() == null || e.getValue() == null)
                 continue; // we dont deal with nulls.
@@ -94,15 +91,15 @@ public class SourceCopyTask extends DefaultTask {
 
                 if (isIncluded(file)) {
                     getLogger().debug("PARSING FILE IN >> " + file);
-                    String text = Files.asCharSource(file, Charsets.UTF_8).read();
+                    String text = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
 
                     for (Entry<String, String> entry : repl.entrySet())
                         text = text.replaceAll(entry.getKey(), entry.getValue());
 
                     getLogger().debug("PARSING FILE OUT >> " + dest);
-                    Files.asCharSink(dest, Charsets.UTF_8).write(text);
+                    Files.write(dest.toPath(), text.getBytes(StandardCharsets.UTF_8));
                 } else {
-                    Files.copy(file, dest);
+                    Files.copy(file.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
             }
         }

@@ -1,6 +1,4 @@
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
@@ -19,6 +17,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.Proxy;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -112,8 +112,7 @@ public class GradleStart extends GradleStartCommon {
             auth.logIn();
         } catch (AuthenticationException e) {
             LOGGER.error("-- Login failed!  " + e.getMessage());
-            Throwables.propagate(e);
-            return; // dont set other variables
+            throw new RuntimeException(e);
         }
 
         LOGGER.info("Login Succesful!");
@@ -165,7 +164,7 @@ public class GradleStart extends GradleStartCommon {
                         File parent = virtual.getParentFile();
                         if (!parent.exists())
                             parent.mkdirs();
-                        Files.copy(source, virtual);
+                        Files.copy(source.toPath(), virtual.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     }
                 }
             }
@@ -175,8 +174,8 @@ public class GradleStart extends GradleStartCommon {
                 File virtual = new File(assetVirtual, key);
                 virtual.delete();
             }
-        } catch (Throwable t) {
-            Throwables.propagate(t);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

@@ -12,11 +12,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 public class ExtractConfigTask extends CachedTask {
@@ -26,27 +26,26 @@ public class ExtractConfigTask extends CachedTask {
     private String config;
 
     @Input
-    private List<String> excludes = new LinkedList<String>();
+    private final List<String> excludes = new LinkedList<>();
 
     @Input
-    private List<Closure<Boolean>> excludeCalls = new LinkedList<Closure<Boolean>>();
+    private final List<Closure<Boolean>> excludeCalls = new LinkedList<>();
 
     @Input
-    private List<String> includes = new LinkedList<String>();
+    private final List<String> includes = new LinkedList<>();
 
     @OutputDirectory
     private DelayedFile out;
 
     @TaskAction
-    public void doTask() throws ZipException, IOException {
+    public void doTask() throws IOException {
         File outDir = getOut();
         outDir.mkdirs();
 
         for (File source : getConfigFiles()) {
             getLogger().debug("Extracting: " + source);
 
-            ZipFile input = new ZipFile(source);
-            try {
+            try (ZipFile input = new ZipFile(source)) {
                 Enumeration<? extends ZipEntry> itr = input.entries();
 
                 while (itr.hasMoreElements()) {
@@ -70,8 +69,6 @@ public class ExtractConfigTask extends CachedTask {
                         }
                     }
                 }
-            } finally {
-                input.close();
             }
         }
     }
@@ -84,7 +81,7 @@ public class ExtractConfigTask extends CachedTask {
         }
 
         for (Closure<Boolean> exclude : excludeCalls) {
-            if (exclude.call(path).booleanValue()) {
+            if (exclude.call(path)) {
                 return false;
             }
         }
@@ -125,9 +122,7 @@ public class ExtractConfigTask extends CachedTask {
     }
 
     public ExtractConfigTask include(String... paterns) {
-        for (String patern : paterns) {
-            includes.add(patern);
-        }
+        Collections.addAll(includes, paterns);
         return this;
     }
 
@@ -136,9 +131,7 @@ public class ExtractConfigTask extends CachedTask {
     }
 
     public ExtractConfigTask exclude(String... paterns) {
-        for (String patern : paterns) {
-            excludes.add(patern);
-        }
+        Collections.addAll(excludes, paterns);
         return this;
     }
 

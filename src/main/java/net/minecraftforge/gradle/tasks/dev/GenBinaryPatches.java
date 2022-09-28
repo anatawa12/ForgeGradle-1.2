@@ -6,22 +6,27 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-import com.google.common.io.LineProcessor;
 import com.nothome.delta.Delta;
 import lzma.streams.LzmaOutputStream;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedFileTree;
+import org.apache.commons.compress.java.util.jar.Pack200;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
-import java.util.jar.*;
-import java.util.jar.Pack200.Packer;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 import java.util.zip.Adler32;
 import java.util.zip.ZipEntry;
 
@@ -38,7 +43,7 @@ public class GenBinaryPatches extends DefaultTask {
     @InputFile
     private DelayedFile dirtyJar;
 
-    private List<DelayedFileTree> patchList = new ArrayList<DelayedFileTree>();
+    private List<DelayedFileTree> patchList = new ArrayList<>();
 
     @InputFile
     private DelayedFile deobfDataLzma;
@@ -49,10 +54,10 @@ public class GenBinaryPatches extends DefaultTask {
     @OutputFile
     private DelayedFile outJar;
 
-    private HashMap<String, String> obfMapping = new HashMap<String, String>();
-    private HashMap<String, String> srgMapping = new HashMap<String, String>();
+    private HashMap<String, String> obfMapping = new HashMap<>();
+    private HashMap<String, String> srgMapping = new HashMap<>();
     private ArrayListMultimap<String, String> innerClasses = ArrayListMultimap.create();
-    private Set<String> patchedFiles = new HashSet<String>();
+    private Set<String> patchedFiles = new HashSet<>();
     private Delta delta = new Delta();
 
     @TaskAction
@@ -68,8 +73,8 @@ public class GenBinaryPatches extends DefaultTask {
             }
         }
 
-        HashMap<String, byte[]> runtime = new HashMap<String, byte[]>();
-        HashMap<String, byte[]> devtime = new HashMap<String, byte[]>();
+        HashMap<String, byte[]> runtime = new HashMap<>();
+        HashMap<String, byte[]> devtime = new HashMap<>();
 
         createBinPatches(runtime, "client/", getCleanClient(), getDirtyJar());
         createBinPatches(runtime, "server/", getCleanServer(), getDirtyJar());
@@ -95,33 +100,22 @@ public class GenBinaryPatches extends DefaultTask {
     }
 
     private void loadMappings() throws Exception {
-        Files.asCharSource(getSrg(), Charset.defaultCharset()).readLines(new LineProcessor<String>() {
-
-            Splitter splitter = Splitter.on(CharMatcher.anyOf(": ")).omitEmptyStrings().trimResults();
-
-            @Override
-            public boolean processLine(String line) throws IOException {
-                if (!line.startsWith("CL")) {
-                    return true;
-                }
-
-                String[] parts = Iterables.toArray(splitter.split(line), String.class);
-                obfMapping.put(parts[1], parts[2]);
-                String srgName = parts[2].substring(parts[2].lastIndexOf('/') + 1);
-                srgMapping.put(srgName, parts[1]);
-                int innerDollar = srgName.lastIndexOf('$');
-                if (innerDollar > 0) {
-                    String outer = srgName.substring(0, innerDollar);
-                    innerClasses.put(outer, srgName);
-                }
-                return true;
+        Splitter splitter = Splitter.on(CharMatcher.anyOf(": ")).omitEmptyStrings().trimResults();
+        for (String line : Files.readAllLines(getSrg().toPath(), Charset.defaultCharset())) {
+            if (!line.startsWith("CL")) {
+                continue;
             }
 
-            @Override
-            public String getResult() {
-                return null;
+            String[] parts = Iterables.toArray(splitter.split(line), String.class);
+            obfMapping.put(parts[1], parts[2]);
+            String srgName = parts[2].substring(parts[2].lastIndexOf('/') + 1);
+            srgMapping.put(srgName, parts[1]);
+            int innerDollar = srgName.lastIndexOf('$');
+            if (innerDollar > 0) {
+                String outer = srgName.substring(0, innerDollar);
+                innerClasses.put(outer, srgName);
             }
-        });
+        }
     }
 
     private void createBinPatches(HashMap<String, byte[]> patches, String root, File base, File target) throws Exception {
@@ -189,12 +183,12 @@ public class GenBinaryPatches extends DefaultTask {
         JarInputStream in = new JarInputStream(new ByteArrayInputStream(data));
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Packer packer = Pack200.newPacker();
+        Pack200.Packer packer = Pack200.newPacker();
 
         SortedMap<String, String> props = packer.properties();
-        props.put(Packer.EFFORT, "9");
-        props.put(Packer.KEEP_FILE_ORDER, Packer.TRUE);
-        props.put(Packer.UNKNOWN_ATTRIBUTE, Packer.PASS);
+        props.put(Pack200.Packer.EFFORT, "9");
+        props.put(Pack200.Packer.KEEP_FILE_ORDER, Pack200.Packer.TRUE);
+        props.put(Pack200.Packer.UNKNOWN_ATTRIBUTE, Pack200.Packer.PASS);
 
         final PrintStream err = new PrintStream(System.err);
         System.setErr(new PrintStream(ByteStreams.nullOutputStream()));
@@ -216,7 +210,7 @@ public class GenBinaryPatches extends DefaultTask {
     }
 
     private void buildOutput(byte[] runtime, byte[] devtime) throws Exception {
-        JarOutputStream out = new JarOutputStream(new FileOutputStream(getOutJar()));
+        JarOutputStream out = new JarOutputStream(Files.newOutputStream(getOutJar().toPath()));
         JarFile in = new JarFile(getDirtyJar());
 
         if (runtime != null) {

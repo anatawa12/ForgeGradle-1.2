@@ -16,18 +16,13 @@ public abstract class DelayedBase<V> extends Closure<V> {
     public boolean resolveOnce = true;
     @SuppressWarnings("rawtypes")
     protected IDelayedResolver[] resolvers;
-    public static final IDelayedResolver<BaseExtension> RESOLVER = new IDelayedResolver<BaseExtension>() {
-        @Override
-        public String resolve(String pattern, Project project, BaseExtension extension) {
-            return pattern;
-        }
-    };
+    public static final IDelayedResolver<BaseExtension> RESOLVER = (pattern, project, extension) -> pattern;
 
-    @SuppressWarnings("unchecked")
     public DelayedBase(Project owner, String pattern) {
         this(owner, pattern, RESOLVER);
     }
 
+    @SafeVarargs
     public DelayedBase(Project owner, String pattern, IDelayedResolver<? extends BaseExtension>... resolvers) {
         super(owner);
         this.project = owner;
@@ -52,8 +47,8 @@ public abstract class DelayedBase<V> extends Closure<V> {
     }
 
     // interface
-    public static interface IDelayedResolver<K extends BaseExtension> {
-        public String resolve(String pattern, Project project, K extension);
+    public interface IDelayedResolver<K extends BaseExtension> {
+        String resolve(String pattern, Project project, K extension);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

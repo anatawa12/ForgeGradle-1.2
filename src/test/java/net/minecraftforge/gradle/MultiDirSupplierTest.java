@@ -2,7 +2,6 @@ package net.minecraftforge.gradle;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.io.Files;
 import net.minecraftforge.srg2source.util.io.InputSupplier;
 import org.junit.After;
 import org.junit.Assert;
@@ -13,13 +12,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
 public class MultiDirSupplierTest {
-    private final List<File> dirs = new LinkedList<File>();
+    private final List<File> dirs = new LinkedList<>();
     private final Multimap<File, String> expectedFiles = HashMultimap.create();
     private final Random rand = new Random();
     private static final String END = ".tmp";
@@ -30,7 +31,7 @@ public class MultiDirSupplierTest {
 
         for (int i = 0; i < dirNum; i++) {
             // create and add dir
-            File dir = Files.createTempDir().getCanonicalFile();
+            File dir = Files.createTempDirectory(Paths.get(System.getProperty("java.io.tmpdir")), System.currentTimeMillis() + "-").toFile();
             dirs.add(dir);
 
             int fileNum = rand.nextInt(9) + 1; // 0-10
@@ -100,7 +101,7 @@ public class MultiDirSupplierTest {
     @Test
     public void testIOStreams() throws IOException {
         // to keep track of changes to check later.
-        HashMap<String, byte[]> dataMap = new HashMap<String, byte[]>(expectedFiles.size());
+        HashMap<String, byte[]> dataMap = new HashMap<>(expectedFiles.size());
 
         // its both an input and output supplier.
         MultiDirSupplier supp = new MultiDirSupplier(dirs);

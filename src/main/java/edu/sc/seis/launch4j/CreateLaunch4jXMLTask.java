@@ -21,12 +21,12 @@ import java.util.regex.Pattern;
 public class CreateLaunch4jXMLTask extends DefaultTask {
     @OutputFile
     public File getXmlOutFile() {
-        return ((Launch4jPluginExtension) getProject().getExtensions().getByName(Launch4jPlugin.LAUNCH4J_CONFIGURATION_NAME)).getXmlOutFileForProject(getProject());
+        return ((Launch4jPluginExtension) getExtensions().getByName(Launch4jPlugin.LAUNCH4J_CONFIGURATION_NAME)).getXmlOutFileForProject(getProject());
     }
 
     @TaskAction
     public void writeXmlConfig() throws ParserConfigurationException, TransformerException {
-        Launch4jPluginExtension cfg = (Launch4jPluginExtension) getProject().getExtensions().getByName("launch4j");
+        Launch4jPluginExtension cfg = (Launch4jPluginExtension) getExtensions().getByName("launch4j");
 
         File file = getXmlOutFile();
         file.getParentFile().mkdirs();
@@ -166,9 +166,6 @@ public class CreateLaunch4jXMLTask extends DefaultTask {
      * launch4j fileVersion and productVersion are required to be x.y.z.w format, no text like beta or
      * SNAPSHOT. I think this is a windows thing. So we check the version, and if it is only dots and
      * numbers, we use it. If not we use 0.0.0.1
-     *
-     * @param version
-     * @return
      */
     private String parseDotVersion(String version) {
         if (VERSION1.matcher(version).matches()) {

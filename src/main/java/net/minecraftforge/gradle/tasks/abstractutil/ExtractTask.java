@@ -11,10 +11,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Enumeration;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -22,16 +19,16 @@ public class ExtractTask extends CachedTask {
     private final AntPathMatcher antMatcher = new AntPathMatcher();
 
     @InputFiles
-    private LinkedHashSet<DelayedFile> sourcePaths = new LinkedHashSet<DelayedFile>();
+    private final LinkedHashSet<DelayedFile> sourcePaths = new LinkedHashSet<>();
 
     @Input
-    private List<String> excludes = new LinkedList<String>();
+    private final List<String> excludes = new LinkedList<>();
 
     @Input
-    private List<Closure<Boolean>> excludeCalls = new LinkedList<Closure<Boolean>>();
+    private final List<Closure<Boolean>> excludeCalls = new LinkedList<>();
 
     @Input
-    private List<String> includes = new LinkedList<String>();
+    private final List<String> includes = new LinkedList<>();
 
     @Input
     private boolean includeEmptyDirs = true;
@@ -55,8 +52,7 @@ public class ExtractTask extends CachedTask {
         for (DelayedFile source : sourcePaths) {
             getLogger().debug("Extracting: " + source);
 
-            ZipFile input = new ZipFile(source.call());
-            try {
+            try (ZipFile input = new ZipFile(source.call())) {
                 Enumeration<? extends ZipEntry> itr = input.entries();
 
                 while (itr.hasMoreElements()) {
@@ -84,13 +80,11 @@ public class ExtractTask extends CachedTask {
                         }
                     }
                 }
-            } finally {
-                input.close();
             }
         }
     }
 
-    private void delete(File f) throws IOException {
+    private void delete(File f) {
         if (f.isDirectory()) {
             for (File c : f.listFiles())
                 delete(c);
@@ -107,7 +101,7 @@ public class ExtractTask extends CachedTask {
         }
 
         for (Closure<Boolean> exclude : excludeCalls) {
-            if (exclude.call(path).booleanValue()) {
+            if (exclude.call(path)) {
                 return false;
             }
         }
@@ -122,9 +116,7 @@ public class ExtractTask extends CachedTask {
     }
 
     public ExtractTask from(DelayedFile... paths) {
-        for (DelayedFile path : paths) {
-            sourcePaths.add(path);
-        }
+        sourcePaths.addAll(Arrays.asList(paths));
         return this;
     }
 
@@ -147,9 +139,7 @@ public class ExtractTask extends CachedTask {
     }
 
     public ExtractTask include(String... paterns) {
-        for (String patern : paterns) {
-            includes.add(patern);
-        }
+        Collections.addAll(includes, paterns);
         return this;
     }
 
@@ -158,9 +148,7 @@ public class ExtractTask extends CachedTask {
     }
 
     public ExtractTask exclude(String... paterns) {
-        for (String patern : paterns) {
-            excludes.add(patern);
-        }
+        Collections.addAll(excludes, paterns);
         return this;
     }
 
@@ -173,7 +161,7 @@ public class ExtractTask extends CachedTask {
     }
 
     public FileCollection getSourcePaths() {
-        FileCollection collection = getProject().files(new Object[]{});
+        FileCollection collection = getProject().files();
 
         for (DelayedFile file : sourcePaths)
             collection = collection.plus(getProject().files(file));

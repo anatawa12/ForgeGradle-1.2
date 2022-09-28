@@ -14,7 +14,6 @@ import org.gradle.api.tasks.TaskAction;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -28,7 +27,7 @@ public class ObtainFernFlowerTask extends CachedTask {
     private DelayedFile ffJar;
 
     @TaskAction
-    public void doTask() throws MalformedURLException, IOException {
+    public void doTask() throws IOException {
         if (getProject().getGradle().getStartParameter().isOffline()) {
             getLogger().error("Offline mode! not downloading Fernflower!");
             this.setDidWork(false);
@@ -46,7 +45,7 @@ public class ObtainFernFlowerTask extends CachedTask {
         connect.setInstanceFollowRedirects(true);
 
         final ZipInputStream zin = new ZipInputStream(connect.getInputStream());
-        ZipEntry entry = null;
+        ZipEntry entry;
 
         while ((entry = zin.getNextEntry()) != null) {
             if (StringUtils.lower(entry.getName()).endsWith("fernflower.jar")) {
