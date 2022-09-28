@@ -6,7 +6,6 @@ plugins {
 group = project(":").group
 version = project(":").version
 
-@Suppress("UnstableApiUsage")
 java {
     withJavadocJar()
     withSourcesJar()
@@ -25,10 +24,10 @@ publishing {
     publications {
         val bintray by this.creating(MavenPublication::class) {
             from(components["java"])
-            artifactId = base.archivesBaseName
+            artifactId = base.archivesName.get()
 
             pom {
-                name.set(project.base.archivesBaseName)
+                name.set(project.base.archivesName.get())
                 description.set("Gradle plugin for Forge, a separated part because of dependencies")
                 url.set("https://github.com/anatawa12/ForgeGradle-1.2")
 
