@@ -2,12 +2,12 @@ package net.minecraftforge.gradle.curseforge;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectIntHashMap;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.ArchiveTaskHelper;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.StringUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -186,7 +187,7 @@ public class CurseUploadTask extends DefaultTask {
 
         String etag;
         if (etagFile.exists()) {
-            etag = Files.asCharSource(etagFile, StandardCharsets.UTF_8).read();
+            etag = FileUtils.readString(etagFile);
         } else {
             etag = "";
         }
@@ -207,17 +208,17 @@ public class CurseUploadTask extends DefaultTask {
 
         if (statusCode == 304) // cached
         {
-            out = Files.asCharSource(cache, StandardCharsets.UTF_8).read();
+            out = FileUtils.readString(cache);
         } else if (statusCode == 200) {
             InputStream stream = response.getEntity().getContent();
             byte[] data = ByteStreams.toByteArray(stream);
-            Files.write(data, cache);
+            Files.write(cache.toPath(), data);
             stream.close();
             out = new String(data, StandardCharsets.UTF_8);
 
             Header etagHeader = response.getFirstHeader("ETag");
             if (etagHeader != null) {
-                Files.asCharSink(etagFile, StandardCharsets.UTF_8).write(etagHeader.getValue());
+                Files.write(etagFile.toPath(), etagHeader.getValue().getBytes(StandardCharsets.UTF_8));
             }
         } else if (response.getEntity().getContentType().getValue().contains("json")) {
             InputStreamReader stream = new InputStreamReader(response.getEntity().getContent());

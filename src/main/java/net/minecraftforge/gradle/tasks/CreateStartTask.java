@@ -1,7 +1,6 @@
 package net.minecraftforge.gradle.tasks;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.common.Constants;
@@ -15,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -51,7 +51,7 @@ public class CreateStartTask extends CachedTask {
             // write file
             File outFile = new File(resourceDir, resEntry.getKey());
             outFile.getParentFile().mkdirs();
-            Files.asCharSink(outFile, StandardCharsets.UTF_8).write(out);
+            Files.write(outFile.toPath(), out.getBytes(StandardCharsets.UTF_8));
         }
 
         // now compile, if im compiling.

@@ -4,7 +4,6 @@ import com.anatawa12.forge.gradle.separated.SeparatedLauncher;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -42,6 +41,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -325,12 +325,12 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                         if (!json.exists())
                             return true;
 
-                        List<String> lines = java.nio.file.Files.readAllLines(json.toPath());
+                        List<String> lines = Files.readAllLines(json.toPath());
                         StringBuilder buf = new StringBuilder();
                         for (String line : lines) {
                             buf = buf.append(line).append('\n');
                         }
-                        java.nio.file.Files.write(json.toPath(), buf.toString().getBytes(StandardCharsets.UTF_8));
+                        Files.write(json.toPath(), buf.toString().getBytes(StandardCharsets.UTF_8));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -471,15 +471,15 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     protected String getWithEtag(String strUrl, File cache, File etagFile) {
         try {
             if (project.getGradle().getStartParameter().isOffline()) // dont even try the internet
-                return new String(java.nio.file.Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
+                return new String(Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
 
             // dude, its been less than 5 minutes since the last time..
             if (cache.exists() && cache.lastModified() + 300000 >= System.currentTimeMillis())
-                return new String(java.nio.file.Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
+                return new String(Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
 
             String etag;
             if (etagFile.exists()) {
-                etag = new String(java.nio.file.Files.readAllBytes(etagFile.toPath()), StandardCharsets.UTF_8);
+                etag = new String(Files.readAllBytes(etagFile.toPath()), StandardCharsets.UTF_8);
             } else {
                 etagFile.getParentFile().mkdirs();
                 etag = "";
@@ -500,20 +500,20 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             String out = null;
             if (con.getResponseCode() == 304) {
                 // the existing file is good
-                Files.touch(cache); // touch it to update last-modified time
-                out = new String(java.nio.file.Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
+                FileUtils.updateDate(cache); // touch it to update last-modified time
+                out = new String(Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
             } else if (con.getResponseCode() == 200) {
                 InputStream stream = con.getInputStream();
                 byte[] data = ByteStreams.toByteArray(stream);
-                java.nio.file.Files.write(cache.toPath(), data);
+                Files.write(cache.toPath(), data);
                 stream.close();
 
                 // write etag
                 etag = con.getHeaderField("ETag");
                 if (Strings.isNullOrEmpty(etag)) {
-                    Files.touch(etagFile);
+                    FileUtils.updateDate(etagFile);
                 } else {
-                    java.nio.file.Files.write(etagFile.toPath(), etag.getBytes(StandardCharsets.UTF_8));
+                    Files.write(etagFile.toPath(), etag.getBytes(StandardCharsets.UTF_8));
                 }
 
                 out = new String(data);
@@ -530,7 +530,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
 
         if (cache.exists()) {
             try {
-                return new String(java.nio.file.Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
+                return new String(Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

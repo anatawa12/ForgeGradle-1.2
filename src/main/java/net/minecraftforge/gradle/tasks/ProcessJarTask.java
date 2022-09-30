@@ -1,8 +1,6 @@
 package net.minecraftforge.gradle.tasks;
 
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-import com.google.common.io.LineProcessor;
 import de.oceanlabs.mcp.mcinjector.MCInjectorImpl;
 import net.md_5.specialsource.*;
 import net.md_5.specialsource.provider.JarProvider;
@@ -25,6 +23,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -131,7 +130,7 @@ public class ProcessJarTask extends CachedTask {
         final Map<String, String> renames = new HashMap<>();
         for (File f : new File[]{getFieldCsv(), getMethodCsv()}) {
             if (f == null) continue;
-            for (String line : java.nio.file.Files.readAllLines(f.toPath())) {
+            for (String line : Files.readAllLines(f.toPath())) {
                 String[] pts = line.split(",");
                 if (!"searge".equals(pts[0])) {
                     renames.put(pts[0], pts[1]);
@@ -241,40 +240,30 @@ public class ProcessJarTask extends CachedTask {
             for (File at : ats) {
                 getLogger().info("loading AT: " + at.getCanonicalPath());
 
-                Files.asCharSource(at, Charset.defaultCharset()).readLines(new LineProcessor<Object>() {
-                    @Override
-                    public boolean processLine(String line) {
-                        if (line.indexOf('#') != -1) line = line.substring(0, line.indexOf('#'));
-                        line = line.trim().replace('.', '/');
-                        if (line.isEmpty()) return true;
+                for (String line : Files.readAllLines(at.toPath(), Charset.defaultCharset())) {
+                    if (line.indexOf('#') != -1) line = line.substring(0, line.indexOf('#'));
+                    line = line.trim().replace('.', '/');
+                    if (line.isEmpty()) continue;
 
-                        String[] s = line.split(" ");
-                        if (s.length == 2 && s[1].indexOf('$') > 0) {
-                            String parent = s[1].substring(0, s[1].indexOf('$'));
-                            for (MCInjectorStruct cls : new MCInjectorStruct[]{struct.get(parent), struct.get(s[1])}) {
-                                if (cls != null && cls.innerClasses != null) {
-                                    for (InnerClass inner : cls.innerClasses) {
-                                        if (inner.inner_class.equals(s[1])) {
-                                            int access = fixAccess(inner.getAccess(), s[0]);
-                                            inner.access = (access == 0 ? null : Integer.toHexString(access));
-                                        }
+                    String[] s = line.split(" ");
+                    if (s.length == 2 && s[1].indexOf('$') > 0) {
+                        String parent = s[1].substring(0, s[1].indexOf('$'));
+                        for (MCInjectorStruct cls : new MCInjectorStruct[]{struct.get(parent), struct.get(s[1])}) {
+                            if (cls != null && cls.innerClasses != null) {
+                                for (InnerClass inner : cls.innerClasses) {
+                                    if (inner.inner_class.equals(s[1])) {
+                                        int access = fixAccess(inner.getAccess(), s[0]);
+                                        inner.access = (access == 0 ? null : Integer.toHexString(access));
                                     }
                                 }
                             }
                         }
-
-                        return true;
                     }
-
-                    @Override
-                    public Object getResult() {
-                        return null;
-                    }
-                });
+                }
             }
             File jsonTmp = new File(this.getTemporaryDir(), "transformed.json");
             json = jsonTmp.getCanonicalPath();
-            Files.write(JsonFactory.GSON.toJson(struct).getBytes(), jsonTmp);
+            Files.write(jsonTmp.toPath(), JsonFactory.GSON.toJson(struct).getBytes());
         }
 
         BaseExtension exten = (BaseExtension) getProject().getExtensions().getByName(EXT_NAME_MC);
@@ -299,7 +288,7 @@ public class ProcessJarTask extends CachedTask {
 
     private void stripSynthetics(File inJar, File outJar) throws IOException {
         ZipFile in = new ZipFile(inJar);
-        final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outJar)));
+        final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(outJar.toPath())));
 
         for (ZipEntry e : Collections.list(in.entries())) {
             if (e.getName().contains("META-INF"))

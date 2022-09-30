@@ -234,7 +234,7 @@ public class McpCleanup {
                 val = Integer.parseInt(matcher.group(1), 16);
                 // work around the replace('\u00a7', '$') call in MinecraftServer and a couple of '\u0000'
                 if (val > 255) {
-                    matcher.appendReplacement(buffer, Matcher.quoteReplacement("" + val));
+                    matcher.appendReplacement(buffer, Matcher.quoteReplacement(String.valueOf(val)));
                 }
             }
             matcher.appendTail(buffer);

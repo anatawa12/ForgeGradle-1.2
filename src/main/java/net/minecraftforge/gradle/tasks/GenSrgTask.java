@@ -1,7 +1,6 @@
 package net.minecraftforge.gradle.tasks;
 
 import au.com.bytecode.opencsv.CSVReader;
-import com.google.common.io.Files;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
 import net.minecraftforge.srg2source.rangeapplier.MethodData;
@@ -15,6 +14,7 @@ import org.gradle.api.tasks.TaskAction;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -128,18 +128,18 @@ public class GenSrgTask extends CachedTask {
 
     private void writeOutSrgs(SrgContainer inSrg, Map<String, String> methods, Map<String, String> fields) throws IOException {
         // ensure folders exist
-        Files.createParentDirs(getNotchToSrg());
-        Files.createParentDirs(getNotchToMcp());
-        Files.createParentDirs(getSrgToMcp());
-        Files.createParentDirs(getMcpToSrg());
-        Files.createParentDirs(getMcpToNotch());
+        getNotchToSrg().getParentFile().mkdirs();
+        getNotchToMcp().getParentFile().mkdirs();
+        getSrgToMcp().getParentFile().mkdirs();
+        getMcpToSrg().getParentFile().mkdirs();
+        getMcpToNotch().getParentFile().mkdirs();
 
         // create streams
-        BufferedWriter notchToSrg = java.nio.file.Files.newBufferedWriter(getNotchToSrg().toPath());
-        BufferedWriter notchToMcp = java.nio.file.Files.newBufferedWriter(getNotchToMcp().toPath());
-        BufferedWriter srgToMcp = java.nio.file.Files.newBufferedWriter(getSrgToMcp().toPath());
-        BufferedWriter mcpToSrg = java.nio.file.Files.newBufferedWriter(getMcpToSrg().toPath());
-        BufferedWriter mcpToNotch = java.nio.file.Files.newBufferedWriter(getMcpToNotch().toPath());
+        BufferedWriter notchToSrg = Files.newBufferedWriter(getNotchToSrg().toPath());
+        BufferedWriter notchToMcp = Files.newBufferedWriter(getNotchToMcp().toPath());
+        BufferedWriter srgToMcp = Files.newBufferedWriter(getSrgToMcp().toPath());
+        BufferedWriter mcpToSrg = Files.newBufferedWriter(getMcpToSrg().toPath());
+        BufferedWriter mcpToNotch = Files.newBufferedWriter(getMcpToNotch().toPath());
 
         String line, temp, mcpName;
         // packages
@@ -271,15 +271,15 @@ public class GenSrgTask extends CachedTask {
 
     private void writeOutExcs(Map<String, String> excRemap, Map<String, String> methods) throws IOException {
         // ensure folders exist
-        Files.createParentDirs(getSrgExc());
-        Files.createParentDirs(getMcpExc());
+        getSrgExc().getParentFile().mkdirs();
+        getMcpExc().getParentFile().mkdirs();
 
         // create streams
-        BufferedWriter srgOut = java.nio.file.Files.newBufferedWriter(getSrgExc().toPath());
-        BufferedWriter mcpOut = java.nio.file.Files.newBufferedWriter(getMcpExc().toPath());
+        BufferedWriter srgOut = Files.newBufferedWriter(getSrgExc().toPath());
+        BufferedWriter mcpOut = Files.newBufferedWriter(getMcpExc().toPath());
 
         // read and write existing lines
-        List<String> excLines = java.nio.file.Files.readAllLines(getInExc().toPath());
+        List<String> excLines = Files.readAllLines(getInExc().toPath());
         String[] split;
         for (String line : excLines) {
             // its already in SRG names.
@@ -312,7 +312,7 @@ public class GenSrgTask extends CachedTask {
         }
 
         for (File f : getExtraExcs()) {
-            List<String> lines = java.nio.file.Files.readAllLines(f.toPath());
+            List<String> lines = Files.readAllLines(f.toPath());
 
             for (String line : lines) {
                 // these are in MCP names

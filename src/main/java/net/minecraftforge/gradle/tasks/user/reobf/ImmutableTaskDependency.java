@@ -11,7 +11,7 @@ public class ImmutableTaskDependency implements TaskDependency {
     private final ImmutableSet<? extends Task> immutableValues;
 
     public ImmutableTaskDependency() {
-        this(ImmutableSet.<Task>of());
+        this(ImmutableSet.of());
     }
 
     public ImmutableTaskDependency(ImmutableSet<? extends Task> immutableValues) {

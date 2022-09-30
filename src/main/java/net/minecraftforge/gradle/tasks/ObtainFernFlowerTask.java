@@ -1,7 +1,7 @@
 package net.minecraftforge.gradle.tasks;
 
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.StringUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -50,8 +51,8 @@ public class ObtainFernFlowerTask extends CachedTask {
         while ((entry = zin.getNextEntry()) != null) {
             if (StringUtils.lower(entry.getName()).endsWith("fernflower.jar")) {
                 ff.getParentFile().mkdirs();
-                Files.touch(ff);
-                Files.write(ByteStreams.toByteArray(zin), ff);
+                FileUtils.updateDate(ff);
+                Files.write(ff.toPath(), ByteStreams.toByteArray(zin));
             }
         }
 

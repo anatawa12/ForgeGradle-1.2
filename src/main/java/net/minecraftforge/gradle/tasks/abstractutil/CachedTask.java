@@ -1,7 +1,7 @@
 package net.minecraftforge.gradle.tasks.abstractutil;
 
-import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.common.Constants;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Task;
@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 
 /**
@@ -94,7 +95,7 @@ public abstract class CachedTask extends DefaultTask {
                         return true;
                     }
 
-                    String foundMD5 = Files.asCharSource(getHashFile(file), Charset.defaultCharset()).read();
+                    String foundMD5 = FileUtils.readString(getHashFile(file), Charset.defaultCharset());
                     String calcMD5 = getHashes(field, inputList, task);
 
                     if (!calcMD5.equals(foundMD5)) {
@@ -132,7 +133,7 @@ public abstract class CachedTask extends DefaultTask {
                 File outFile = getProject().file(annot.getValue(task));
                 if (outFile.exists()) {
                     File hashFile = getHashFile(outFile);
-                    Files.asCharSink(hashFile, Charset.defaultCharset()).write(getHashes(annot, inputList, task));
+                    Files.write(hashFile.toPath(), getHashes(annot, inputList, task).getBytes(Charset.defaultCharset()));
                 }
             }
             // error? spit it and do the task.

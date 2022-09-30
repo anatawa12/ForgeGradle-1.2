@@ -114,6 +114,7 @@ public class ExtensionMcpMappingTest {
         this.ext.setMappings("abrar_blahblah");
     }
 
+    @Test
     public void testValidCustom() {
         this.ext.setVersion(VERSION_17);
         this.ext.setMappings("abrar_custom");

@@ -1,7 +1,6 @@
 package net.minecraftforge.gradle.tasks.dev;
 
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import groovy.lang.Closure;
@@ -18,6 +17,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -48,7 +49,7 @@ public class ChangelogTask extends DefaultTask {
     public void doTask() throws IOException {
         if (getAuthName() != null && getAuthPassword() != null) {
             String raw = getAuthName() + ":" + getAuthPassword();
-            auth = "Basic " + new String(Base64.getEncoder().encode(raw.getBytes()));
+            auth = "Basic " + new String(Base64.getEncoder().encode(raw.getBytes()), Charset.defaultCharset());
         }
 
         List<Map<String, Object>> builds = getBuildInfo();
@@ -80,7 +81,7 @@ public class ChangelogTask extends DefaultTask {
             out.append('\n');
         }
 
-        Files.write(out.toString().getBytes(), getOutput());
+        Files.write(getOutput().toPath(), out.toString().getBytes());
         getProject().getArtifacts().add("archives", getOutput());
     }
 

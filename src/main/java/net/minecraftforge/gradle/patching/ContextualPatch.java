@@ -984,6 +984,7 @@ public final class ContextualPatch {
             }
             for (int x = 0; x < t.length; x++) {
                 if (isAccess(t[x]) && isAccess(h[x])) {
+                    continue;
                 } else if (!t[x].equals(h[x])) {
                     if (isLabel(t[x]) && isLabel(h[x]))
                         continue;

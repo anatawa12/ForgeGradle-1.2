@@ -34,5 +34,4 @@ public class EnumFixerTest {
     private String readResource(String name) throws IOException {
         return Resources.toString(Resources.getResource(name), StandardCharsets.UTF_8);
     }
-
 }

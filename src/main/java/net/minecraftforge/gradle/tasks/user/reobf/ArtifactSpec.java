@@ -1,9 +1,9 @@
 package net.minecraftforge.gradle.tasks.user.reobf;
 
 import com.google.common.base.Strings;
-import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.ArchiveTaskHelper;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.user.UserConstants;
@@ -35,13 +35,13 @@ public class ArtifactSpec {
 
     public ArtifactSpec(File file, Project proj) {
         archiveName = file.getName();
-        extension = Files.getFileExtension(file.getName());
+        extension = FileUtils.getFileExtension(file.getName());
         project = proj;
     }
 
     public ArtifactSpec(String file, Project proj) {
         archiveName = file;
-        extension = Files.getFileExtension(file);
+        extension = FileUtils.getFileExtension(file);
         project = proj;
     }
 

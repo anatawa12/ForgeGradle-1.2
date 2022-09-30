@@ -1,5 +1,6 @@
 package net.minecraftforge.gradle.user.patch;
 
+import net.minecraftforge.gradle.JavaExtensionHelper;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.tasks.ProcessJarTask;
@@ -10,8 +11,8 @@ import net.minecraftforge.gradle.user.UserBasePlugin;
 import net.minecraftforge.gradle.user.UserConstants;
 import org.apache.tools.ant.types.Commandline;
 import org.gradle.api.Project;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -127,10 +128,10 @@ public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtens
 
         // from the resources dirs
         {
-            JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
+            SourceSetContainer javaConv = JavaExtensionHelper.getSourceSet(project);
 
-            SourceSet main = javaConv.getSourceSets().getByName("main");
-            SourceSet api = javaConv.getSourceSets().getByName("api");
+            SourceSet main = javaConv.getByName(SourceSet.MAIN_SOURCE_SET_NAME);
+            SourceSet api = javaConv.getByName("api");
 
             for (File at : main.getResources().getFiles()) {
                 if (at.getName().toLowerCase().endsWith("_at.cfg")) {

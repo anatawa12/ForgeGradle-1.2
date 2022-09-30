@@ -1,8 +1,8 @@
 package net.minecraftforge.gradle.tasks.dev;
 
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.InputFile;
@@ -12,6 +12,7 @@ import org.gradle.api.tasks.TaskAction;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Map;
 
 public class VersionJsonTask extends DefaultTask {
@@ -26,12 +27,11 @@ public class VersionJsonTask extends DefaultTask {
     @SuppressWarnings("unchecked")
     @TaskAction
     public void doTask() throws IOException {
-
-        String data = Files.asCharSource(getInput(), StandardCharsets.UTF_8).read();
+        String data = FileUtils.readString(getInput(), StandardCharsets.UTF_8);
         Map<String, Object> json = (Map<String, Object>) new Gson().fromJson(data, Map.class);
         json = (Map<String, Object>) json.get("versionInfo");
         data = GSON_FORMATTER.toJson(json);
-        Files.write(data.getBytes(), getOutput());
+        Files.write(getOutput().toPath(), data.getBytes());
     }
 
     public File getInput() {

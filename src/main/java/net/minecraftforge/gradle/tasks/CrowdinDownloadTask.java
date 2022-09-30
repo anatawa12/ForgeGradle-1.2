@@ -2,8 +2,8 @@ package net.minecraftforge.gradle.tasks;
 
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.common.Constants;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -108,17 +109,17 @@ public class CrowdinDownloadTask extends DefaultTask {
 
                 getLogger().debug("Extracting file: " + entry.getName());
                 File out = new File(output, entry.getName());
-                Files.createParentDirs(out);
-                Files.touch(out);
-                Files.write(ByteStreams.toByteArray(zStream), out);
+                output.mkdirs();
+                FileUtils.updateDate(out);
+                Files.write(out.toPath(), ByteStreams.toByteArray(zStream));
                 zStream.closeEntry();
             }
 
             zStream.close();
         } else {
-            Files.createParentDirs(output);
-            Files.touch(output);
-            Files.write(ByteStreams.toByteArray(stream), output);
+            output.mkdirs();
+            FileUtils.updateDate(output);
+            Files.write(output.toPath(), ByteStreams.toByteArray(stream));
             stream.close();
         }
 

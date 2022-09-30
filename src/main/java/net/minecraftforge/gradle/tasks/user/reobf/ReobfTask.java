@@ -1,7 +1,7 @@
 package net.minecraftforge.gradle.tasks.user.reobf;
 
-import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -271,7 +273,7 @@ public class ReobfTask extends DefaultTask {
             exc = getExceptor();
             exc.buildSrg(getSrg(), srg);
         } else
-            Files.copy(getSrg(), srg);
+            Files.copy(getSrg().toPath(), srg.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         // generate extraSrg
         {
@@ -280,7 +282,7 @@ public class ReobfTask extends DefaultTask {
                 extraSrg.createNewFile();
             }
 
-            BufferedWriter writer = java.nio.file.Files.newBufferedWriter(extraSrg.toPath());
+            BufferedWriter writer = Files.newBufferedWriter(extraSrg.toPath());
             for (String line : getExtraSrg()) {
                 writer.write(line);
                 writer.newLine();
@@ -431,11 +433,11 @@ public class ReobfTask extends DefaultTask {
             File f = getProject().file(thing);
             if (f.isDirectory()) {
                 for (File nested : getProject().fileTree(f)) {
-                    if ("srg".equalsIgnoreCase(Files.getFileExtension(nested.getName()))) {
+                    if ("srg".equalsIgnoreCase(FileUtils.getFileExtension(nested.getName()))) {
                         files.add(nested.getAbsoluteFile());
                     }
                 }
-            } else if ("srg".equalsIgnoreCase(Files.getFileExtension(f.getName()))) {
+            } else if ("srg".equalsIgnoreCase(FileUtils.getFileExtension(f.getName()))) {
                 files.add(f.getAbsoluteFile());
             }
         }

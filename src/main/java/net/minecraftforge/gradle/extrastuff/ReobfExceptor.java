@@ -2,13 +2,12 @@ package net.minecraftforge.gradle.extrastuff;
 
 import com.google.common.base.Joiner;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-import com.google.common.io.LineProcessor;
 import de.oceanlabs.mcp.mcinjector.StringUtil;
 import org.objectweb.asm.*;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -39,8 +38,12 @@ public class ReobfExceptor {
             outSrg.delete();
 
         // rewrite it.
-        String fixed = Files.asCharSource(inSrg, Charset.defaultCharset()).readLines(new SrgLineProcessor(clsMap, access));
-        Files.write(fixed.getBytes(), outSrg);
+        SrgLineProcessor processor = new SrgLineProcessor(clsMap, access);
+        for (String line : Files.readAllLines(inSrg.toPath(), Charset.defaultCharset())) {
+            processor.processLine(line);
+        }
+        String fixed = processor.getResult();
+        Files.write(outSrg.toPath(), fixed.getBytes());
     }
 
     /**
@@ -72,7 +75,7 @@ public class ReobfExceptor {
         for (File f : csvs) {
             if (f == null) continue;
 
-            for (String line : java.nio.file.Files.readAllLines(f.toPath(), Charset.defaultCharset())) {
+            for (String line : Files.readAllLines(f.toPath(), Charset.defaultCharset())) {
                 String[] s = line.split(",");
                 csvData.put(s[0], s[1]);
             }
@@ -122,7 +125,7 @@ public class ReobfExceptor {
 
     private Map<String, String> createClassMap(Map<String, String> markerMap, final List<String> interfaces) throws IOException {
         Map<String, String> excMap = new HashMap<>();
-        for (String line : java.nio.file.Files.readAllLines(excConfig.toPath(), Charset.defaultCharset())) {
+        for (String line : Files.readAllLines(excConfig.toPath(), Charset.defaultCharset())) {
             if (line.contains(".") ||
                     !line.contains("=") ||
                     line.startsWith("#")) continue;
@@ -181,7 +184,7 @@ public class ReobfExceptor {
         return matched;
     }
 
-    private static class SrgLineProcessor implements LineProcessor<String> {
+    private static class SrgLineProcessor {
         Map<String, String> map;
         Map<String, String> access;
         StringBuilder out = new StringBuilder();
@@ -206,7 +209,6 @@ public class ReobfExceptor {
                     };
         }
 
-        @Override
         public boolean processLine(String line) {
             String[] split = line.split(" ");
             switch (split[0]) {
@@ -240,11 +242,9 @@ public class ReobfExceptor {
             return true;
         }
 
-        @Override
         public String getResult() {
             return out.toString();
         }
-
     }
 
     private static class JarInfo extends ClassVisitor {

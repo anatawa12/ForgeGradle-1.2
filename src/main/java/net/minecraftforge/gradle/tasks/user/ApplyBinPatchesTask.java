@@ -1,7 +1,5 @@
 package net.minecraftforge.gradle.tasks.user;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
 import com.nothome.delta.GDiffPatcher;
@@ -24,10 +22,12 @@ import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.*;
 
 public class ApplyBinPatchesTask extends CachedTask {
@@ -108,8 +108,7 @@ public class ApplyBinPatchesTask extends CachedTask {
 
             getResources().visit(new FileVisitor() {
                 @Override
-                public void visitDir(FileVisitDetails dirDetails) {
-                }
+                public void visitDir(FileVisitDetails dirDetails) {}
 
                 @Override
                 public void visitFile(FileVisitDetails file) {
@@ -123,10 +122,9 @@ public class ApplyBinPatchesTask extends CachedTask {
                             entries.add(name);
                         }
                     } catch (IOException e) {
-                        Throwables.throwIfUnchecked(e);
+                        throw new RuntimeException(e);
                     }
                 }
-
             });
         }
     }
@@ -169,7 +167,8 @@ public class ApplyBinPatchesTask extends CachedTask {
             }
         } while (true);
         log("Read %d binary patches", patchlist.size());
-        log("Patch list :\n\t%s", Joiner.on("\n\t").join(patchlist.entrySet()));
+        List<String> parts = patchlist.entrySet().stream().map(Object::toString).collect(Collectors.toList());
+        log("Patch list :\n\t%s", String.join("\n\t", parts));
     }
 
     private ClassPatch readPatch(JarEntry patchEntry, JarInputStream jis) throws IOException {

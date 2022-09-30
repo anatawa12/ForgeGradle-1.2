@@ -1,6 +1,13 @@
 package net.minecraftforge.gradle;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -18,8 +25,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -28,8 +33,8 @@ public abstract class GradleStartCommon {
     protected static Logger LOGGER = LogManager.getLogger("GradleStart");
     private static final String NO_CORE_SEARCH = "noCoreSearch";
 
-    private Map<String, String> argMap = new HashMap<>();
-    private List<String> extras = new ArrayList<>();
+    private Map<String, String> argMap = new HashMap<String, String>();
+    private List<String> extras = new ArrayList<String>();
 
     private static final File SRG_DIR = new File("@@SRGDIR@@");
     private static final File SRG_NOTCH_SRG = new File("@@SRG_NOTCH_SRG@@");
@@ -158,7 +163,7 @@ public abstract class GradleStartCommon {
         if (options.has(NO_CORE_SEARCH))
             argMap.put(NO_CORE_SEARCH, "");
 
-        extras = new ArrayList<>(nonOption.values(options));
+        extras = new ArrayList<String>(nonOption.values(options));
         LOGGER.info("Extra: " + extras);
     }
 
@@ -195,7 +200,7 @@ public abstract class GradleStartCommon {
     private static final String MOD_ATD_CLASS = "fml.common.asm.transformers.ModAccessTransformer";
     private static final String MOD_AT_METHOD = "addJar";
 
-    public static final Map<String, File> coreMap = new HashMap<>();
+    public static final Map<String, File> coreMap = new HashMap<String, File>();
 
     @SuppressWarnings("unchecked")
     private void searchCoremods() throws Exception {
@@ -243,11 +248,11 @@ public abstract class GradleStartCommon {
         }
 
         // set property.
-        Set<String> coremodsSet = new HashSet<>();
+        Set<String> coremodsSet = new HashSet<String>();
         if (!Strings.isNullOrEmpty(System.getProperty(COREMOD_VAR)))
-            coremodsSet.addAll(Arrays.asList(System.getProperty(COREMOD_VAR).split(",")));
+            coremodsSet.addAll(Splitter.on(',').splitToList(System.getProperty(COREMOD_VAR)));
         coremodsSet.addAll(coreMap.keySet());
-        System.setProperty(COREMOD_VAR, String.join(",", coremodsSet));
+        System.setProperty(COREMOD_VAR, Joiner.on(',').join(coremodsSet));
 
         // ok.. tweaker hack now.
         if (!Strings.isNullOrEmpty(getTweakClass())) {
@@ -319,7 +324,7 @@ public abstract class GradleStartCommon {
             }
 
             // read the field and method CSV files.
-            Map<String, String> nameMap = new HashMap<>();
+            Map<String, String> nameMap = new HashMap<String, String>();
             try {
                 readCsv(new File(CSV_DIR, "fields.csv"), nameMap);
                 readCsv(new File(CSV_DIR, "methods.csv"), nameMap);
@@ -350,12 +355,13 @@ public abstract class GradleStartCommon {
 
         private void readCsv(File file, Map<String, String> map) throws IOException {
             LOGGER.log(Level.DEBUG, "Reading CSV file: {}", file);
-            for (String line : Files.readAllLines(file.toPath(), StandardCharsets.UTF_8)) {
+            Splitter split = Splitter.on(',').trimResults().limit(3);
+            for (String line : Files.readLines(file, Charsets.UTF_8)) {
                 if (line.startsWith("searge")) // header line
                     continue;
 
-                String[] splits = line.split(",", 3);
-                map.put(splits[0].trim(), splits[1].trim());
+                List<String> splits = split.splitToList(line);
+                map.put(splits.get(0), splits.get(1));
             }
         }
 

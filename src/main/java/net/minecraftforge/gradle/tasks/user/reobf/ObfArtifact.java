@@ -4,7 +4,6 @@ import COM.rl.NameProvider;
 import COM.rl.obf.RetroGuardImpl;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.md_5.specialsource.Jar;
 import net.md_5.specialsource.JarMapping;
@@ -12,6 +11,7 @@ import net.md_5.specialsource.JarRemapper;
 import net.md_5.specialsource.provider.ClassLoaderProvider;
 import net.md_5.specialsource.provider.JarProvider;
 import net.md_5.specialsource.provider.JointProvider;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedThingy;
@@ -29,6 +29,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -198,7 +200,7 @@ public class ObfArtifact implements PublishArtifact {
         else if (spec.getExtension() != null)
             return spec.getExtension().toString();
         else
-            return Files.getFileExtension(getFile() == null ? null : getFile().getName());
+            return FileUtils.getFileExtension(getFile() == null ? null : getFile().getName());
     }
 
     public String getType() {
@@ -305,7 +307,6 @@ public class ObfArtifact implements PublishArtifact {
     /**
      * Obfuscates the file
      *
-     * @throws IOException
      * @throws InvalidUserDataException if the there is insufficient information available to generate the signature.
      */
     void generate(ReobfExceptor exc, File defaultSrg, File extraSrg, FileCollection extraSrgFiles) throws Exception {
@@ -318,7 +319,7 @@ public class ObfArtifact implements PublishArtifact {
         File output = getFile();
         File toObfTemp = File.createTempFile("toObf", ".jar", caller.getTemporaryDir());
         File toInjectTemp = File.createTempFile("toInject", ".jar", caller.getTemporaryDir());
-        Files.copy(toObf, toObfTemp);
+        Files.copy(toObf.toPath(), toObfTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         // ready Srg
         File srg = (File) (spec.srg == null ? defaultSrg : spec.srg);
@@ -343,7 +344,7 @@ public class ObfArtifact implements PublishArtifact {
         if (caller.getMcVersion().startsWith("1.8")) {
             new McVersionTransformer(toInjectTemp, output).transform(caller.getMcVersion());
         } else {
-            Files.copy(toInjectTemp, output);
+            Files.copy(toInjectTemp.toPath(), output.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
 
         // delete temporary files
@@ -391,11 +392,11 @@ public class ObfArtifact implements PublishArtifact {
 
         HashSet<String> modFiles = new HashSet<>();
         { // pack in classPath
-            ZipOutputStream out = new ZipOutputStream(java.nio.file.Files.newOutputStream(packedJar.toPath()));
+            ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(packedJar.toPath()));
             ZipEntry entry;
 
             // pack input jar
-            ZipInputStream in = new ZipInputStream(java.nio.file.Files.newInputStream(input.toPath()));
+            ZipInputStream in = new ZipInputStream(Files.newInputStream(input.toPath()));
             while ((entry = in.getNextEntry()) != null) {
                 modFiles.add(entry.getName());
                 out.putNextEntry(entry);
@@ -431,7 +432,7 @@ public class ObfArtifact implements PublishArtifact {
                         }
                     }
                 } else if (f.getName().endsWith("jar") || f.getName().endsWith("zip")) {
-                    in = new ZipInputStream(java.nio.file.Files.newInputStream(f.toPath()));
+                    in = new ZipInputStream(Files.newInputStream(f.toPath()));
                     while ((entry = in.getNextEntry()) != null) {
                         if (antiDuplicate.contains(entry.getName()) || modFiles.contains(entry.getName()))
                             continue;
@@ -475,11 +476,11 @@ public class ObfArtifact implements PublishArtifact {
 
         // unpack jar.
         {
-            ZipOutputStream out = new ZipOutputStream(java.nio.file.Files.newOutputStream(output.toPath()));
+            ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(output.toPath()));
             ZipEntry entry;
 
             // pack input jar
-            ZipInputStream in = new ZipInputStream(java.nio.file.Files.newInputStream(outPackedJar.toPath()));
+            ZipInputStream in = new ZipInputStream(Files.newInputStream(outPackedJar.toPath()));
             while ((entry = in.getNextEntry()) != null) {
                 if (modFiles.contains(entry.getName())) {
                     out.putNextEntry(entry);
@@ -510,7 +511,7 @@ public class ObfArtifact implements PublishArtifact {
         configOut.add("fullmap = 0");
         configOut.add("startindex = 0");
 
-        Files.asCharSink(config, Charset.defaultCharset()).write(String.join(Constants.NEWLINE, configOut));
+        Files.write(config.toPath(), String.join(Constants.NEWLINE, configOut).getBytes(Charset.defaultCharset()));
 
         // the script.
         String[] lines = new String[]{
@@ -524,7 +525,7 @@ public class ObfArtifact implements PublishArtifact {
                 ".attribute Deprecated"
         };
 
-        Files.asCharSink(script, Charset.defaultCharset()).write(String.join(Constants.NEWLINE, lines));
+        Files.write(script.toPath(), String.join(Constants.NEWLINE, lines).getBytes(Charset.defaultCharset()));
     }
 
     public static URL[] toUrls(FileCollection collection) throws MalformedURLException {

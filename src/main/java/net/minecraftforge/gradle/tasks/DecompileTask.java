@@ -6,8 +6,8 @@ import com.github.abrarsyed.jastyle.OptParser;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.common.BaseExtension;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -27,6 +27,7 @@ import org.gradle.process.JavaExecSpec;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -128,8 +129,8 @@ public class DecompileTask extends CachedTask {
 
     private void readJarAndFix(final File jar) throws IOException {
         // begin reading jar
-        final ZipInputStream zin = new ZipInputStream(java.nio.file.Files.newInputStream(jar.toPath()));
-        ZipEntry entry = null;
+        final ZipInputStream zin = new ZipInputStream(Files.newInputStream(jar.toPath()));
+        ZipEntry entry;
         String fileStr;
 
         BaseExtension exten = (BaseExtension) getProject().getExtensions().getByName(EXT_NAME_MC);
@@ -159,7 +160,7 @@ public class DecompileTask extends CachedTask {
     }
 
     private void applySingleMcpPatch(File patchFile) throws Throwable {
-        ContextualPatch patch = ContextualPatch.create(Files.asCharSource(patchFile, Charset.defaultCharset()).read(), new ContextProvider(sourceMap));
+        ContextualPatch patch = ContextualPatch.create(FileUtils.readString(patchFile, Charset.defaultCharset()), new ContextProvider(sourceMap));
         printPatchErrors(patch.patch(false));
     }
 
@@ -217,7 +218,7 @@ public class DecompileTask extends CachedTask {
     private ContextualPatch findPatch(Collection<File> files) throws Throwable {
         ContextualPatch patch = null;
         for (File f : files) {
-            patch = ContextualPatch.create(Files.asCharSource(f, Charset.defaultCharset()).read(), new ContextProvider(sourceMap));
+            patch = ContextualPatch.create(FileUtils.readString(f, Charset.defaultCharset()), new ContextProvider(sourceMap));
             List<PatchReport> errors = patch.patch(true);
 
             boolean success = true;
@@ -280,7 +281,7 @@ public class DecompileTask extends CachedTask {
     }
 
     private void saveJar(File output) throws IOException {
-        ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(output));
+        ZipOutputStream zout = new ZipOutputStream(Files.newOutputStream(output.toPath()));
 
         // write in resources
         for (Map.Entry<String, byte[]> entry : resourceMap.entrySet()) {

@@ -2,8 +2,8 @@ package net.minecraftforge.gradle.tasks.abstractutil;
 
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.common.Constants;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.Input;
@@ -17,6 +17,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public class EtagDownloadTask extends DefaultTask {
     Object url;
@@ -34,7 +35,7 @@ public class EtagDownloadTask extends DefaultTask {
 
         String etag;
         if (etagFile.exists()) {
-            etag = Files.asCharSource(etagFile, StandardCharsets.UTF_8).read();
+            etag = FileUtils.readString(etagFile);
         } else {
             etag = "";
         }
@@ -58,13 +59,13 @@ public class EtagDownloadTask extends DefaultTask {
 
                     // write file
                     InputStream stream = con.getInputStream();
-                    Files.write(ByteStreams.toByteArray(stream), outFile);
+                    Files.write(outFile.toPath(), ByteStreams.toByteArray(stream));
                     stream.close();
 
                     // write etag
                     etag = con.getHeaderField("ETag");
                     if (!Strings.isNullOrEmpty(etag)) {
-                        Files.asCharSink(etagFile, StandardCharsets.UTF_8).write(etag);
+                        Files.write(etagFile.toPath(), etag.getBytes(StandardCharsets.UTF_8));
                     }
 
                     break;

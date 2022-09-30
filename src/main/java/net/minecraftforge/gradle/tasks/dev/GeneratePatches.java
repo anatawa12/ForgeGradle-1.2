@@ -4,7 +4,7 @@ import com.cloudbees.diff.Diff;
 import com.cloudbees.diff.Hunk;
 import com.cloudbees.diff.PatchException;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.srg2source.util.io.FolderSupplier;
 import net.minecraftforge.srg2source.util.io.InputSupplier;
@@ -21,10 +21,8 @@ import org.gradle.api.tasks.TaskAction;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.nio.file.Files;
+import java.util.*;
 
 public class GeneratePatches extends DefaultTask {
     @OutputDirectory
@@ -85,10 +83,7 @@ public class GeneratePatches extends DefaultTask {
         });
 
         // We want things sorted in reverse order. Do that sub folders come before parents
-        directories.sort((o1, o2) -> {
-            int r = o1.compareTo(o2);
-            return Integer.compare(0, r);
-        });
+        directories.sort(((Comparator<File>) File::compareTo).reversed());
 
         for (File f : directories) {
             if (f.listFiles().length == 0) {
@@ -136,14 +131,14 @@ public class GeneratePatches extends DefaultTask {
 
             String olddiff = "";
             if (patchFile.exists()) {
-                olddiff = Files.asCharSource(patchFile, StandardCharsets.UTF_8).read();
+                olddiff = FileUtils.readString(patchFile);
             }
 
             if (!olddiff.equals(unidiff)) {
                 getLogger().debug("Writing patch: " + patchFile);
                 patchFile.getParentFile().mkdirs();
-                Files.touch(patchFile);
-                Files.asCharSink(patchFile, StandardCharsets.UTF_8).write(unidiff);
+                FileUtils.updateDate(patchFile);
+                Files.write(patchFile.toPath(), unidiff.getBytes(StandardCharsets.UTF_8));
             } else {
                 getLogger().debug("Patch did not change");
             }

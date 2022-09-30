@@ -1,11 +1,14 @@
 package net.minecraftforge.gradle.user;
 
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.GradleVersionUtils;
+import net.minecraftforge.gradle.JavaExtensionHelper;
 import net.minecraftforge.gradle.ProjectUtils;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
@@ -25,7 +28,7 @@ import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.WarningMode;
-import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.bundling.Jar;
@@ -51,6 +54,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import static net.minecraftforge.gradle.common.Constants.*;
 import static net.minecraftforge.gradle.user.UserConstants.*;
@@ -360,16 +364,14 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
      * This mod adds the API sourceSet, and correctly configures the
      */
     protected void configureCompilation() {
-        // get conventions
-        JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
-
-        SourceSet main = javaConv.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME);
-        SourceSet test = javaConv.getSourceSets().getByName(SourceSet.TEST_SOURCE_SET_NAME);
-        SourceSet api = javaConv.getSourceSets().create("api");
+        SourceSetContainer sourceSets = JavaExtensionHelper.getSourceSet(project);
+        SourceSet main = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME);
+        SourceSet test = sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME);
+        SourceSet api = sourceSets.create("api");
 
         // set the Source
-        javaConv.setSourceCompatibility("1.6");
-        javaConv.setTargetCompatibility("1.6");
+        JavaExtensionHelper.setSourceCompatibility(project, "1.6");
+        JavaExtensionHelper.setTargetCompatibility(project, "1.6");
 
         main.setCompileClasspath(main.getCompileClasspath().plus(api.getOutput()));
         test.setCompileClasspath(test.getCompileClasspath().plus(api.getOutput()));
@@ -393,9 +395,12 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         if (version == null) {
             try {
                 version = JsonFactory.loadVersion(file, delayedFile(Constants.JSONS_DIR).call());
-            } catch (Exception e) {
-                log.error("" + file + " could not be parsed");
+            } catch (JsonSyntaxException | JsonIOException | IOException e) {
+                log.error(file + " could not be parsed");
                 throw new RuntimeException(e);
+            } catch (Throwable t) {
+                Throwables.throwIfUnchecked(t);
+                throw new RuntimeException(t);
             }
         }
 
@@ -857,9 +862,6 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                 project.getLogger().error("");
                 project.getLogger().error("THIS TASK WILL BE DEPRECATED SOON!");
                 project.getLogger().error("Instead use the runClient task, with the --debug-jvm option");
-                if (!project.getGradle().getGradleVersion().equals("1.12")) {
-                    project.getLogger().error("You may have to update to Gradle 1.12");
-                }
                 project.getLogger().error("");
             });
             exec.setMain(GRADLE_START_CLIENT);
@@ -884,9 +886,6 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                 project.getLogger().error("");
                 project.getLogger().error("THIS TASK WILL BE DEPRECATED SOON!");
                 project.getLogger().error("Instead use the runServer task, with the --debug-jvm option");
-                if (!project.getGradle().getGradleVersion().equals("1.12")) {
-                    project.getLogger().error("You may have to update to Gradle 1.12");
-                }
                 project.getLogger().error("");
             });
             exec.setMain(GRADLE_START_SERVER);
@@ -906,8 +905,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
     }
 
     private void createSourceCopyTasks() {
-        JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
-        SourceSet main = javaConv.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME);
+        SourceSet main = JavaExtensionHelper.getSourceSet(project).getByName(SourceSet.MAIN_SOURCE_SET_NAME);
 
         // do the special source moving...
         SourceCopyTask task;
@@ -1050,17 +1048,19 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         // add extraSRG lines to reobf task
         {
             ReobfTask task = ((ReobfTask) project.getTasks().getByName("reobf"));
-            task.reobf(project.getTasks().getByName("jar"), arg0 -> {
-                JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
-                arg0.setClasspath(javaConv.getSourceSets().getByName("main").getCompileClasspath());
-            });
+            task.reobf(project.getTasks().getByName("jar"), arg0 ->
+                    arg0.setClasspath(JavaExtensionHelper.getSourceSet(project).getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath()));
             task.setExtraSrg(getExtension().getSrgExtra());
         }
 
         // configure output of recompile task
         {
             JavaCompile compile = (JavaCompile) project.getTasks().getByName("recompMinecraft");
-            compile.setDestinationDir(delayedFile(RECOMP_CLS_DIR).call());
+            if (GradleVersionUtils.isBefore("6.1")) {
+                compile.setDestinationDir(delayedFile(RECOMP_CLS_DIR).call());
+            } else {
+                compile.getDestinationDirectory().set(delayedFile(RECOMP_CLS_DIR).call());
+            }
         }
 
         // configure output of repackage task.
@@ -1144,7 +1144,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             ((ReobfTask) project.getTasks().getByName("reobf")).setDeobfFile(((ProcessJarTask) project.getTasks().getByName("deobfuscateJar")).getDelayedOutput());
             ((ReobfTask) project.getTasks().getByName("reobf")).setRecompFile(delayedDirtyFile(getSrcDepName(), null, "jar"));
         } else {
-            (project.getTasks().getByName("compileJava")).dependsOn("deobfBinJar");
+            (project.getTasks().getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME)).dependsOn("deobfBinJar");
             (project.getTasks().getByName("compileApiJava")).dependsOn("deobfBinJar");
         }
 
@@ -1244,9 +1244,8 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         if (!git.exists()) {
             git.getParentFile().mkdir();
             try {
-                Files.write("#Seriously guys, stop commiting this to your git repo!\r\n*".getBytes(), git);
-            } catch (IOException e) {
-            }
+                Files.write(git.toPath(), "#Seriously guys, stop commiting this to your git repo!\r\n*".getBytes());
+            } catch (IOException e) {}
         }
     }
 }

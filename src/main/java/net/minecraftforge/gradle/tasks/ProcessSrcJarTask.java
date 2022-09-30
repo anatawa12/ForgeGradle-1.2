@@ -1,7 +1,6 @@
 package net.minecraftforge.gradle.tasks;
 
-import com.google.common.io.FileWriteMode;
-import com.google.common.io.Files;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.patching.ContextualPatch;
@@ -16,6 +15,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public class ProcessSrcJarTask extends EditJarTask {
@@ -49,9 +50,9 @@ public class ProcessSrcJarTask extends EditJarTask {
 //                        continue; //ignore duplicates.
 
                     if (relative.endsWith(".java")) {
-                        sourceMap.put(relative, Files.asCharSource(rel.file, Charset.defaultCharset()).read());
+                        sourceMap.put(relative, FileUtils.readString(rel.file, Charset.defaultCharset()));
                     } else {
-                        resourceMap.put(relative, Files.asByteSource(rel.file).read());
+                        resourceMap.put(relative, Files.readAllBytes(rel.file.toPath()));
                     }
                 }
             }
@@ -90,9 +91,9 @@ public class ProcessSrcJarTask extends EditJarTask {
                         if (!hunk.getStatus().isSuccess()) {
                             failed++;
                             getLogger().error("  " + hunk.getHunkID() + ": " + (hunk.getFailure() != null ? hunk.getFailure().getMessage() : "") + " @ " + hunk.getIndex());
-                            Files.asCharSink(reject, StandardCharsets.UTF_8, FileWriteMode.APPEND).write(String.format("++++ REJECTED PATCH %d\n", hunk.getHunkID()));
-                            Files.asCharSink(reject, StandardCharsets.UTF_8, FileWriteMode.APPEND).write(String.join("\n", hunk.hunk.lines));
-                            Files.asCharSink(reject, StandardCharsets.UTF_8, FileWriteMode.APPEND).write("\n++++ END PATCH\n");
+                            Files.write(reject.toPath(), String.format("++++ REJECTED PATCH %d\n", hunk.getHunkID()).getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
+                            Files.write(reject.toPath(), hunk.hunk.lines, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
+                            Files.write(reject.toPath(), "\n++++ END PATCH\n".getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
                         } else if (hunk.getStatus() == PatchStatus.Fuzzed) {
                             getLogger().info("  " + hunk.getHunkID() + " fuzzed " + hunk.getFuzz() + "!");
                         }
@@ -156,8 +157,8 @@ public class ProcessSrcJarTask extends EditJarTask {
         FileCollection col = null;
 
         for (ResourceHolder holder : stages) {
-            if (holder.patchDir == null) {
-            }
+            if (holder.patchDir == null)
+                continue;
             else if (col == null)
                 col = holder.getPatchFiles();
             else
@@ -206,7 +207,7 @@ public class ProcessSrcJarTask extends EditJarTask {
 
         public PatchedFile(File file) throws IOException {
             this.fileToPatch = file;
-            this.patch = ContextualPatch.create(Files.asCharSource(file, Charset.defaultCharset()).read(), PROVIDER).setAccessC14N(true).setMaxFuzz(getMaxFuzz());
+            this.patch = ContextualPatch.create(FileUtils.readString(file, Charset.defaultCharset()), PROVIDER).setAccessC14N(true).setMaxFuzz(getMaxFuzz());
         }
 
         public File makeRejectFile() {

@@ -2,6 +2,7 @@ package net.minecraftforge.gradle.user.lib;
 
 import net.minecraftforge.gradle.ArchiveTaskHelper;
 import net.minecraftforge.gradle.GradleConfigurationException;
+import net.minecraftforge.gradle.JavaExtensionHelper;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.json.JsonFactory;
 import net.minecraftforge.gradle.json.LiteLoaderJson;
@@ -13,7 +14,6 @@ import net.minecraftforge.gradle.tasks.user.reobf.ReobfTask;
 import net.minecraftforge.gradle.user.UserBasePlugin;
 import net.minecraftforge.gradle.user.UserConstants;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.bundling.Jar;
 
@@ -61,11 +61,10 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
     @SuppressWarnings("rawtypes")
     protected void configurePackaging() {
         String cappedApiName = Character.toUpperCase(actualApiName().charAt(0)) + actualApiName().substring(1);
-        JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
 
         // create apiJar task
         Jar jarTask = makeTask("jar" + cappedApiName, Jar.class);
-        jarTask.from(javaConv.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME).getOutput());
+        jarTask.from(JavaExtensionHelper.getSourceSet(project).getByName(SourceSet.MAIN_SOURCE_SET_NAME).getOutput());
         ArchiveTaskHelper.setClassifier(jarTask, actualApiName());
         ArchiveTaskHelper.setExtension(jarTask, EXTENSION);
 
@@ -76,8 +75,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
         ((ReobfTask) project.getTasks().getByName("reobf")).reobf(jarTask, spec -> {
             spec.setSrgMcp();
 
-            JavaPluginConvention javaConv1 = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
-            spec.setClasspath(javaConv1.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath());
+            spec.setClasspath(JavaExtensionHelper.getSourceSet(project).getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath());
         });
 
         project.getArtifacts().add("archives", jarTask);
