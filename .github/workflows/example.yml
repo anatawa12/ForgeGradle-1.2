@@ -1,8 +1,11 @@
 name: Run with example repository
 
 on: 
-  push: {}
-  pull_request: {}
+  push:
+    branches: [FG_1.2]
+  pull_request:
+    branches: [FG_1.2]
+  workflow_dispatch: {}
   schedule:
     - cron:  '0 0 * * *'
 
