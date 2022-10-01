@@ -27,14 +27,19 @@ public class ObtainFernFlowerTask extends CachedTask {
     @OutputFile
     private DelayedFile ffJar;
 
-    @TaskAction
-    public void doTask() throws IOException {
+    public ObtainFernFlowerTask() {
         if (getProject().getGradle().getStartParameter().isOffline()) {
             getLogger().error("Offline mode! not downloading Fernflower!");
+            setEnabled(false);
+        }
+    }
+
+    @TaskAction
+    public void doTask() throws IOException {
+        if (!getEnabled()) {
             this.setDidWork(false);
             return;
         }
-
         File ff = getFfJar();
         String url = getMcpUrl();
 

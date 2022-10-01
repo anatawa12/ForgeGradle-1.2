@@ -8,9 +8,11 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.bundling.Jar;
 
+import java.io.File;
+
 public class CursePlugin implements Plugin<Project> {
 
-    @SuppressWarnings({"rawtypes", "serial"})
+    @SuppressWarnings("serial")
     @Override
     public void apply(final Project project) {
         // create task
@@ -19,13 +21,13 @@ public class CursePlugin implements Plugin<Project> {
         upload.setDescription("Uploads an artifact to CurseForge. Configureable in the curse{} block.");
 
         // set artifact
-        upload.setArtifact(new Closure(null, null) {
-            public Object call() {
+        upload.setArtifact(new Closure<File>(null, null) {
+            @Override
+            public File call() {
                 if (project.getPlugins().hasPlugin("java"))
                     return ArchiveTaskHelper.getArchivePath((Jar) project.getTasks().getByName("jar"));
                 return null;
             }
-
         });
 
         // configure task extra.
@@ -34,7 +36,7 @@ public class CursePlugin implements Plugin<Project> {
             if (project.getState().getFailure() != null)
                 return;
 
-            UserBasePlugin plugin = userPluginApplied(project);
+            UserBasePlugin<UserExtension> plugin = userPluginApplied(project);
             upload.addGameVersion(plugin.getExtension().getVersion());
 
             upload.dependsOn("reobf");
