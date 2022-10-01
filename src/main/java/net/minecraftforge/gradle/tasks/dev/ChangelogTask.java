@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
@@ -49,7 +49,7 @@ public class ChangelogTask extends DefaultTask {
     public void doTask() throws IOException {
         if (getAuthName() != null && getAuthPassword() != null) {
             String raw = getAuthName() + ":" + getAuthPassword();
-            auth = "Basic " + new String(Base64.getEncoder().encode(raw.getBytes()), Charset.defaultCharset());
+            auth = "Basic " + new String(Base64.getEncoder().encode(raw.getBytes()), StandardCharsets.ISO_8859_1);
         }
 
         List<Map<String, Object>> builds = getBuildInfo();

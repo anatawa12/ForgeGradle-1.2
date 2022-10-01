@@ -267,7 +267,7 @@ public class ReobfTask extends DefaultTask {
         File srg = File.createTempFile("reobf-default", ".srg", getTemporaryDir());
         File extraSrg = File.createTempFile("reobf-extra", ".srg", getTemporaryDir());
 
-        UserExtension ext = (UserExtension) getProject().getExtensions().getByName(Constants.EXT_NAME_MC);
+        UserExtension ext = (UserExtension) getExtensions().getByName(Constants.EXT_NAME_MC);
 
         if (ext.isDecomp()) {
             exc = getExceptor();
@@ -357,18 +357,16 @@ public class ReobfTask extends DefaultTask {
 
     @SuppressWarnings({"serial"})
     private class ActionClosure extends Closure<Object> {
-        @SuppressWarnings("rawtypes")
-        private final Action act;
+        private final Action<ArtifactSpec> act;
 
-        @SuppressWarnings("rawtypes")
-        public ActionClosure(Action artifactSpec) {
+        public ActionClosure(Action<ArtifactSpec> artifactSpec) {
             super(null);
             this.act = artifactSpec;
         }
 
-        @SuppressWarnings("unchecked")
-        public Object call(Object obj) {
-            act.execute(obj);
+        @Override
+        public ArtifactSpec call(Object obj) {
+            act.execute((ArtifactSpec) obj);
             return null;
         }
     }
@@ -458,11 +456,11 @@ public class ReobfTask extends DefaultTask {
     }
 
     public void setSrgSrg() {
-        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_SRG, ((UserExtension) getProject().getExtensions().getByName(Constants.EXT_NAME_MC)).plugin);
+        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_SRG, ((UserExtension) getExtensions().getByName(Constants.EXT_NAME_MC)).plugin);
     }
 
     public void setSrgMcp() {
-        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_NOTCH_SRG, ((UserExtension) getProject().getExtensions().getByName(Constants.EXT_NAME_MC)).plugin);
+        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_NOTCH_SRG, ((UserExtension) getExtensions().getByName(Constants.EXT_NAME_MC)).plugin);
     }
 
     public File getFieldCsv() {

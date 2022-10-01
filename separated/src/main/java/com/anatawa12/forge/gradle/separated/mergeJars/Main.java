@@ -1,9 +1,8 @@
 package com.anatawa12.forge.gradle.separated.mergeJars;
 
 import com.anatawa12.forge.gradle.separated.ArgsParser;
-import com.google.common.base.Function;
+import com.anatawa12.forge.gradle.separated.ListUtils;
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -15,6 +14,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -305,7 +305,7 @@ public class Main {
 
         int serverFieldIdx = 0;
         if (DEBUG)
-            System.out.printf("B: Server List: %s\nB: Client List: %s\n", Lists.transform(sFields, FieldName.instance), Lists.transform(cFields, FieldName.instance));
+            System.out.printf("B: Server List: %s\nB: Client List: %s\n", ListUtils.transform(sFields, FieldName.instance), ListUtils.transform(cFields, FieldName.instance));
         for (int clientFieldIdx = 0; clientFieldIdx < cFields.size(); clientFieldIdx++) {
             FieldNode clientField = cFields.get(clientFieldIdx);
             if (serverFieldIdx < sFields.size()) {
@@ -334,7 +334,7 @@ public class Main {
                             serverField.visibleAnnotations.add(getSideAnn(false));
                             cFields.add(clientFieldIdx, serverField);
                             if (DEBUG)
-                                System.out.printf("1. Server List: %s\n1. Client List: %s\nIdx: %d %d\n", Lists.transform(sFields, FieldName.instance), Lists.transform(cFields, FieldName.instance), serverFieldIdx, clientFieldIdx);
+                                System.out.printf("1. Server List: %s\n1. Client List: %s\nIdx: %d %d\n", ListUtils.transform(sFields, FieldName.instance), ListUtils.transform(cFields, FieldName.instance), serverFieldIdx, clientFieldIdx);
                         }
                     } else {
                         if (clientField.visibleAnnotations == null) {
@@ -343,7 +343,7 @@ public class Main {
                         clientField.visibleAnnotations.add(getSideAnn(true));
                         sFields.add(serverFieldIdx, clientField);
                         if (DEBUG)
-                            System.out.printf("2. Server List: %s\n2. Client List: %s\nIdx: %d %d\n", Lists.transform(sFields, FieldName.instance), Lists.transform(cFields, FieldName.instance), serverFieldIdx, clientFieldIdx);
+                            System.out.printf("2. Server List: %s\n2. Client List: %s\nIdx: %d %d\n", ListUtils.transform(sFields, FieldName.instance), ListUtils.transform(cFields, FieldName.instance), serverFieldIdx, clientFieldIdx);
                     }
                 }
             } else {
@@ -353,12 +353,12 @@ public class Main {
                 clientField.visibleAnnotations.add(getSideAnn(true));
                 sFields.add(serverFieldIdx, clientField);
                 if (DEBUG)
-                    System.out.printf("3. Server List: %s\n3. Client List: %s\nIdx: %d %d\n", Lists.transform(sFields, FieldName.instance), Lists.transform(cFields, FieldName.instance), serverFieldIdx, clientFieldIdx);
+                    System.out.printf("3. Server List: %s\n3. Client List: %s\nIdx: %d %d\n", ListUtils.transform(sFields, FieldName.instance), ListUtils.transform(cFields, FieldName.instance), serverFieldIdx, clientFieldIdx);
             }
             serverFieldIdx++;
         }
         if (DEBUG)
-            System.out.printf("A. Server List: %s\nA. Client List: %s\n", Lists.transform(sFields, FieldName.instance), Lists.transform(cFields, FieldName.instance));
+            System.out.printf("A. Server List: %s\nA. Client List: %s\n", ListUtils.transform(sFields, FieldName.instance), ListUtils.transform(cFields, FieldName.instance));
         if (sFields.size() != cFields.size()) {
             for (int x = cFields.size(); x < sFields.size(); x++) {
                 FieldNode sF = sFields.get(x);
@@ -370,12 +370,13 @@ public class Main {
             }
         }
         if (DEBUG)
-            System.out.printf("E. Server List: %s\nE. Client List: %s\n", Lists.transform(sFields, FieldName.instance), Lists.transform(cFields, FieldName.instance));
+            System.out.printf("E. Server List: %s\nE. Client List: %s\n", ListUtils.transform(sFields, FieldName.instance), ListUtils.transform(cFields, FieldName.instance));
     }
 
     private static class FieldName implements Function<FieldNode, String> {
         public static FieldName instance = new FieldName();
 
+        @Override
         public String apply(FieldNode in) {
             return in.name;
         }
@@ -450,7 +451,7 @@ public class Main {
                 // no op
             } else {
                 if (mw.node.visibleAnnotations == null) {
-                    mw.node.visibleAnnotations = Lists.newArrayListWithExpectedSize(1);
+                    mw.node.visibleAnnotations = new ArrayList<>(6);
                 }
 
                 mw.node.visibleAnnotations.add(getSideAnn(mw.client));
@@ -469,7 +470,7 @@ public class Main {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null || !(obj instanceof MethodWrapper)) {
+            if (!(obj instanceof MethodWrapper)) {
                 return false;
             }
             MethodWrapper mw = (MethodWrapper) obj;

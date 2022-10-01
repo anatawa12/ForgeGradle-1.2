@@ -266,7 +266,7 @@ public class ProcessJarTask extends CachedTask {
             Files.write(jsonTmp.toPath(), JsonFactory.GSON.toJson(struct).getBytes());
         }
 
-        BaseExtension exten = (BaseExtension) getProject().getExtensions().getByName(EXT_NAME_MC);
+        BaseExtension exten = (BaseExtension) getExtensions().getByName(EXT_NAME_MC);
         boolean genParams = !exten.getVersion().equals("1.7.2");
         getLogger().debug("INPUT: " + inJar);
         getLogger().debug("OUTPUT: " + outJar);

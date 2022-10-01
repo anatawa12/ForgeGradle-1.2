@@ -71,20 +71,18 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                 && GradleVersionUtils.isBefore("7.0");
         wrapperArtifact = ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.wrapper-artifact");
         if (mavenPluginEnabled) {
-            {
-                GradleVersionUtils.ifAfter("6.0", () -> {
-                    if (project.getGradle().getStartParameter().getWarningMode() == WarningMode.All) {
-                        project.getLogger().warn("The maven plugin is automatically applied by ForgeGradle and " +
-                                "will not be applied since Gradle 7.0. " +
-                                "If you're using maven plugin applied by ForgeGradle, " +
-                                "please use 'maven-publish' instead and apply it yourself.");
-                        project.getLogger().warn("To disable applying maven plugin by ForgeGradle, please set " +
-                                "'com.anatawa12.forge.gradle.no-maven-plugin' project property as 'true' in " +
-                                "gradle.properties.");
-                    }
-                });
-                applyExternalPlugin("maven");
-            }
+            GradleVersionUtils.ifAfter("6.0", () -> {
+                if (project.getGradle().getStartParameter().getWarningMode() == WarningMode.All) {
+                    project.getLogger().warn("The maven plugin is automatically applied by ForgeGradle and " +
+                            "will not be applied since Gradle 7.0. " +
+                            "If you're using maven plugin applied by ForgeGradle, " +
+                            "please use 'maven-publish' instead and apply it yourself.");
+                    project.getLogger().warn("To disable applying maven plugin by ForgeGradle, please set " +
+                            "'com.anatawa12.forge.gradle.no-maven-plugin' project property as 'true' in " +
+                            "gradle.properties.");
+                }
+            });
+            applyExternalPlugin("maven");
         }
         this.applyExternalPlugin("eclipse");
         this.applyExternalPlugin("idea");
@@ -822,7 +820,9 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             final JavaExec exec = makeTask("runClient", JavaExec.class);
             project.afterEvaluate(project -> exec.workingDir(delayedFile("{RUN_DIR}")));
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
-            exec.setMain(GRADLE_START_CLIENT);
+            GradleVersionUtils.choose("6.4",
+                    () -> exec.setMain(GRADLE_START_CLIENT),
+                    () -> exec.getMainClass().set(GRADLE_START_CLIENT));
             //exec.jvmArgs("-Xincgc", "-Xmx1024M", "-Xms1024M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
             exec.args(getClientRunArgs());
             exec.setStandardOutput(System.out);
@@ -839,7 +839,9 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             final JavaExec exec = makeTask("runServer", JavaExec.class);
             project.afterEvaluate(project -> exec.workingDir(delayedFile("{RUN_DIR}")));
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
-            exec.setMain(GRADLE_START_SERVER);
+            GradleVersionUtils.choose("6.4",
+                    () -> exec.setMain(GRADLE_START_SERVER),
+                    () -> exec.getMainClass().set(GRADLE_START_SERVER));
             exec.jvmArgs("-Xincgc", "-Dfml.ignoreInvalidMinecraftCertificates=true");
             exec.args(getServerRunArgs());
             exec.setStandardOutput(System.out);
@@ -864,7 +866,9 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                 project.getLogger().error("Instead use the runClient task, with the --debug-jvm option");
                 project.getLogger().error("");
             });
-            exec.setMain(GRADLE_START_CLIENT);
+            GradleVersionUtils.choose("6.4",
+                    () -> exec.setMain(GRADLE_START_CLIENT),
+                    () -> exec.getMainClass().set(GRADLE_START_CLIENT));
             exec.jvmArgs("-Xincgc", "-Xmx1024M", "-Xms1024M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
             exec.args(getClientRunArgs());
             exec.setStandardOutput(System.out);
@@ -888,7 +892,9 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                 project.getLogger().error("Instead use the runServer task, with the --debug-jvm option");
                 project.getLogger().error("");
             });
-            exec.setMain(GRADLE_START_SERVER);
+            GradleVersionUtils.choose("6.4",
+                    () -> exec.setMain(GRADLE_START_SERVER),
+                    () -> exec.getMainClass().set(GRADLE_START_SERVER));
             exec.jvmArgs("-Xincgc", "-Dfml.ignoreInvalidMinecraftCertificates=true");
             exec.args(getServerRunArgs());
             exec.setStandardOutput(System.out);
@@ -1056,11 +1062,9 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         // configure output of recompile task
         {
             JavaCompile compile = (JavaCompile) project.getTasks().getByName("recompMinecraft");
-            if (GradleVersionUtils.isBefore("6.1")) {
-                compile.setDestinationDir(delayedFile(RECOMP_CLS_DIR).call());
-            } else {
-                compile.getDestinationDirectory().set(delayedFile(RECOMP_CLS_DIR).call());
-            }
+            GradleVersionUtils.choose("6.1", () ->
+                    compile.setDestinationDir(delayedFile(RECOMP_CLS_DIR).call()),
+            () -> compile.getDestinationDirectory().set(delayedFile(RECOMP_CLS_DIR).call()));
         }
 
         // configure output of repackage task.

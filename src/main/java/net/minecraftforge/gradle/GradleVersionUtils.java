@@ -41,6 +41,18 @@ public class GradleVersionUtils {
     }
 
     /**
+     * Only runs not returns any variable
+     * @param versionName includes this version
+     */
+    public static void choose(String versionName, Runnable before, Runnable after) {
+        if (isBefore(versionName)) {
+            before.run();
+        } else {
+            after.run();
+        }
+    }
+
+    /**
      * same version includes after
      * @param versionName includes this version
      */
@@ -48,11 +60,7 @@ public class GradleVersionUtils {
         GradleVersion gradleVersion = GradleVersion.current();
         GradleVersion version = GradleVersion.version(versionName);
 
-        if (gradleVersion.compareTo(version) < 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return gradleVersion.compareTo(version) < 0;
     }
 
     public interface Callable<T> {

@@ -36,7 +36,7 @@ import java.nio.file.Files;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class CurseUploadTask extends DefaultTask {
 
@@ -77,14 +77,14 @@ public class CurseUploadTask extends DefaultTask {
             }
         }
 
-        checkNotNull(meta.releaseType, "Curse releaseType cannot be null. Valid types are: " + validReleaseTypes);
+        requireNonNull(meta.releaseType, "Curse releaseType cannot be null. Valid types are: " + validReleaseTypes);
         checkArgument(validReleaseTypes.contains(meta.releaseType),
                 meta.releaseType + " is not a valid Curse relase type. Valid types are: " + validReleaseTypes);
 
         if (meta.relations != null) {
             for (CurseProjectDep projectDep : meta.relations.projects) {
-                checkNotNull(projectDep.slug, "Curse project relation slug cannot be null");
-                checkNotNull(projectDep.type, "Curse project relation type cannot be null");
+                requireNonNull(projectDep.slug, "Curse project relation slug cannot be null");
+                requireNonNull(projectDep.type, "Curse project relation type cannot be null");
                 checkArgument(validRelationTypes.contains(projectDep.type),
                         projectDep.type + " is not a valid Curse project relation type. Valid types are: " + validRelationTypes);
             }
@@ -387,7 +387,7 @@ public class CurseUploadTask extends DefaultTask {
     }
 
     private File resolveFile(Object object) {
-        checkNotNull(object, "Configured a null artifact!");
+        requireNonNull(object, "Configured a null artifact!");
 
         if (object instanceof File) {
             return (File) object;

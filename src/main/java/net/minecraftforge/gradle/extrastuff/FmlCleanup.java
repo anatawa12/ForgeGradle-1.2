@@ -1,6 +1,5 @@
 package net.minecraftforge.gradle.extrastuff;
 
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import net.minecraftforge.gradle.StringUtils;
 import net.minecraftforge.gradle.common.Constants;
@@ -38,7 +37,10 @@ public class FmlCleanup {
                 boolean invalid = false; // Can't think of a better way to filter out enum declarations, so make sure that all the parameters have types
                 String args = matcher.group("parameters");
                 if (args != null) {
-                    for (String str : Splitter.on(',').trimResults().omitEmptyStrings().split(args)) {
+                    for (String str : args.split(",")) {
+                        str = str.trim();
+                        if (Strings.isNullOrEmpty(str))
+                            continue;
                         if (str.indexOf(' ') == -1) {
                             invalid = true;
                             break;

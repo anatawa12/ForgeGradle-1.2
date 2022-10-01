@@ -116,8 +116,8 @@ public class GenSrgTask extends CachedTask {
         {
             String notchSig = remapSig(e.getValue().sig, classMap);
             String notchName = remapMethodName(e.getKey().name, notchSig, classMap, methodMap);
-            //getProject().getLogger().lifecycle(e.getKey().name + " " + e.getKey().sig + " " + e.getValue().name + " " + e.getValue().sig);
-            //getProject().getLogger().lifecycle(notchName       + " " + notchSig       + " " + e.getValue().name + " " + e.getValue().sig);
+            //getLogger().lifecycle(e.getKey().name + " " + e.getKey().sig + " " + e.getValue().name + " " + e.getValue().sig);
+            //getLogger().lifecycle(notchName       + " " + notchSig       + " " + e.getValue().name + " " + e.getValue().sig);
             inSrg.methodMap.put(new MethodData(notchName, notchSig), e.getValue());
             excRemap.put(e.getKey().name, e.getValue().name);
         }
@@ -363,8 +363,8 @@ public class GenSrgTask extends CachedTask {
 
             String cls = qualified.substring(0, qualified.lastIndexOf('/'));
             String name = qualified.substring(cls.length() + 1);
-            getProject().getLogger().lifecycle(qualified);
-            getProject().getLogger().lifecycle(cls + " " + name);
+            getLogger().lifecycle(qualified);
+            getLogger().lifecycle(cls + " " + name);
 
             String ret = classMap.get(cls);
             if (ret != null)

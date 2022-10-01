@@ -139,16 +139,19 @@ public class ArchiveTaskHelper {
 
     private static class AbstractArchiveTaskHelperBackImplOld implements AbstractArchiveTaskHelperBack {
         @Override
+        @Deprecated
         public File getArchivePath(AbstractArchiveTask task) {
             return task.getArchivePath();
         }
 
         @Override
+        @Deprecated
         public File getDestinationDir(AbstractArchiveTask task) {
             return task.getDestinationDir();
         }
 
         @Override
+        @Deprecated
         public void setDestinationDir(AbstractArchiveTask task, File destinationDir) {
             task.setDestinationDir(destinationDir);
         }
