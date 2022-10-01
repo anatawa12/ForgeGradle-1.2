@@ -1,6 +1,11 @@
 name: Build
 
-on: [push]
+on:
+  push:
+    branches: [FG_1.2]
+  pull_request:
+    branches: [FG_1.2]
+  workflow_dispatch: {}
 
 jobs:
   build:
