@@ -1,6 +1,7 @@
 package com.anatawa12.forge.gradle.separated;
 
 import net.minecraftforge.gradle.GradleVersionUtils;
+import net.minecraftforge.gradle.JavaExecSpecHelper;
 import org.gradle.api.Project;
 
 import java.io.File;
@@ -33,10 +34,7 @@ public class SeparatedLauncher {
     public void run(final Project project) {
         project.javaexec(javaExecSpec -> {
             javaExecSpec.classpath(project.getConfigurations().getByName(configurationName));
-            String main = "com.anatawa12.forge.gradle.separated." + name + ".Main";
-            GradleVersionUtils.choose("6.4",
-                    () -> javaExecSpec.setMain(main),
-                    () -> javaExecSpec.getMainClass().set(main));
+            JavaExecSpecHelper.setMainClass(javaExecSpec, "com.anatawa12.forge.gradle.separated." + name + ".Main");
             javaExecSpec.args(args);
             javaExecSpec.setIgnoreExitValue(false);
         });

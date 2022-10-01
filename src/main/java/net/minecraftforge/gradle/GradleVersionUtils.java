@@ -41,18 +41,6 @@ public class GradleVersionUtils {
     }
 
     /**
-     * Only runs not returns any variable
-     * @param versionName includes this version
-     */
-    public static void choose(String versionName, Runnable before, Runnable after) {
-        if (isBefore(versionName)) {
-            before.run();
-        } else {
-            after.run();
-        }
-    }
-
-    /**
      * same version includes after
      * @param versionName includes this version
      */

@@ -6,10 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import groovy.lang.Closure;
-import net.minecraftforge.gradle.ArchiveTaskHelper;
-import net.minecraftforge.gradle.GradleVersionUtils;
-import net.minecraftforge.gradle.JavaExtensionHelper;
-import net.minecraftforge.gradle.ProjectUtils;
+import net.minecraftforge.gradle.*;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedBase;
@@ -820,9 +817,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             final JavaExec exec = makeTask("runClient", JavaExec.class);
             project.afterEvaluate(project -> exec.workingDir(delayedFile("{RUN_DIR}")));
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
-            GradleVersionUtils.choose("6.4",
-                    () -> exec.setMain(GRADLE_START_CLIENT),
-                    () -> exec.getMainClass().set(GRADLE_START_CLIENT));
+            JavaExecSpecHelper.setMainClass(exec, GRADLE_START_CLIENT);
             //exec.jvmArgs("-Xincgc", "-Xmx1024M", "-Xms1024M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
             exec.args(getClientRunArgs());
             exec.setStandardOutput(System.out);
@@ -839,9 +834,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             final JavaExec exec = makeTask("runServer", JavaExec.class);
             project.afterEvaluate(project -> exec.workingDir(delayedFile("{RUN_DIR}")));
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
-            GradleVersionUtils.choose("6.4",
-                    () -> exec.setMain(GRADLE_START_SERVER),
-                    () -> exec.getMainClass().set(GRADLE_START_SERVER));
+            JavaExecSpecHelper.setMainClass(exec, GRADLE_START_SERVER);
             exec.jvmArgs("-Xincgc", "-Dfml.ignoreInvalidMinecraftCertificates=true");
             exec.args(getServerRunArgs());
             exec.setStandardOutput(System.out);
@@ -866,9 +859,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                 project.getLogger().error("Instead use the runClient task, with the --debug-jvm option");
                 project.getLogger().error("");
             });
-            GradleVersionUtils.choose("6.4",
-                    () -> exec.setMain(GRADLE_START_CLIENT),
-                    () -> exec.getMainClass().set(GRADLE_START_CLIENT));
+            JavaExecSpecHelper.setMainClass(exec, GRADLE_START_CLIENT);
             exec.jvmArgs("-Xincgc", "-Xmx1024M", "-Xms1024M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
             exec.args(getClientRunArgs());
             exec.setStandardOutput(System.out);
@@ -892,9 +883,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
                 project.getLogger().error("Instead use the runServer task, with the --debug-jvm option");
                 project.getLogger().error("");
             });
-            GradleVersionUtils.choose("6.4",
-                    () -> exec.setMain(GRADLE_START_SERVER),
-                    () -> exec.getMainClass().set(GRADLE_START_SERVER));
+            JavaExecSpecHelper.setMainClass(exec, GRADLE_START_SERVER);
             exec.jvmArgs("-Xincgc", "-Dfml.ignoreInvalidMinecraftCertificates=true");
             exec.args(getServerRunArgs());
             exec.setStandardOutput(System.out);
@@ -1062,9 +1051,11 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         // configure output of recompile task
         {
             JavaCompile compile = (JavaCompile) project.getTasks().getByName("recompMinecraft");
-            GradleVersionUtils.choose("6.1", () ->
-                    compile.setDestinationDir(delayedFile(RECOMP_CLS_DIR).call()),
-            () -> compile.getDestinationDirectory().set(delayedFile(RECOMP_CLS_DIR).call()));
+            if (GradleVersionUtils.isBefore("6.1")) {
+                compile.setDestinationDir(delayedFile(RECOMP_CLS_DIR).call());
+            } else {
+                compile.getDestinationDirectory().set(delayedFile(RECOMP_CLS_DIR).call());
+            }
         }
 
         // configure output of repackage task.
