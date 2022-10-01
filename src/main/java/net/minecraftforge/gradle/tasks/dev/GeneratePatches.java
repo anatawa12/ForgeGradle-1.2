@@ -83,7 +83,7 @@ public class GeneratePatches extends DefaultTask {
         });
 
         // We want things sorted in reverse order. Do that sub folders come before parents
-        directories.sort(((Comparator<File>) File::compareTo).reversed());
+        directories.sort(Comparator.reverseOrder());
 
         for (File f : directories) {
             if (f.listFiles().length == 0) {
