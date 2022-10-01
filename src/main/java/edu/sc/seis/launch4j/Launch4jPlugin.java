@@ -71,7 +71,7 @@ public class Launch4jPlugin implements Plugin<Project> {
         task.into(new Closure<File>(null) {
             @Override
             public File call(Object... obj) {
-                Launch4jPluginExtension ext = ((Launch4jPluginExtension) task.getExtensions().getByName(Launch4jPlugin.LAUNCH4J_CONFIGURATION_NAME));
+                Launch4jPluginExtension ext = ((Launch4jPluginExtension) task.getProject().getExtensions().getByName(Launch4jPlugin.LAUNCH4J_CONFIGURATION_NAME));
                 return task.getProject().file(task.getProject().getBuildDir() + "/" + ext.getOutputDir() + "/lib");
             }
         });
@@ -84,7 +84,7 @@ public class Launch4jPlugin implements Plugin<Project> {
         task.setGroup(LAUNCH4J_GROUP);
         // TODO
         project.afterEvaluate(project1 -> {
-            Launch4jPluginExtension ext = ((Launch4jPluginExtension) task.getExtensions().getByName(Launch4jPlugin.LAUNCH4J_CONFIGURATION_NAME));
+            Launch4jPluginExtension ext = ((Launch4jPluginExtension) task.getProject().getExtensions().getByName(Launch4jPlugin.LAUNCH4J_CONFIGURATION_NAME));
 
             task.setCommandLine(ext.getLaunch4jCmd(), project1.getBuildDir() + "/" + ext.getOutputDir() + "/" + ext.getXmlFileName());
             task.setWorkingDir(project1.file(ext.getChdir()));

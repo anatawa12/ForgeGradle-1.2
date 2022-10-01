@@ -22,12 +22,12 @@ public class CreateLaunch4jXMLTask extends DefaultTask {
     private final String projectName = getProject().getName();
     @OutputFile
     public File getXmlOutFile() {
-        return ((Launch4jPluginExtension) getExtensions().getByName(Launch4jPlugin.LAUNCH4J_CONFIGURATION_NAME)).getXmlOutFileForProject(getProject());
+        return ((Launch4jPluginExtension) getProject().getExtensions().getByName(Launch4jPlugin.LAUNCH4J_CONFIGURATION_NAME)).getXmlOutFileForProject(getProject());
     }
 
     @TaskAction
     public void writeXmlConfig() throws ParserConfigurationException, TransformerException {
-        Launch4jPluginExtension cfg = (Launch4jPluginExtension) getExtensions().getByName("launch4j");
+        Launch4jPluginExtension cfg = (Launch4jPluginExtension) getProject().getExtensions().getByName("launch4j");
 
         File file = getXmlOutFile();
         file.getParentFile().mkdirs();

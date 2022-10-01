@@ -133,7 +133,7 @@ public class DecompileTask extends CachedTask {
         ZipEntry entry;
         String fileStr;
 
-        BaseExtension exten = (BaseExtension) getExtensions().getByName(EXT_NAME_MC);
+        BaseExtension exten = (BaseExtension) getProject().getExtensions().getByName(EXT_NAME_MC);
         boolean fixInterfaces = !exten.getVersion().equals("1.7.2");
 
         while ((entry = zin.getNextEntry()) != null) {
