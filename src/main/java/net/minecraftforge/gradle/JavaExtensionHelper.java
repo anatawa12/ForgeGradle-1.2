@@ -7,12 +7,12 @@ import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.SourceSetContainer;
 
 public class JavaExtensionHelper {
-    private static final Extensions SOURCE_SETS = GradleVersionUtils.choose("7.1",
+    private static final Extensions GETTERS_AND_SETTERS = GradleVersionUtils.choose("7.1",
             ConventionGetter::new,
             ExtensionGetter::new
     );
 
-    private static final Extensions VERSION_SETTERS = GradleVersionUtils.choose("4.10",
+    private static final Extensions VERSION_GETTERS = GradleVersionUtils.choose("4.10",
             ConventionGetter::new,
             ExtensionGetter::new
     );
@@ -84,18 +84,18 @@ public class JavaExtensionHelper {
     }
 
     public static SourceSetContainer getSourceSet(Project project) {
-        return SOURCE_SETS.getSourceSets(project);
+        return GETTERS_AND_SETTERS.getSourceSets(project);
     }
 
     public static void setSourceCompatibility(Project project, Object value) {
-        VERSION_SETTERS.setSourceCompatibility(project, value);
+        GETTERS_AND_SETTERS.setSourceCompatibility(project, value);
     }
 
     public static void setTargetCompatibility(Project project, Object value) {
-        VERSION_SETTERS.setTargetCompatibility(project, value);
+        GETTERS_AND_SETTERS.setTargetCompatibility(project, value);
     }
 
     public static JavaVersion getTargetCompatibility(Project project) {
-        return VERSION_SETTERS.getTargetCompatibility(project);
+        return VERSION_GETTERS.getTargetCompatibility(project);
     }
 }

@@ -13,6 +13,8 @@ import net.minecraftforge.gradle.tasks.abstractutil.EtagDownloadTask;
 import net.minecraftforge.gradle.tasks.user.reobf.ReobfTask;
 import net.minecraftforge.gradle.user.UserBasePlugin;
 import net.minecraftforge.gradle.user.UserConstants;
+import org.gradle.api.Action;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.bundling.Jar;
@@ -99,12 +101,15 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
             project.getTasks().getByName("setupDevWorkspace").dependsOn(task);
             project.getTasks().getByName("setupDecompWorkspace").dependsOn(task);
 
-            task.doLast(arg0 -> {
-                EtagDownloadTask task1 = (EtagDownloadTask) arg0;
-                try {
-                    readJsonDep(task1.getFile());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+            task.doLast(new Action<Task>() {
+                @Override
+                public void execute(Task arg0) {
+                    EtagDownloadTask task1 = (EtagDownloadTask) arg0;
+                    try {
+                        readJsonDep(task1.getFile());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             });
         }

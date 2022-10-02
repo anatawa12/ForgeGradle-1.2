@@ -331,7 +331,12 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         extractUserDev.setConfig(CONFIG_USERDEV);
         extractUserDev.setDoesCache(true);
         extractUserDev.dependsOn("getVersionJson");
-        extractUserDev.doLast(arg0 -> readAndApplyJson(getDevJson().call(), CONFIG_DEPS, CONFIG_NATIVES, arg0.getLogger()));
+        extractUserDev.doLast(new Action<Task>() {
+            @Override
+            public void execute(Task arg0) {
+                readAndApplyJson(getDevJson().call(), CONFIG_DEPS, CONFIG_NATIVES, arg0.getLogger());
+            }
+        });
         project.getTasks().findByName("getAssetsIndex").dependsOn("extractUserDev");
 
         // special native stuff
@@ -438,54 +443,57 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         ideaConv.getModule().setInheritOutputDirs(true);
 
         Task task = makeTask("genIntellijRuns", DefaultTask.class);
-        task.doLast(task1 -> {
-            try {
-                String module = task1.getProject().getProjectDir().getCanonicalPath();
+        task.doLast(new Action<Task>() {
+            @Override
+            public void execute(Task task1) {
+                try {
+                    String module = task1.getProject().getProjectDir().getCanonicalPath();
 
-                File root = task1.getProject().getProjectDir().getCanonicalFile();
-                File file = null;
-                while (file == null && !root.equals(task1.getProject().getRootProject().getProjectDir().getCanonicalFile().getParentFile())) {
-                    file = new File(root, ".idea/workspace.xml");
-                    if (!file.exists()) {
-                        file = null;
-                        // find iws file
-                        for (File f : root.listFiles()) {
-                            if (f.isFile() && f.getName().endsWith(".iws")) {
-                                file = f;
-                                break;
+                    File root = task1.getProject().getProjectDir().getCanonicalFile();
+                    File file = null;
+                    while (file == null && !root.equals(task1.getProject().getRootProject().getProjectDir().getCanonicalFile().getParentFile())) {
+                        file = new File(root, ".idea/workspace.xml");
+                        if (!file.exists()) {
+                            file = null;
+                            // find iws file
+                            for (File f : root.listFiles()) {
+                                if (f.isFile() && f.getName().endsWith(".iws")) {
+                                    file = f;
+                                    break;
+                                }
                             }
                         }
+
+                        root = root.getParentFile();
                     }
 
-                    root = root.getParentFile();
+                    if (file == null || !file.exists())
+                        throw new RuntimeException("Intellij workspace file could not be found! are you sure you imported the project into intellij?");
+
+                    DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+                    Document doc = docBuilder.parse(file);
+
+                    injectIntellijRuns(doc, module);
+
+                    // write the content into xml file
+                    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                    Transformer transformer = transformerFactory.newTransformer();
+                    transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+                    transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+                    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                    transformer.setOutputProperty(OutputKeys.ENCODING, StandardCharsets.UTF_8.name());
+                    //noinspection HttpUrlsUsage
+                    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+                    DOMSource source = new DOMSource(doc);
+                    StreamResult result = new StreamResult(file);
+                    //StreamResult result = new StreamResult(System.out);
+
+                    transformer.transform(source, result);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-
-                if (file == null || !file.exists())
-                    throw new RuntimeException("Intellij workspace file could not be found! are you sure you imported the project into intellij?");
-
-                DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-                Document doc = docBuilder.parse(file);
-
-                injectIntellijRuns(doc, module);
-
-                // write the content into xml file
-                TransformerFactory transformerFactory = TransformerFactory.newInstance();
-                Transformer transformer = transformerFactory.newTransformer();
-                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-                transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-                transformer.setOutputProperty(OutputKeys.ENCODING, StandardCharsets.UTF_8.name());
-                //noinspection HttpUrlsUsage
-                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-
-                DOMSource source = new DOMSource(doc);
-                StreamResult result = new StreamResult(file);
-                //StreamResult result = new StreamResult(System.out);
-
-                transformer.transform(source, result);
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         });
 
@@ -853,11 +861,14 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             final JavaExec exec = makeTask("debugClient", JavaExec.class);
             project.afterEvaluate(project -> exec.workingDir(delayedFile("{RUN_DIR}")));
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
-            exec.doFirst(o -> {
-                project.getLogger().error("");
-                project.getLogger().error("THIS TASK WILL BE DEPRECATED SOON!");
-                project.getLogger().error("Instead use the runClient task, with the --debug-jvm option");
-                project.getLogger().error("");
+            exec.doFirst(new Action<Task>() {
+                @Override
+                public void execute(Task o) {
+                    project.getLogger().error("");
+                    project.getLogger().error("THIS TASK WILL BE DEPRECATED SOON!");
+                    project.getLogger().error("Instead use the runClient task, with the --debug-jvm option");
+                    project.getLogger().error("");
+                }
             });
             JavaExecSpecHelper.setMainClass(exec, GRADLE_START_CLIENT);
             exec.jvmArgs("-Xincgc", "-Xmx1024M", "-Xms1024M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
@@ -877,11 +888,14 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             final JavaExec exec = makeTask("debugServer", JavaExec.class);
             project.afterEvaluate(project -> exec.workingDir(delayedFile("{RUN_DIR}")));
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
-            exec.doFirst(o -> {
-                project.getLogger().error("");
-                project.getLogger().error("THIS TASK WILL BE DEPRECATED SOON!");
-                project.getLogger().error("Instead use the runServer task, with the --debug-jvm option");
-                project.getLogger().error("");
+            exec.doFirst(new Action<Task>() {
+                @Override
+                public void execute(Task o) {
+                    project.getLogger().error("");
+                    project.getLogger().error("THIS TASK WILL BE DEPRECATED SOON!");
+                    project.getLogger().error("Instead use the runServer task, with the --debug-jvm option");
+                    project.getLogger().error("");
+                }
             });
             JavaExecSpecHelper.setMainClass(exec, GRADLE_START_SERVER);
             exec.jvmArgs("-Xincgc", "-Dfml.ignoreInvalidMinecraftCertificates=true");

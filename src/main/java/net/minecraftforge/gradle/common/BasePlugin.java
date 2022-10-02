@@ -21,10 +21,7 @@ import net.minecraftforge.gradle.tasks.ExtractConfigTask;
 import net.minecraftforge.gradle.tasks.ObtainFernFlowerTask;
 import net.minecraftforge.gradle.tasks.abstractutil.DownloadTask;
 import net.minecraftforge.gradle.tasks.abstractutil.EtagDownloadTask;
-import org.gradle.api.DefaultTask;
-import org.gradle.api.Plugin;
-import org.gradle.api.Project;
-import org.gradle.api.Task;
+import org.gradle.api.*;
 import org.gradle.api.artifacts.ArtifactRepositoryContainer;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
@@ -294,11 +291,14 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             etagDlTask.setFile(delayedFile(Constants.ASSETS + "/indexes/{ASSET_INDEX}.json"));
             etagDlTask.setDieWithError(false);
 
-            etagDlTask.doLast(task1 -> {
-                try {
-                    parseAssetIndex();
-                } catch (JsonSyntaxException | JsonIOException | IOException e) {
-                    throw new RuntimeException(e);
+            etagDlTask.doLast(new Action<Task>() {
+                @Override
+                public void execute(Task task1) {
+                    try {
+                        parseAssetIndex();
+                    } catch (JsonSyntaxException | JsonIOException | IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             });
         }

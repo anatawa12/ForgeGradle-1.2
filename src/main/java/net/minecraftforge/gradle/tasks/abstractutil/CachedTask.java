@@ -3,6 +3,7 @@ package net.minecraftforge.gradle.tasks.abstractutil;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.common.Constants;
+import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
@@ -125,20 +126,23 @@ public abstract class CachedTask extends DefaultTask {
     private void addCachedOutput(final Annotated annot) {
         cachedList.add(annot);
 
-        this.doLast(task -> {
-            if (!doesCache())
-                return;
+        this.doLast(new Action<Task>() {
+            @Override
+            public void execute(Task task) {
+                if (!doesCache())
+                    return;
 
-            try {
-                File outFile = getProject().file(annot.getValue(task));
-                if (outFile.exists()) {
-                    File hashFile = getHashFile(outFile);
-                    Files.write(hashFile.toPath(), getHashes(annot, inputList, task).getBytes(Charset.defaultCharset()));
+                try {
+                    File outFile = getProject().file(annot.getValue(task));
+                    if (outFile.exists()) {
+                        File hashFile = getHashFile(outFile);
+                        Files.write(hashFile.toPath(), getHashes(annot, inputList, task).getBytes(Charset.defaultCharset()));
+                    }
                 }
-            }
-            // error? spit it and do the task.
-            catch (Exception e) {
-                e.printStackTrace();
+                // error? spit it and do the task.
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
