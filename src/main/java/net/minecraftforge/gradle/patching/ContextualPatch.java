@@ -42,7 +42,6 @@ package net.minecraftforge.gradle.patching;
 
 import com.cloudbees.diff.Hunk;
 import com.cloudbees.diff.PatchException;
-import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -440,7 +439,9 @@ public final class ContextualPatch {
             }
             return lines;
         } finally {
-            IOUtils.closeQuietly(r);
+            try {
+                r.close();
+            } catch (IOException ignored) {}
         }
     }
 

@@ -8,6 +8,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.FileUtils;
+import net.minecraftforge.gradle.JavaExecSpecHelper;
 import net.minecraftforge.gradle.common.BaseExtension;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -110,7 +111,7 @@ public class DecompileTask extends CachedTask {
                         outJar.getAbsolutePath()
                 );
 
-                exec.setMain("-jar");
+                JavaExecSpecHelper.setMainClass(exec, "-jar");
                 exec.setWorkingDir(fernFlower.getParentFile());
 
                 exec.classpath(Constants.getClassPath());
