@@ -83,14 +83,14 @@ jobs:
         with:
           timeout_minutes: 5
           max_attempts: 5
-          command: ./gradlew --init-script=useLocal.init.gradle ${{ matrix.setting }}
+          command: ./gradlew --init-script=useLocal.init.gradle ${{ matrix.setting }} --stacktrace
 
       - name: Run Build Task
         uses: nick-invision/retry@v2
         with:
           timeout_minutes: 5
           max_attempts: 5
-          command: ./gradlew --init-script=useLocal.init.gradle build
+          command: ./gradlew --init-script=useLocal.init.gradle build --stacktrace
 
   conclude:
     runs-on: ubuntu-latest
