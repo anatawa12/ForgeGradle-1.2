@@ -1,6 +1,5 @@
 package com.anatawa12.forge.gradle.separated;
 
-import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.JavaExecSpecHelper;
 import org.gradle.api.Project;
 

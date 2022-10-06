@@ -267,7 +267,7 @@ public class ReobfTask extends DefaultTask {
         File srg = File.createTempFile("reobf-default", ".srg", getTemporaryDir());
         File extraSrg = File.createTempFile("reobf-extra", ".srg", getTemporaryDir());
 
-        UserExtension ext = (UserExtension) getExtensions().getByName(Constants.EXT_NAME_MC);
+        UserExtension ext = (UserExtension) getProject().getExtensions().getByName(Constants.EXT_NAME_MC);
 
         if (ext.isDecomp()) {
             exc = getExceptor();
@@ -456,11 +456,11 @@ public class ReobfTask extends DefaultTask {
     }
 
     public void setSrgSrg() {
-        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_SRG, ((UserExtension) getExtensions().getByName(Constants.EXT_NAME_MC)).plugin);
+        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_SRG, ((UserExtension) getProject().getExtensions().getByName(Constants.EXT_NAME_MC)).plugin);
     }
 
     public void setSrgMcp() {
-        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_NOTCH_SRG, ((UserExtension) getExtensions().getByName(Constants.EXT_NAME_MC)).plugin);
+        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_NOTCH_SRG, ((UserExtension) getProject().getExtensions().getByName(Constants.EXT_NAME_MC)).plugin);
     }
 
     public File getFieldCsv() {
