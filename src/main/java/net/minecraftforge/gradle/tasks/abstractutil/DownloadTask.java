@@ -52,7 +52,6 @@ public class DownloadTask extends DefaultTask {
         getLogger().info("Download complete");
     }
 
-    @OutputFile
     public File getOutput() {
         return output;
     }
