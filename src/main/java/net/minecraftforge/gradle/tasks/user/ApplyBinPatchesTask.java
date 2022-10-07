@@ -5,10 +5,10 @@ import com.google.common.io.ByteStreams;
 import com.nothome.delta.GDiffPatcher;
 import lzma.sdk.lzma.Decoder;
 import lzma.streams.LzmaInputStream;
+import net.minecraftforge.gradle.Pack200Util;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedFileTree;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
-import org.apache.commons.compress.java.util.jar.Pack200;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.FileVisitor;
@@ -143,7 +143,7 @@ public class ApplyBinPatchesTask extends CachedTask {
             LzmaInputStream binpatchesDecompressed = new LzmaInputStream(Files.newInputStream(getPatches().toPath()), new Decoder());
             ByteArrayOutputStream jarBytes = new ByteArrayOutputStream();
             JarOutputStream jos = new JarOutputStream(jarBytes);
-            Pack200.newUnpacker().unpack(binpatchesDecompressed, jos);
+            Pack200Util.unpack(Pack200Util.newUnpacker(), binpatchesDecompressed, jos);
             jis = new JarInputStream(new ByteArrayInputStream(jarBytes.toByteArray()));
         } catch (IOException e) {
             throw new RuntimeException(e);

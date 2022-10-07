@@ -69,7 +69,7 @@ dependencies {
     implementation("com.github.jponge:lzma-java:1.3") // replaces the LZMA binary
     implementation("com.nothome:javaxdelta:2.0.1") // GDIFF implementation for BinPatches
     implementation("com.google.code.gson:gson:2.9.0") // Used instead of Argo for building changelog.
-    implementation("org.apache.commons:commons-compress:1.22-SNAPSHOT") // Because java removed Pack200
+    compileOnly("org.apache.commons:commons-compress:1.22-SNAPSHOT") // Because java removed Pack200
 
     implementation("net.md-5:SpecialSource:1.11.0") // deobf and reobs
 
