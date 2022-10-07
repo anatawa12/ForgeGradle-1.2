@@ -266,18 +266,18 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
 
         task = makeTask("downloadClient", DownloadTask.class);
         {
-            String jarClientFresh = Constants.JAR_CLIENT_FRESH.replace("{MC_VERSION}", baseExtension.getVersion()).replace("{CACHE_DIR}", project.getGradle().getGradleUserHomeDir().getAbsolutePath().replace('\\', '/') + "/caches");
+            String jarClientFresh = Constants.JAR_CLIENT_FRESH.replace("{MC_VERSION}", baseExtension.version).replace("{CACHE_DIR}", project.getGradle().getGradleUserHomeDir().getAbsolutePath().replace('\\', '/') + "/caches");
 
             task.setOutput(project.file(jarClientFresh));
-            task.setUrl(Constants.MC_JAR_URL.replace("{MC_VERSION}", baseExtension.getVersion()));
+            task.setUrl(Constants.MC_JAR_URL.replace("{MC_VERSION}", baseExtension.version));
         }
 
         task = makeTask("downloadServer", DownloadTask.class);
         {
-            String jarServerFresh = Constants.JAR_SERVER_FRESH.replace("{MC_VERSION}", baseExtension.getVersion()).replace("{CACHE_DIR}", project.getGradle().getGradleUserHomeDir().getAbsolutePath().replace('\\', '/') + "/caches");
+            String jarServerFresh = Constants.JAR_SERVER_FRESH.replace("{MC_VERSION}", baseExtension.version).replace("{CACHE_DIR}", project.getGradle().getGradleUserHomeDir().getAbsolutePath().replace('\\', '/') + "/caches");
 
             task.setOutput(project.file(jarServerFresh));
-            task.setUrl(Constants.MC_SERVER_URL.replace("{MC_VERSION}", baseExtension.getVersion()));
+            task.setUrl(Constants.MC_SERVER_URL.replace("{MC_VERSION}", baseExtension.version));
         }
 
         ObtainFernFlowerTask mcpTask = makeTask("downloadMcpTools", ObtainFernFlowerTask.class);
