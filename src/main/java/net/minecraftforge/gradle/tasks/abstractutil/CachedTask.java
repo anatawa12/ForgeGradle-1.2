@@ -26,6 +26,7 @@ import java.util.*;
 /**
  * This class offers some extra helper methods for caching files.
  */
+// TODO : Maybe move to Gradle's Caching system ?
 public abstract class CachedTask extends DefaultTask {
     private boolean doesCache = true;
     private boolean cacheSet = false;
@@ -154,7 +155,6 @@ public abstract class CachedTask extends DefaultTask {
             return new File(file.getParentFile(), file.getName() + ".md5");
     }
 
-    @SuppressWarnings("rawtypes")
     private String getHashes(Annotated output, List<Annotated> inputs, Object instance) throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, SecurityException, IllegalArgumentException, InvocationTargetException {
         LinkedList<String> hashes = new LinkedList<>(Constants.hashAll(getProject().file(output.getValue(instance))));
 
@@ -183,7 +183,7 @@ public abstract class CachedTask extends DefaultTask {
                 Object obj = input.getValue(instance);
 
                 while (obj instanceof Closure)
-                    obj = ((Closure) obj).call();
+                    obj = ((Closure<?>) obj).call();
 
                 if (obj instanceof String) {
                     hashes.add(Constants.hash((String) obj));

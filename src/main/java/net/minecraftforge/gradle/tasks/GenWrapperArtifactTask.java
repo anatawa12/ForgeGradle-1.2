@@ -75,7 +75,6 @@ public class GenWrapperArtifactTask extends DefaultTask {
         this.moduleName = moduleName;
     }
 
-    
     public void setModuleName(String moduleName) {
         this.moduleName = DelayedString.resolved(moduleName);
     }

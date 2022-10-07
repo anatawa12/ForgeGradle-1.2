@@ -38,7 +38,7 @@ public class GLConstantFixer {
     private static final String IMPORT_REPLACE = "import " + ADD_AFTER + ";";
 
     public GLConstantFixer() throws IOException {
-        InputStream resource = GLConstantFixer.class.getResourceAsStream("net/minecraftforge/gradle/extrastuff/gl.json");
+        InputStream resource = GLConstantFixer.class.getResourceAsStream("gl.json");
         if (resource == null) throw new FileNotFoundException("resource gl.json not found.");
         String text = new String(ByteStreams.toByteArray(resource));
         json = JsonFactory.GSON.fromJson(text, new TypeToken<List<GLConstantGroup>>() {}.getType());

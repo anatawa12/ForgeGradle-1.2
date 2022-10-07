@@ -3,25 +3,28 @@ package net.minecraftforge.gradle.tasks.abstractutil;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedString;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.tasks.*;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 
-public class DownloadTask extends CachedTask {
+@CacheableTask
+public class DownloadTask extends DefaultTask {
     @Input
-    private DelayedString url;
-
+    private String url;
     @OutputFile
-    @Cached
-    private DelayedFile output;
+    private File output;
+    @Internal
+    private final File outputFile = getProject().file(getOutput());
 
     @TaskAction
     public void doTask() throws IOException {
-        File outputFile = getProject().file(getOutput());
         outputFile.getParentFile().mkdirs();
         outputFile.createNewFile();
 
@@ -29,12 +32,12 @@ public class DownloadTask extends CachedTask {
 
         // TODO: check etags... maybe?
 
-        HttpURLConnection connect = (HttpURLConnection) (new URL(getUrl())).openConnection();
+        HttpURLConnection connect = (HttpURLConnection) new URL(getUrl()).openConnection();
         connect.setRequestProperty("User-Agent", Constants.USER_AGENT);
         connect.setInstanceFollowRedirects(true);
 
         InputStream inStream = connect.getInputStream();
-        OutputStream outStream = new FileOutputStream(outputFile);
+        OutputStream outStream = Files.newOutputStream(outputFile.toPath());
 
         int data = inStream.read();
         while (data != -1) {
@@ -51,19 +54,30 @@ public class DownloadTask extends CachedTask {
         getLogger().info("Download complete");
     }
 
+    @OutputFile
     public File getOutput() {
-        return output.call();
+        return output;
     }
 
+    @Deprecated
     public void setOutput(DelayedFile output) {
+        this.output = output.call();
+    }
+
+    public void setOutput(File output) {
         this.output = output;
     }
 
     public String getUrl() {
-        return url.call();
+        return url;
     }
 
+    @Deprecated
     public void setUrl(DelayedString url) {
+        this.url = url.call();
+    }
+
+    public void setUrl(String url) {
         this.url = url;
     }
 }

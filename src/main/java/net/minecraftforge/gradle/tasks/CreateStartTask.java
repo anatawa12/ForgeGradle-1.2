@@ -73,10 +73,9 @@ public class CreateStartTask extends CachedTask {
 
     }
 
-    @SuppressWarnings("rawtypes")
     private String resolveString(Object obj) throws IOException {
         if (obj instanceof Closure)
-            return resolveString(((Closure) obj).call());
+            return resolveString(((Closure<?>) obj).call());
         else if (obj instanceof File)
             return ((File) obj).getCanonicalPath().replace('\\', '/');
         else

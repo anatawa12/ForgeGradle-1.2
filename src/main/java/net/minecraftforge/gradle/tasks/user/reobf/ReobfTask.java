@@ -1,5 +1,6 @@
 package net.minecraftforge.gradle.tasks.user.reobf;
 
+import com.google.common.base.Throwables;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.GradleVersionUtils;
@@ -14,7 +15,6 @@ import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.DefaultDomainObjectSet;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
@@ -23,8 +23,6 @@ import javax.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -32,25 +30,17 @@ import java.util.List;
 
 public class ReobfTask extends DefaultTask {
     final private DomainObjectSet<ObfArtifact> obfOutput = GradleVersionUtils.choose("5.5",
-            () -> new DefaultDomainObjectSet<>(ObfArtifact.class),
-            () -> ObfOutputCreateHelper.domainObjectSet(getInjectedObjectFactory(), ObfArtifact.class));
-    private static class ObfOutputCreateHelper {
-        static Method method;
+            ReobfTask::getInternalDeprecatedDefaultDomain,
+            () -> getInjectedObjectFactory().domainObjectSet(ObfArtifact.class));
 
-        static {
-            try {
-                method = ObjectFactory.class.getMethod("domainObjectSet", Class.class);
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public static <T> DomainObjectSet<T> domainObjectSet(ObjectFactory factory, Class<T> elementType) {
-            try {
-                return (DomainObjectSet<T>) method.invoke(factory, elementType);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
+    @SuppressWarnings("unchecked")
+    private static DomainObjectSet<ObfArtifact> getInternalDeprecatedDefaultDomain() {
+        try {
+            Class<?> aClass = Class.forName("org.gradle.api.internal.DefaultDomainObjectSet");
+            return (DomainObjectSet<ObfArtifact>) aClass.getConstructor(Class.class).newInstance(ObfArtifact.class);
+        } catch (Throwable t) {
+            Throwables.throwIfUnchecked(t);
+            throw new IllegalStateException(t);
         }
     }
 

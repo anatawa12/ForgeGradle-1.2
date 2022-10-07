@@ -43,6 +43,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static net.minecraftforge.gradle.common.Constants.EXT_NAME_MC;
+
 public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Project>, IDelayedResolver<K> {
     public Project project;
     @SuppressWarnings("rawtypes")
@@ -214,13 +216,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     private boolean hasMavenCentralBeforeJCenterInBuildScriptRepositories() {
         if (ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.no-maven-central-warn"))
             return true;
-        URI mavenCentralUrl;
-        try {
-            mavenCentralUrl = project.uri(ArtifactRepositoryContainer.class
-                    .getField("MAVEN_CENTRAL_URL").get(null));
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
+        URI mavenCentralUrl = project.uri(ArtifactRepositoryContainer.MAVEN_CENTRAL_URL);
         for (ArtifactRepository repository : project.getBuildscript().getRepositories()) {
             if (repository instanceof MavenArtifactRepository) {
                 MavenArtifactRepository mvnRepo = (MavenArtifactRepository) repository;
@@ -264,19 +260,20 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
 
     @SuppressWarnings("serial")
     private void makeObtainTasks() {
+        BaseExtension baseExtension = (BaseExtension) project.getExtensions().getByName(EXT_NAME_MC);
         // download tasks
         DownloadTask task;
 
         task = makeTask("downloadClient", DownloadTask.class);
         {
-            task.setOutput(delayedFile(Constants.JAR_CLIENT_FRESH));
-            task.setUrl(delayedString(Constants.MC_JAR_URL));
+            task.setOutput(delayedFile(Constants.JAR_CLIENT_FRESH).call());
+            task.setUrl(Constants.MC_JAR_URL.replace("{MC_VERSION}", baseExtension.getVersion()));
         }
 
         task = makeTask("downloadServer", DownloadTask.class);
         {
-            task.setOutput(delayedFile(Constants.JAR_SERVER_FRESH));
-            task.setUrl(delayedString(Constants.MC_SERVER_URL));
+            task.setOutput(delayedFile(Constants.JAR_SERVER_FRESH).call());
+            task.setUrl(Constants.MC_SERVER_URL.replace("{MC_VERSION}", baseExtension.getVersion()));
         }
 
         ObtainFernFlowerTask mcpTask = makeTask("downloadMcpTools", ObtainFernFlowerTask.class);

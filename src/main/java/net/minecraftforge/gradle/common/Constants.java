@@ -222,8 +222,7 @@ public class Constants {
         logFile.delete(); //Delete the old log
         try {
             return new PrintStream(logFile);
-        } catch (FileNotFoundException ignored) {
-        }
+        } catch (FileNotFoundException ignored) {}
         return null; // Should never get to here
     }
 

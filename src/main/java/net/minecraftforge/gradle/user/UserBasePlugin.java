@@ -21,7 +21,7 @@ import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration.State;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.execution.TaskExecutionGraph;
-import org.gradle.api.internal.ConventionTask;
+import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.WarningMode;
@@ -34,7 +34,6 @@ import org.gradle.api.tasks.compile.GroovyCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.scala.ScalaCompile;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
-import org.gradle.util.GUtil;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -52,6 +51,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Locale;
 
 import static net.minecraftforge.gradle.common.Constants.*;
 import static net.minecraftforge.gradle.user.UserConstants.*;
@@ -376,8 +376,9 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         main.setCompileClasspath(main.getCompileClasspath().plus(api.getOutput()));
         test.setCompileClasspath(test.getCompileClasspath().plus(api.getOutput()));
 
-        project.getConfigurations().getByName(GUtil.toLowerCamelCase("api " + CONFIG_COMPILE)).extendsFrom(project.getConfigurations().getByName(CONFIG_COMPILE));
-        project.getConfigurations().getByName(GUtil.toLowerCamelCase("test " + CONFIG_COMPILE)).extendsFrom(project.getConfigurations().getByName(GUtil.toLowerCamelCase("api " + CONFIG_COMPILE)));
+        String upperConfigCompile = String.valueOf(CONFIG_COMPILE.charAt(0)).toUpperCase(Locale.ROOT) + CONFIG_COMPILE.substring(1);
+        project.getConfigurations().getByName("api" + upperConfigCompile).extendsFrom(project.getConfigurations().getByName(CONFIG_COMPILE));
+        project.getConfigurations().getByName("test" + upperConfigCompile).extendsFrom(project.getConfigurations().getByName("api" + upperConfigCompile));
 
         // set compile not to take from libs
         /*
@@ -934,11 +935,19 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         // scala!!!
         if (project.getPlugins().hasPlugin("scala")) {
-            ScalaSourceSet set = (ScalaSourceSet) new DslObject(main).getConvention().getPlugins().get("scala");
+            SourceDirectorySet set;
+            DslObject dslObject = new DslObject(main);
+            if (GradleVersionUtils.isBefore("7.1")) {
+                @SuppressWarnings("deprecation")
+                SourceDirectorySet set1 = ((ScalaSourceSet) dslObject.getConvention().getPlugins().get("scala")).getScala();
+                set = set1;
+            } else {
+                set = dslObject.getExtensions().getByType(ScalaSourceDirectorySet.class);
+            }
             DelayedFile dir = delayedFile(SOURCES_DIR + "/scala");
 
             task = makeTask("sourceMainScala", SourceCopyTask.class);
-            task.setSource(set.getScala());
+            task.setSource(set);
             task.setOutput(dir);
 
             ScalaCompile compile = (ScalaCompile) project.getTasks().getByName(main.getCompileTaskName("scala"));
@@ -948,11 +957,19 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         // groovy!!!
         if (project.getPlugins().hasPlugin("groovy")) {
-            GroovySourceSet set = (GroovySourceSet) new DslObject(main).getConvention().getPlugins().get("groovy");
+            SourceDirectorySet set;
+            DslObject dslObject = new DslObject(main);
+            if (GradleVersionUtils.isBefore("7.1")) {
+                @SuppressWarnings("deprecation")
+                SourceDirectorySet set1 = ((GroovySourceSet) dslObject.getConvention().getPlugins().get("groovy")).getGroovy();
+                set = set1;
+            } else {
+                set = dslObject.getExtensions().getByType(GroovySourceDirectorySet.class);
+            }
             DelayedFile dir = delayedFile(SOURCES_DIR + "/groovy");
 
             task = makeTask("sourceMainGroovy", SourceCopyTask.class);
-            task.setSource(set.getGroovy());
+            task.setSource(set);
             task.setOutput(dir);
 
             GroovyCompile compile = (GroovyCompile) project.getTasks().getByName(main.getCompileTaskName("groovy"));
@@ -1040,10 +1057,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         {
             // stop getting empty dirs
-            Action<ConventionTask> act = arg0 -> {
-                Zip task = (Zip) arg0;
-                task.setIncludeEmptyDirs(false);
-            };
+            Action<Zip> act = task -> task.setIncludeEmptyDirs(false);
 
             project.getTasks().withType(Jar.class, act);
             project.getTasks().withType(Zip.class, act);
