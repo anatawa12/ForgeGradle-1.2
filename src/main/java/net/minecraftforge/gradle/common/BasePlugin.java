@@ -266,13 +266,17 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
 
         task = makeTask("downloadClient", DownloadTask.class);
         {
-            task.setOutput(delayedFile(Constants.JAR_CLIENT_FRESH).call());
+            String jarClientFresh = Constants.JAR_CLIENT_FRESH.replace("{MC_VERSION}", baseExtension.getVersion()).replace("{CACHE_DIR}", project.getGradle().getGradleUserHomeDir().getAbsolutePath().replace('\\', '/') + "/caches");
+
+            task.setOutput(project.file(jarClientFresh));
             task.setUrl(Constants.MC_JAR_URL.replace("{MC_VERSION}", baseExtension.getVersion()));
         }
 
         task = makeTask("downloadServer", DownloadTask.class);
         {
-            task.setOutput(delayedFile(Constants.JAR_SERVER_FRESH).call());
+            String jarServerFresh = Constants.JAR_SERVER_FRESH.replace("{MC_VERSION}", baseExtension.getVersion()).replace("{CACHE_DIR}", project.getGradle().getGradleUserHomeDir().getAbsolutePath().replace('\\', '/') + "/caches");
+
+            task.setOutput(project.file(jarServerFresh));
             task.setUrl(Constants.MC_SERVER_URL.replace("{MC_VERSION}", baseExtension.getVersion()));
         }
 

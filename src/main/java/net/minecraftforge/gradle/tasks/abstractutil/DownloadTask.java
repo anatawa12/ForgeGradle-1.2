@@ -20,15 +20,13 @@ public class DownloadTask extends DefaultTask {
     private String url;
     @OutputFile
     private File output;
-    @Internal
-    private final File outputFile = getProject().file(getOutput());
 
     @TaskAction
     public void doTask() throws IOException {
-        outputFile.getParentFile().mkdirs();
-        outputFile.createNewFile();
+        output.getParentFile().mkdirs();
+        output.createNewFile();
 
-        getLogger().debug("Downloading " + getUrl() + " to " + outputFile);
+        getLogger().debug("Downloading " + getUrl() + " to " + output);
 
         // TODO: check etags... maybe?
 
@@ -37,7 +35,7 @@ public class DownloadTask extends DefaultTask {
         connect.setInstanceFollowRedirects(true);
 
         InputStream inStream = connect.getInputStream();
-        OutputStream outStream = Files.newOutputStream(outputFile.toPath());
+        OutputStream outStream = Files.newOutputStream(output.toPath());
 
         int data = inStream.read();
         while (data != -1) {

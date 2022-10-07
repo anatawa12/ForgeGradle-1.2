@@ -46,7 +46,6 @@ public class ForgeUserPlugin extends UserPatchBasePlugin {
 
     @Override
     protected String getVersionsJsonUrl() {
-        // TODO Auto-generated method stub
         return Constants.FORGE_MAVEN + "/net/minecraftforge/forge/json";
     }
 }
