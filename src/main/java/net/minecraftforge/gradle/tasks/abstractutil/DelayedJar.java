@@ -3,6 +3,10 @@ package net.minecraftforge.gradle.tasks.abstractutil;
 import groovy.lang.Closure;
 import org.gradle.api.tasks.bundling.Jar;
 
+/**
+ * @deprecated not used anywhere
+ */
+@Deprecated
 public class DelayedJar extends Jar {
     private Closure<?> closure = null;
 

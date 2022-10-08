@@ -15,7 +15,7 @@ public class ImmutableTaskDependency implements TaskDependency {
     }
 
     public ImmutableTaskDependency(ImmutableSet<? extends Task> immutableValues) {
-        if (immutableValues == null) throw new NullPointerException("immutableValues");
+        Objects.requireNonNull(immutableValues, "immutableValues");
         this.immutableValues = immutableValues;
     }
 

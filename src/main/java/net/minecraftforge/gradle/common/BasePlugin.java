@@ -214,7 +214,13 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     private boolean hasMavenCentralBeforeJCenterInBuildScriptRepositories() {
         if (ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.no-maven-central-warn"))
             return true;
-        URI mavenCentralUrl = project.uri(ArtifactRepositoryContainer.MAVEN_CENTRAL_URL);
+        URI mavenCentralUrl;
+        try {
+            mavenCentralUrl = project.uri(ArtifactRepositoryContainer.class
+                    .getField("MAVEN_CENTRAL_URL").get(null));
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
         for (ArtifactRepository repository : project.getBuildscript().getRepositories()) {
             if (repository instanceof MavenArtifactRepository) {
                 MavenArtifactRepository mvnRepo = (MavenArtifactRepository) repository;

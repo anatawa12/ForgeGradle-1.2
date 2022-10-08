@@ -8,10 +8,8 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.nothome.delta.Delta;
 import lzma.streams.LzmaOutputStream;
-import net.minecraftforge.gradle.Pack200Util;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedFileTree;
-import org.apache.commons.compress.java.util.jar.Pack200;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
@@ -24,10 +22,7 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarInputStream;
-import java.util.jar.JarOutputStream;
+import java.util.jar.*;
 import java.util.zip.Adler32;
 import java.util.zip.ZipEntry;
 
@@ -184,16 +179,16 @@ public class GenBinaryPatches extends DefaultTask {
         JarInputStream in = new JarInputStream(new ByteArrayInputStream(data));
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Object packer = Pack200Util.newPacker();
+        Pack200.Packer packer = Pack200.newPacker();
 
-        SortedMap<String, String> props = Pack200Util.properties(packer);
+        SortedMap<String, String> props = packer.properties();
         props.put(Pack200.Packer.EFFORT, "9");
         props.put(Pack200.Packer.KEEP_FILE_ORDER, Pack200.Packer.TRUE);
         props.put(Pack200.Packer.UNKNOWN_ATTRIBUTE, Pack200.Packer.PASS);
 
         final PrintStream err = new PrintStream(System.err);
         System.setErr(new PrintStream(ByteStreams.nullOutputStream()));
-        Pack200Util.pack(packer, in, out);
+        packer.pack(in, out);
         System.setErr(err);
 
         in.close();

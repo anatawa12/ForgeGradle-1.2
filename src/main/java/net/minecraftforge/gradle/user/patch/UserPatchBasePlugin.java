@@ -1,7 +1,6 @@
 package net.minecraftforge.gradle.user.patch;
 
 import net.minecraftforge.gradle.JavaExtensionHelper;
-import net.minecraftforge.gradle.Pack200Util;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.tasks.ProcessJarTask;
@@ -14,7 +13,6 @@ import org.apache.tools.ant.types.Commandline;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 
@@ -34,13 +32,6 @@ public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtens
     public void applyPlugin() {
         super.applyPlugin();
 
-        if (Pack200Util.isApacheVariant(project)) {
-            project.getBuildscript().getRepositories().maven(mavenArtifactRepository -> {
-                mavenArtifactRepository.setName("Apache Snapshots");
-                mavenArtifactRepository.setUrl("https://repository.apache.org/content/repositories/snapshots/");
-            });
-            project.getBuildscript().getDependencies().add(ScriptHandler.CLASSPATH_CONFIGURATION, "org.apache.commons:commons-compress:1.22-SNAPSHOT");
-        }
         // add the binPatching task
         {
             ApplyBinPatchesTask task = makeTask("applyBinPatches", ApplyBinPatchesTask.class);

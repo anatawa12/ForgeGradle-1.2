@@ -13,6 +13,7 @@ version = "1.2-${property("version")!!}"
 base {
     archivesName.set("ForgeGradle")
 }
+
 java {
     targetCompatibility = JavaVersion.VERSION_1_8
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -30,9 +31,6 @@ repositories {
     maven("https://oss.sonatype.org/content/repositories/snapshots/") {
         // because SpecialSource doesnt have a full release
         name = "sonatype"
-    }
-    maven("https://repository.apache.org/content/repositories/snapshots/") {
-        name = "apache-snapshots"
     }
     mavenCentral()
     maven("https://libraries.minecraft.net/") {
@@ -69,7 +67,6 @@ dependencies {
     implementation("com.github.jponge:lzma-java:1.3") // replaces the LZMA binary
     implementation("com.nothome:javaxdelta:2.0.1") // GDIFF implementation for BinPatches
     implementation("com.google.code.gson:gson:2.9.0") // Used instead of Argo for building changelog.
-    compileOnly("org.apache.commons:commons-compress:1.22-SNAPSHOT") // Because java removed Pack200
 
     implementation("net.md-5:SpecialSource:1.11.0") // deobf and reobs
 

@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -129,8 +130,7 @@ public class CrowdinDownloadTask extends DefaultTask {
 
     @SuppressWarnings("rawtypes")
     public String getProjectId() {
-        if (projectId == null)
-            throw new NullPointerException("ProjectID must be set for crowdin!");
+        Objects.requireNonNull(projectId, "ProjectID must be set for crowdin!");
 
         while (projectId instanceof Closure)
             projectId = ((Closure) projectId).call();
