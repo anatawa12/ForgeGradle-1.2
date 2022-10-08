@@ -317,8 +317,8 @@ public class ObfArtifact implements PublishArtifact {
 
         // ready artifacts
         File output = getFile();
-        File toObfTemp = File.createTempFile("toObf", ".jar", caller.getTemporaryDir());
-        File toInjectTemp = File.createTempFile("toInject", ".jar", caller.getTemporaryDir());
+        File toObfTemp = Files.createTempFile(caller.getTemporaryDir().toPath(), "toObf", ".jar").toFile();
+        File toInjectTemp = Files.createTempFile(caller.getTemporaryDir().toPath(), "toInject", ".jar").toFile();
         Files.copy(toObf.toPath(), toObfTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         // ready Srg
@@ -326,7 +326,7 @@ public class ObfArtifact implements PublishArtifact {
         boolean isTempSrg = false;
         if (exc != null && srg != defaultSrg) // defualt SRG is already passed through this.
         {
-            File tempSrg = File.createTempFile("reobf", ".srg", caller.getTemporaryDir());
+            File tempSrg = Files.createTempFile(caller.getTemporaryDir().toPath(), "reobf", ".srg").toFile();
             isTempSrg = true;
 
             exc.buildSrg(srg, tempSrg);

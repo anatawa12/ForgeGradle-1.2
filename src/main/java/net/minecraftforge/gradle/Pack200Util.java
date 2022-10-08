@@ -16,9 +16,9 @@ public class Pack200Util {
     private static boolean useApacheVariant;
 
     /**
-     * @return variant (returns true for apache variant, false for JDK's)
+     * @return true for apache variant, false for JDK's
      */
-    public static boolean getVariant(Project project) {
+    public static boolean isApacheVariant(Project project) {
         return useApacheVariant = isJava14 || ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.useApachePack200");
     }
 

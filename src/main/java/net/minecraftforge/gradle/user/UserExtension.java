@@ -12,7 +12,7 @@ import java.util.Map.Entry;
 public class UserExtension extends BaseExtension {
     public transient UserBasePlugin<? extends UserExtension> plugin;
     private HashMap<String, Object> replacements = new HashMap<>();
-    private ArrayList<String> includes = new ArrayList<>();
+    private List<String> includes = new ArrayList<>();
     private boolean isDecomp = false;
 
     public UserExtension(UserBasePlugin<? extends UserExtension> plugin) {

@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 public class ApplyS2STask extends DefaultTask {
@@ -39,7 +40,7 @@ public class ApplyS2STask extends DefaultTask {
         List<File> ins = getIn();
         File out = getOut();
         File rangemap = getRangeMap();
-        File rangelog = File.createTempFile("rangelog", ".txt", this.getTemporaryDir());
+        Path rangelog = Files.createTempFile(this.getTemporaryDir().toPath(), "rangelog", ".txt");
         FileCollection srg = getSrgs();
         FileCollection exc = getExcs();
 
@@ -96,7 +97,7 @@ public class ApplyS2STask extends DefaultTask {
             throw new IllegalArgumentException("Can only make suppliers out of directories and zips right now!");
     }
 
-    private void applyRangeMap(InputSupplier inSup, OutputSupplier outSup, FileCollection srg, FileCollection exc, File rangeMap, File rangeLog) throws IOException {
+    private void applyRangeMap(InputSupplier inSup, OutputSupplier outSup, FileCollection srg, FileCollection exc, File rangeMap, Path rangeLog) throws IOException {
         RangeApplier app = new RangeApplier().readSrg(srg.getFiles());
 
         app.setOutLogger(Constants.getTaskLogStream(getProject(), this.getName() + ".log"));

@@ -50,7 +50,7 @@ public class RemapSourcesTask extends EditJarTask {
     @Override
     public String asRead(String text) {
         Matcher matcher;
-        ArrayList<String> newLines = new ArrayList<>();
+        List<String> newLines = new ArrayList<>();
         for (String line : StringUtils.lines(text)) {
             if (noJavadocs) // noajavadocs? dont bothe with the rest of this crap...
             {

@@ -118,10 +118,10 @@ public class Main {
             }
 
             // read in the jars, and initalize some variables
-            HashSet<String> resources = new HashSet<>();
-            HashMap<String, ZipEntry> cClasses = getClassEntries(cInJar, outJar, resources);
-            HashMap<String, ZipEntry> sClasses = getClassEntries(sInJar, outJar, resources);
-            HashSet<String> cAdded = new HashSet<>();
+            Set<String> resources = new HashSet<>();
+            Map<String, ZipEntry> cClasses = getClassEntries(cInJar, outJar, resources);
+            Map<String, ZipEntry> sClasses = getClassEntries(sInJar, outJar, resources);
+            Set<String> cAdded = new HashSet<>();
 
             // start processing
             for (Map.Entry<String, ZipEntry> entry : cClasses.entrySet()) {
@@ -234,8 +234,8 @@ public class Main {
      * @param resources The registry to add resources to, and to check against.
      * @return HashMap of all the desired Classes and their ZipEntrys
      */
-    private HashMap<String, ZipEntry> getClassEntries(ZipFile inFile, ZipOutputStream outFile, HashSet<String> resources) throws IOException {
-        HashMap<String, ZipEntry> ret = new HashMap<>();
+    private Map<String, ZipEntry> getClassEntries(ZipFile inFile, ZipOutputStream outFile, Set<String> resources) throws IOException {
+        Map<String, ZipEntry> ret = new HashMap<>();
         master:
         for (ZipEntry entry : Collections.list(inFile.entries())) {
             String entryName = entry.getName();
@@ -273,7 +273,7 @@ public class Main {
         return ret;
     }
 
-    // @TODO: rewrite.
+    // TODO: rewrite.
     public static byte[] getClassBytes(String name) throws IOException {
         try (InputStream classStream = Main.class.getResourceAsStream("/" + name.replace('.', '/').concat(".class"))) {
             return ByteStreams.toByteArray(classStream);

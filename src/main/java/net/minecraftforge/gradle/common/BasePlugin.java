@@ -43,8 +43,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static net.minecraftforge.gradle.common.Constants.EXT_NAME_MC;
-
 public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Project>, IDelayedResolver<K> {
     public Project project;
     @SuppressWarnings("rawtypes")
@@ -80,7 +78,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             if (projectCacheDir == null)
                 projectCacheDir = new File(project.getProjectDir(), ".gradle");
 
-            FileLogListenner listener = new FileLogListenner(new File(projectCacheDir, "gradle.log"));
+            FileLogListenner listener = new FileLogListenner(projectCacheDir.toPath().resolve("gradle.log"));
             project.getLogging().addStandardOutputListener(listener);
             project.getLogging().addStandardErrorListener(listener);
             project.getGradle().addBuildListener(listener);
@@ -347,7 +345,6 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         {
             extractMcpData.setOut(delayedFile(Constants.MCP_DATA_DIR));
             extractMcpData.setConfig(Constants.CONFIG_MCP_DATA);
-            extractMcpData.setDoesCache(true);
         }
     }
 
@@ -438,7 +435,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     }
 
     public void applyExternalPlugin(String plugin) {
-        HashMap<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         map.put("plugin", plugin);
         project.apply(map);
     }

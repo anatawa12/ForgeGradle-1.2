@@ -1,6 +1,5 @@
 package net.minecraftforge.gradle.extrastuff;
 
-import com.google.common.base.Joiner;
 import com.google.common.io.ByteStreams;
 import de.oceanlabs.mcp.mcinjector.StringUtil;
 import org.objectweb.asm.*;
@@ -12,6 +11,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -202,11 +202,10 @@ public class ReobfExceptor {
 
         private String[] rsplit(String value, String delim) {
             int idx = value.lastIndexOf(delim);
-            return new String[]
-                    {
-                            value.substring(0, idx),
-                            value.substring(idx + 1)
-                    };
+            return new String[] {
+                    value.substring(0, idx),
+                    value.substring(idx + 1)
+            };
         }
 
         public boolean processLine(String line) {
@@ -333,7 +332,7 @@ public class ReobfExceptor {
                 if (insns.size() < 1)
                     throw new RuntimeException("Empty Intruction!!!  IMPOSSIBURU");
 
-                cache = "[" + Joiner.on(", ").join(insns) + "]";
+                cache = "[" + insns.stream().map(Object::toString).collect(Collectors.joining(", ")) + "]";
             }
             return cache;
         }

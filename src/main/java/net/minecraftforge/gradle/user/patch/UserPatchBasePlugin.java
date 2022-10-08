@@ -34,7 +34,7 @@ public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtens
     public void applyPlugin() {
         super.applyPlugin();
 
-        if (Pack200Util.getVariant(project)) {
+        if (Pack200Util.isApacheVariant(project)) {
             project.getBuildscript().getRepositories().maven(mavenArtifactRepository -> {
                 mavenArtifactRepository.setName("Apache Snapshots");
                 mavenArtifactRepository.setUrl("https://repository.apache.org/content/repositories/snapshots/");

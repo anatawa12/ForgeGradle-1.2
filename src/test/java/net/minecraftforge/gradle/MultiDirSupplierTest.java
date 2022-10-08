@@ -13,11 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class MultiDirSupplierTest {
     private final List<File> dirs = new LinkedList<>();
@@ -31,12 +27,12 @@ public class MultiDirSupplierTest {
 
         for (int i = 0; i < dirNum; i++) {
             // create and add dir
-            File dir = Files.createTempDirectory(Paths.get(System.getProperty("java.io.tmpdir")), System.currentTimeMillis() + "-").toFile();
+            File dir = Files.createTempDirectory(System.currentTimeMillis() + "-").toFile();
             dirs.add(dir);
 
             int fileNum = rand.nextInt(9) + 1; // 0-10
             for (int j = 0; j < fileNum; j++) {
-                File f = File.createTempFile("" + j + "tmp-", END, dir);
+                File f = Files.createTempFile(dir.toPath(), j + "tmp-", END).toFile();
                 expectedFiles.put(dir, getRelative(dir, f));
             }
         }
@@ -101,7 +97,7 @@ public class MultiDirSupplierTest {
     @Test
     public void testIOStreams() throws IOException {
         // to keep track of changes to check later.
-        HashMap<String, byte[]> dataMap = new HashMap<>(expectedFiles.size());
+        Map<String, byte[]> dataMap = new HashMap<>(expectedFiles.size());
 
         // its both an input and output supplier.
         MultiDirSupplier supp = new MultiDirSupplier(dirs);

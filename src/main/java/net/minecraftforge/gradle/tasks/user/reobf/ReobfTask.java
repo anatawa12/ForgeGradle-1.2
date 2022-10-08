@@ -254,8 +254,8 @@ public class ReobfTask extends DefaultTask {
     public void doTask() throws Exception {
         // do stuff.
         ReobfExceptor exc = null;
-        File srg = File.createTempFile("reobf-default", ".srg", getTemporaryDir());
-        File extraSrg = File.createTempFile("reobf-extra", ".srg", getTemporaryDir());
+        File srg = Files.createTempFile(getTemporaryDir().toPath(), "reobf-default", ".srg").toFile();
+        File extraSrg = Files.createTempFile(getTemporaryDir().toPath(), "reobf-extra", ".srg").toFile();
 
         UserExtension ext = (UserExtension) getProject().getExtensions().getByName(Constants.EXT_NAME_MC);
 
@@ -320,7 +320,7 @@ public class ReobfTask extends DefaultTask {
      */
     @InputFiles
     FileCollection getFilesToObfuscate() {
-        ArrayList<File> collect = new ArrayList<>();
+        List<File> collect = new ArrayList<>();
 
         for (ObfArtifact obf : getObfuscated()) {
             if (obf != null && obf.getToObf() != null)
@@ -335,7 +335,7 @@ public class ReobfTask extends DefaultTask {
      */
     @OutputFiles
     FileCollection getObfuscatedFiles() {
-        ArrayList<File> collect = new ArrayList<>();
+        List<File> collect = new ArrayList<>();
 
         for (ObfArtifact obf : getObfuscated()) {
             if (obf != null && obf.getFile() != null)

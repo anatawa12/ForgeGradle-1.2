@@ -32,7 +32,7 @@ public class PredefInputSupplier implements InputSupplier {
 
     @Override
     public List<String> gatherAll(String endFilter) {
-        LinkedList<String> out = new LinkedList<>();
+        List<String> out = new LinkedList<>();
         for (String s : fileMap.keySet()) {
             if (s.endsWith(endFilter)) {
                 out.add(s);

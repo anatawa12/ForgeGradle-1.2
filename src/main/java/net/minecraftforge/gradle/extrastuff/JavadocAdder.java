@@ -50,7 +50,7 @@ public final class JavadocAdder {
             //builder.append(Constants.NEWLINE);
         }
 
-        return builder.toString().replace(indent, indent);
+        return builder.toString();
     }
 
     private static List<String> wrapText(String text, int len) {

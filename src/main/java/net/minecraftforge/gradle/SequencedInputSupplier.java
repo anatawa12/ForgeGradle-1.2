@@ -50,7 +50,7 @@ public class SequencedInputSupplier extends LinkedList<InputSupplier> implements
 
     @Override
     public List<String> gatherAll(String endFilter) {
-        LinkedList<String> all = new LinkedList<>();
+        List<String> all = new LinkedList<>();
         for (InputSupplier sup : this)
             all.addAll(sup.gatherAll(endFilter));
         return all;
