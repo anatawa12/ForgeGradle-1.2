@@ -260,24 +260,19 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
 
     @SuppressWarnings("serial")
     private void makeObtainTasks() {
-        BaseExtension baseExtension = (BaseExtension) project.getExtensions().getByName(EXT_NAME_MC);
         // download tasks
         DownloadTask task;
 
         task = makeTask("downloadClient", DownloadTask.class);
         {
-            String jarClientFresh = Constants.JAR_CLIENT_FRESH.replace("{MC_VERSION}", baseExtension.version).replace("{CACHE_DIR}", project.getGradle().getGradleUserHomeDir().getAbsolutePath().replace('\\', '/') + "/caches");
-
-            task.setOutput(project.file(jarClientFresh));
-            task.setUrl(Constants.MC_JAR_URL.replace("{MC_VERSION}", baseExtension.version));
+            task.setOutput(delayedFile(Constants.JAR_CLIENT_FRESH));
+            task.setUrl(delayedString(Constants.MC_JAR_URL));
         }
 
         task = makeTask("downloadServer", DownloadTask.class);
         {
-            String jarServerFresh = Constants.JAR_SERVER_FRESH.replace("{MC_VERSION}", baseExtension.version).replace("{CACHE_DIR}", project.getGradle().getGradleUserHomeDir().getAbsolutePath().replace('\\', '/') + "/caches");
-
-            task.setOutput(project.file(jarServerFresh));
-            task.setUrl(Constants.MC_SERVER_URL.replace("{MC_VERSION}", baseExtension.version));
+            task.setOutput(delayedFile(Constants.JAR_SERVER_FRESH));
+            task.setUrl(delayedString(Constants.MC_SERVER_URL));
         }
 
         ObtainFernFlowerTask mcpTask = makeTask("downloadMcpTools", ObtainFernFlowerTask.class);

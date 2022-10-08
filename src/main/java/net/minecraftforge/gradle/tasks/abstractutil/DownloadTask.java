@@ -17,12 +17,13 @@ import java.nio.file.Files;
 @CacheableTask
 public class DownloadTask extends DefaultTask {
     @Input
-    private String url;
+    private DelayedString url;
     @OutputFile
-    private File output;
+    private DelayedFile output;
 
     @TaskAction
     public void doTask() throws IOException {
+        File output = getOutput();
         output.getParentFile().mkdirs();
         output.createNewFile();
 
@@ -53,28 +54,18 @@ public class DownloadTask extends DefaultTask {
     }
 
     public File getOutput() {
-        return output;
+        return output.call();
     }
 
-    @Deprecated
     public void setOutput(DelayedFile output) {
-        this.output = output.call();
-    }
-
-    public void setOutput(File output) {
         this.output = output;
     }
 
     public String getUrl() {
-        return url;
+        return url.call();
     }
 
-    @Deprecated
     public void setUrl(DelayedString url) {
-        this.url = url.call();
-    }
-
-    public void setUrl(String url) {
         this.url = url;
     }
 }
