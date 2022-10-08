@@ -1,16 +1,16 @@
 package net.minecraftforge.gradle.tasks;
 
 import au.com.bytecode.opencsv.CSVReader;
+import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.delayed.DelayedFile;
-import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
 import net.minecraftforge.srg2source.rangeapplier.MethodData;
 import net.minecraftforge.srg2source.rangeapplier.SrgContainer;
+import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.tasks.*;
 
+import javax.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class GenSrgTask extends CachedTask {
+@CacheableTask
+public class GenSrgTask extends DefaultTask {
     @InputFile
     private DelayedFile inSrg;
     @InputFile
@@ -37,33 +38,30 @@ public class GenSrgTask extends CachedTask {
     @InputFile
     private DelayedFile fieldsCsv;
 
-    @Cached
     @OutputFile
     private DelayedFile notchToSrg;
 
-    @Cached
     @OutputFile
     private DelayedFile notchToMcp;
 
-    @Cached
     @OutputFile
     private DelayedFile mcpToNotch;
 
-    @Cached
     @OutputFile
     private DelayedFile srgToMcp;
 
-    @Cached
     @OutputFile
     private DelayedFile mcpToSrg;
 
-    @Cached
     @OutputFile
     private DelayedFile srgExc;
 
-    @Cached
     @OutputFile
     private DelayedFile mcpExc;
+
+    public GenSrgTask() {
+        getOutputs().doNotCacheIf("Old gradle version", e -> GradleVersionUtils.isBefore("5.3"));
+    }
 
     @TaskAction
     public void doTask() throws IOException {
@@ -400,6 +398,12 @@ public class GenSrgTask extends CachedTask {
                 return thing;
         }
     */
+
+    @Inject
+    protected ObjectFactory getInjectedObjectFactory() {
+        throw new IllegalStateException("must be injected");
+    }
+
     public File getInSrg() {
         return inSrg.call();
     }
@@ -489,7 +493,7 @@ public class GenSrgTask extends CachedTask {
     }
 
     public FileCollection getExtraExcs() {
-        return getProject().files(extraExcs);
+        return GradleVersionUtils.choose("5.3", () -> getProject().files(extraExcs), () -> getInjectedObjectFactory().fileCollection().from(extraExcs));
     }
 
     public void addExtraExc(File file) {
@@ -497,7 +501,7 @@ public class GenSrgTask extends CachedTask {
     }
 
     public FileCollection getExtraSrgs() {
-        return getProject().files(extraSrgs);
+        return GradleVersionUtils.choose("5.3", () -> getProject().files(extraSrgs), () -> getInjectedObjectFactory().fileCollection().from(extraSrgs));
     }
 
     public void addExtraSrg(File file) {

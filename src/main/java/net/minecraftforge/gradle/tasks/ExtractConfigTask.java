@@ -3,8 +3,9 @@ package net.minecraftforge.gradle.tasks;
 import com.google.common.io.ByteStreams;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.delayed.DelayedFile;
-import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
 import org.apache.shiro.util.AntPathMatcher;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.*;
 
@@ -19,8 +20,10 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class ExtractConfigTask extends CachedTask {
+@CacheableTask
+public class ExtractConfigTask extends DefaultTask {
     private final AntPathMatcher antMatcher = new AntPathMatcher();
+    private final ConfigurationContainer configurations = getProject().getConfigurations();
 
     @Input
     private String config;
@@ -106,7 +109,7 @@ public class ExtractConfigTask extends CachedTask {
     @Optional
     @InputFiles
     public FileCollection getConfigFiles() {
-        return getProject().getConfigurations().getByName(config);
+        return configurations.getByName(config);
     }
 
     public File getOut() {
@@ -141,10 +144,5 @@ public class ExtractConfigTask extends CachedTask {
 
     public void exclude(Closure<Boolean> c) {
         excludeCalls.add(c);
-    }
-
-    @Override
-    protected boolean defaultCache() {
-        return false;
     }
 }

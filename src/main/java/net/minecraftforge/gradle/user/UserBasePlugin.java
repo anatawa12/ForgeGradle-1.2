@@ -329,7 +329,6 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         ExtractConfigTask extractUserDev = makeTask("extractUserDev", ExtractConfigTask.class);
         extractUserDev.setOut(delayedFile("{USER_DEV}"));
         extractUserDev.setConfig(CONFIG_USERDEV);
-        extractUserDev.setDoesCache(true);
         extractUserDev.dependsOn("getVersionJson");
         extractUserDev.doLast(new Action<Task>() {
             @Override
@@ -344,7 +343,6 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         extractNatives.setOut(delayedFile(Constants.NATIVES_DIR));
         extractNatives.setConfig(CONFIG_NATIVES);
         extractNatives.exclude("META-INF/**", "META-INF/**");
-        extractNatives.doesCache();
         extractNatives.dependsOn("extractUserDev");
 
         // special gradleStart stuff

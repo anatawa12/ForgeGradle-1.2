@@ -8,14 +8,11 @@ import lzma.streams.LzmaInputStream;
 import net.minecraftforge.gradle.Pack200Util;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedFileTree;
-import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
+import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.FileVisitor;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -30,7 +27,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.*;
 
-public class ApplyBinPatchesTask extends CachedTask {
+@CacheableTask
+public class ApplyBinPatchesTask extends DefaultTask {
     @InputFile
     DelayedFile inJar;
 
@@ -38,7 +36,6 @@ public class ApplyBinPatchesTask extends CachedTask {
     DelayedFile classesJar;
 
     @OutputFile
-    @Cached
     DelayedFile outJar;
 
     @InputFile
@@ -163,8 +160,7 @@ public class ApplyBinPatchesTask extends CachedTask {
                 } else {
                     jis.closeEntry();
                 }
-            } catch (IOException e) {
-            }
+            } catch (IOException e) {}
         } while (true);
         log("Read %d binary patches", patchlist.size());
         List<String> parts = patchlist.entrySet().stream().map(Object::toString).collect(Collectors.toList());

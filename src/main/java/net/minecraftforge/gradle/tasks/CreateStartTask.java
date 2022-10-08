@@ -5,7 +5,9 @@ import com.google.common.io.Resources;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
-import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
@@ -18,13 +20,14 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-public class CreateStartTask extends CachedTask {
+@CacheableTask
+public class CreateStartTask extends DefaultTask {
+    private final ConfigurationContainer configurations = getProject().getConfigurations();
     @Input
     HashMap<String, String> resources = new HashMap<>();
 
     HashMap<String, Object> replacements = new HashMap<>();
 
-    @Cached
     @OutputDirectory
     private DelayedFile startOut;
 
@@ -64,7 +67,7 @@ public class CreateStartTask extends CachedTask {
                     .put("destDir", compiled.getCanonicalPath())
                     .put("failonerror", true)
                     .put("includeantruntime", false)
-                    .put("classpath", getProject().getConfigurations().getByName(classpath).getAsPath())
+                    .put("classpath", configurations.getByName(classpath).getAsPath())
                     .put("encoding", StandardCharsets.UTF_8)
                     .put("source", "1.6")
                     .put("target", "1.6")

@@ -2,11 +2,15 @@ package net.minecraftforge.gradle.tasks.abstractutil;
 
 import com.google.common.io.ByteStreams;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import org.apache.shiro.util.AntPathMatcher;
+import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.*;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,7 +19,8 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class ExtractTask extends CachedTask {
+@CacheableTask
+public class ExtractTask extends DefaultTask {
     private final AntPathMatcher antMatcher = new AntPathMatcher();
 
     @InputFiles
@@ -35,9 +40,12 @@ public class ExtractTask extends CachedTask {
 
     private boolean clean = false;
 
-    @Cached
     @OutputDirectory
     private DelayedFile destinationDir = null;
+
+    public ExtractTask() {
+        getOutputs().doNotCacheIf("Old gradle version", e -> GradleVersionUtils.isBefore("5.3"));
+    }
 
     @TaskAction
     public void doTask() throws IOException {
@@ -161,13 +169,23 @@ public class ExtractTask extends CachedTask {
     }
 
     public FileCollection getSourcePaths() {
-        FileCollection collection = getProject().files();
+        FileCollection collection = getFiles();
 
         for (DelayedFile file : sourcePaths)
-            collection = collection.plus(getProject().files(file));
+            collection = collection.plus(getFiles(file));
 
         return collection;
     }
+
+    private FileCollection getFiles(Object... paths) {
+        return GradleVersionUtils.choose("5.3", () -> getProject().files(paths), () -> getInjectedObjectFactory().fileCollection().from(paths));
+    }
+
+    @Inject
+    protected ObjectFactory getInjectedObjectFactory() {
+        throw new IllegalStateException("must be injected");
+    }
+
 
     public boolean isIncludeEmptyDirs() {
         return includeEmptyDirs;
@@ -175,11 +193,6 @@ public class ExtractTask extends CachedTask {
 
     public void setIncludeEmptyDirs(boolean includeEmptyDirs) {
         this.includeEmptyDirs = includeEmptyDirs;
-    }
-
-    @Override
-    protected boolean defaultCache() {
-        return false;
     }
 
     public boolean shouldClean() {

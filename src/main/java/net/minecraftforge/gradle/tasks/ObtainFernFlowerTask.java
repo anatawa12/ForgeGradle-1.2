@@ -7,6 +7,8 @@ import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedString;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -19,17 +21,18 @@ import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class ObtainFernFlowerTask extends CachedTask {
+@CacheableTask
+public class ObtainFernFlowerTask extends DefaultTask {
+    private final boolean isOffline = getProject().getGradle().getStartParameter().isOffline();
     @Input
     private DelayedString mcpUrl;
 
-    @Cached
     @OutputFile
     private DelayedFile ffJar;
 
     @TaskAction
     public void doTask() throws IOException {
-        if (getProject().getGradle().getStartParameter().isOffline()) {
+        if (isOffline) {
             getLogger().error("Offline mode! not downloading Fernflower!");
             this.setDidWork(false);
             return;
