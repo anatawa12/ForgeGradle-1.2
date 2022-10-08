@@ -30,18 +30,22 @@ import java.util.zip.*;
 @CacheableTask
 public class ApplyBinPatchesTask extends DefaultTask {
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     DelayedFile inJar;
 
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     DelayedFile classesJar;
 
     @OutputFile
     DelayedFile outJar;
 
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     DelayedFile patches;  // this will be a patches.lzma
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     DelayedFileTree resources;
 
     private HashMap<String, ClassPatch> patchlist = new HashMap<>();

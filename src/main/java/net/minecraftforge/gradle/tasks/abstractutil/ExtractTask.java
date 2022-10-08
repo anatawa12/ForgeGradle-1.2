@@ -24,6 +24,7 @@ public class ExtractTask extends DefaultTask {
     private final AntPathMatcher antMatcher = new AntPathMatcher();
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private final LinkedHashSet<DelayedFile> sourcePaths = new LinkedHashSet<>();
 
     @Input

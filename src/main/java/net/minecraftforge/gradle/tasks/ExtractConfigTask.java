@@ -108,6 +108,7 @@ public class ExtractConfigTask extends DefaultTask {
 
     @Optional
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     public FileCollection getConfigFiles() {
         return configurations.getByName(config);
     }

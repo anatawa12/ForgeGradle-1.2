@@ -24,18 +24,24 @@ import java.util.Map.Entry;
 @CacheableTask
 public class GenSrgTask extends DefaultTask {
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile inSrg;
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile inExc;
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private final LinkedList<File> extraExcs = new LinkedList<>();
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private final LinkedList<File> extraSrgs = new LinkedList<>();
 
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile methodsCsv;
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile fieldsCsv;
 
     @OutputFile
