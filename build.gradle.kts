@@ -56,7 +56,7 @@ dependencies {
 
     // moved to the beginning to be the overrider
     implementation("org.ow2.asm:asm:9.3")
-    implementation("org.ow2.asm:asm-tree:9.3")
+    implementation("org.ow2.asm:asm-tree:9.4")
     implementation("com.google.guava:guava:31.1-jre")
 
     implementation("net.sf.opencsv:opencsv:2.3") // reading CSVs.. also used by SpecialSource
