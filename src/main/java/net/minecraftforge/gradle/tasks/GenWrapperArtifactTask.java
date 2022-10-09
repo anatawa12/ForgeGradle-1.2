@@ -6,16 +6,12 @@ import net.minecraftforge.gradle.delayed.DelayedString;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Optional;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static net.minecraftforge.gradle.user.UserConstants.WRAPPER_ARTIFACT_GROUP_ID;
 
@@ -79,7 +75,6 @@ public class GenWrapperArtifactTask extends DefaultTask {
         this.moduleName = moduleName;
     }
 
-    
     public void setModuleName(String moduleName) {
         this.moduleName = DelayedString.resolved(moduleName);
     }
@@ -151,9 +146,7 @@ public class GenWrapperArtifactTask extends DefaultTask {
     }
 
     private static void generateEmptyJar(File emptyJar) throws IOException {
-        FileOutputStream stream = null;
-        try {
-            stream = new FileOutputStream(emptyJar);
+        try (FileOutputStream stream = new FileOutputStream(emptyJar)) {
             // this is empty zip file
             stream.write(new byte[]{
                     0x50, 0x4B, 0x05, 0x06,
@@ -164,8 +157,6 @@ public class GenWrapperArtifactTask extends DefaultTask {
                     0x00, 0x00,
             });
             stream.flush();
-        } finally {
-            if (stream != null) stream.close();
         }
     }
 
@@ -199,12 +190,8 @@ public class GenWrapperArtifactTask extends DefaultTask {
         xml.append("  </dependencies>\n");
         xml.append("</ivy-module>\n");
 
-        FileOutputStream stream = null;
-        try {
-            stream = new FileOutputStream(ivyXml);
-            stream.write(xml.toString().getBytes(Charset.forName("UTF-8")));
-        } finally {
-            if (stream != null) stream.close();
+        try (FileOutputStream stream = new FileOutputStream(ivyXml)) {
+            stream.write(xml.toString().getBytes(StandardCharsets.UTF_8));
         }
     }
 }

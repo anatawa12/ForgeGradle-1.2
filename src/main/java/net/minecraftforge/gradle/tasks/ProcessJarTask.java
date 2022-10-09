@@ -1,11 +1,6 @@
 package net.minecraftforge.gradle.tasks;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-import com.google.common.io.LineProcessor;
 import de.oceanlabs.mcp.mcinjector.MCInjectorImpl;
 import net.md_5.specialsource.*;
 import net.md_5.specialsource.provider.JarProvider;
@@ -28,6 +23,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -66,16 +62,14 @@ public class ProcessJarTask extends CachedTask {
     private DelayedFile outDirtyJar = new DelayedFile(getProject(), "{BUILD_DIR}/processed.jar"); // dirty = has any other ATs
 
     @InputFiles
-    private ArrayList<DelayedFile> ats = new ArrayList<DelayedFile>();
+    private ArrayList<DelayedFile> ats = new ArrayList<>();
 
     private DelayedFile log;
 
     private boolean isClean = true;
 
     public void addTransformerClean(DelayedFile... obj) {
-        for (DelayedFile object : obj) {
-            ats.add(object);
-        }
+        ats.addAll(Arrays.asList(obj));
     }
 
     /**
@@ -104,7 +98,7 @@ public class ProcessJarTask extends CachedTask {
         File tempExcJar = stripSynthetics ? new File(getTemporaryDir(), "excpeted.jar") : out; // courtesy of gradle temp dir.
 
         // make the ATs list.. its a Set to avoid duplication.
-        Set<File> ats = new HashSet<File>();
+        Set<File> ats = new HashSet<>();
         for (DelayedFile obj : this.ats) {
             ats.add(getProject().file(obj).getCanonicalFile());
         }
@@ -133,25 +127,15 @@ public class ProcessJarTask extends CachedTask {
         JarMapping mapping = new JarMapping();
         mapping.loadMappings(srg);
 
-        final Map<String, String> renames = Maps.newHashMap();
+        final Map<String, String> renames = new HashMap<>();
         for (File f : new File[]{getFieldCsv(), getMethodCsv()}) {
             if (f == null) continue;
-            Files.asCharSource(f, Charsets.UTF_8).readLines(new LineProcessor<String>() {
-                @Override
-                public boolean processLine(String line) throws IOException {
-                    String[] pts = line.split(",");
-                    if (!"searge".equals(pts[0])) {
-                        renames.put(pts[0], pts[1]);
-                    }
-
-                    return true;
+            for (String line : Files.readAllLines(f.toPath())) {
+                String[] pts = line.split(",");
+                if (!"searge".equals(pts[0])) {
+                    renames.put(pts[0], pts[1]);
                 }
-
-                @Override
-                public String getResult() {
-                    return null;
-                }
-            });
+            }
         }
 
         // load in ATs
@@ -175,7 +159,7 @@ public class ProcessJarTask extends CachedTask {
                         pts[1] = rename + end;
                     }
                 }
-                String joinedString = Joiner.on('.').join(pts);
+                String joinedString = String.join(".", pts);
                 super.addAccessChange(joinedString, accessString);
             }
         };
@@ -191,7 +175,7 @@ public class ProcessJarTask extends CachedTask {
             }
 
             @Override
-            public void writeTo(OutputStream out) throws IOException {
+            public void writeTo(OutputStream out) {
             }
         }));
         //Make SS shutup about access maps
@@ -256,40 +240,30 @@ public class ProcessJarTask extends CachedTask {
             for (File at : ats) {
                 getLogger().info("loading AT: " + at.getCanonicalPath());
 
-                Files.asCharSource(at, Charset.defaultCharset()).readLines(new LineProcessor<Object>() {
-                    @Override
-                    public boolean processLine(String line) throws IOException {
-                        if (line.indexOf('#') != -1) line = line.substring(0, line.indexOf('#'));
-                        line = line.trim().replace('.', '/');
-                        if (line.isEmpty()) return true;
+                for (String line : Files.readAllLines(at.toPath(), Charset.defaultCharset())) {
+                    if (line.indexOf('#') != -1) line = line.substring(0, line.indexOf('#'));
+                    line = line.trim().replace('.', '/');
+                    if (line.isEmpty()) continue;
 
-                        String[] s = line.split(" ");
-                        if (s.length == 2 && s[1].indexOf('$') > 0) {
-                            String parent = s[1].substring(0, s[1].indexOf('$'));
-                            for (MCInjectorStruct cls : new MCInjectorStruct[]{struct.get(parent), struct.get(s[1])}) {
-                                if (cls != null && cls.innerClasses != null) {
-                                    for (InnerClass inner : cls.innerClasses) {
-                                        if (inner.inner_class.equals(s[1])) {
-                                            int access = fixAccess(inner.getAccess(), s[0]);
-                                            inner.access = (access == 0 ? null : Integer.toHexString(access));
-                                        }
+                    String[] s = line.split(" ");
+                    if (s.length == 2 && s[1].indexOf('$') > 0) {
+                        String parent = s[1].substring(0, s[1].indexOf('$'));
+                        for (MCInjectorStruct cls : new MCInjectorStruct[]{struct.get(parent), struct.get(s[1])}) {
+                            if (cls != null && cls.innerClasses != null) {
+                                for (InnerClass inner : cls.innerClasses) {
+                                    if (inner.inner_class.equals(s[1])) {
+                                        int access = fixAccess(inner.getAccess(), s[0]);
+                                        inner.access = (access == 0 ? null : Integer.toHexString(access));
                                     }
                                 }
                             }
                         }
-
-                        return true;
                     }
-
-                    @Override
-                    public Object getResult() {
-                        return null;
-                    }
-                });
+                }
             }
             File jsonTmp = new File(this.getTemporaryDir(), "transformed.json");
             json = jsonTmp.getCanonicalPath();
-            Files.write(JsonFactory.GSON.toJson(struct).getBytes(), jsonTmp);
+            Files.write(jsonTmp.toPath(), JsonFactory.GSON.toJson(struct).getBytes());
         }
 
         BaseExtension exten = (BaseExtension) getProject().getExtensions().getByName(EXT_NAME_MC);
@@ -314,7 +288,7 @@ public class ProcessJarTask extends CachedTask {
 
     private void stripSynthetics(File inJar, File outJar) throws IOException {
         ZipFile in = new ZipFile(inJar);
-        final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outJar)));
+        final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(outJar.toPath())));
 
         for (ZipEntry e : Collections.list(in.entries())) {
             if (e.getName().contains("META-INF"))
@@ -351,12 +325,12 @@ public class ProcessJarTask extends CachedTask {
         if ((node.access & Opcodes.ACC_ENUM) == 0 && !node.superName.equals("java/lang/Enum") && (node.access & Opcodes.ACC_SYNTHETIC) == 0) {
             // ^^ is for ignoring enums.
 
-            for (FieldNode f : ((List<FieldNode>) node.fields)) {
+            for (FieldNode f : node.fields) {
                 f.access = f.access & (0xffffffff - Opcodes.ACC_SYNTHETIC);
                 //getLogger().lifecycle("Stripping field: "+f.name);
             }
 
-            for (MethodNode m : ((List<MethodNode>) node.methods)) {
+            for (MethodNode m : node.methods) {
                 m.access = m.access & (0xffffffff - Opcodes.ACC_SYNTHETIC);
                 //getLogger().lifecycle("Stripping method: "+m.name);
             }

@@ -1,7 +1,5 @@
 package net.minecraftforge.gradle.tasks.dev;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedString;
@@ -11,6 +9,8 @@ import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public class FMLVersionPropTask extends DefaultTask {
     @OutputFile
@@ -37,7 +37,7 @@ public class FMLVersionPropTask extends DefaultTask {
                         "fmlbuild.mcversion=" + new DelayedString(getProject(), "{MC_VERSION}").call() + "\n" +
                         "fmlbuild.mcpversion=" + new DelayedString(getProject(), "{MCP_VERSION}").call() + "\n";
         //fmlbuild.deobfuscation.hash -- Not actually used anywhere
-        Files.write(data.getBytes(Charsets.UTF_8), getOutputFile());
+        Files.write(getOutputFile().toPath(), data.getBytes(StandardCharsets.UTF_8));
     }
 
     public void setOutputFile(DelayedFile output) {

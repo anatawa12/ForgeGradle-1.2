@@ -1,15 +1,18 @@
 package net.minecraftforge.gradle.common;
 
-import com.google.common.base.Joiner;
 import com.google.common.io.ByteStreams;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.StringUtils;
 import net.minecraftforge.gradle.json.version.OS;
 import org.gradle.api.Project;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -19,7 +22,7 @@ import java.util.zip.ZipInputStream;
 
 public class Constants {
     // OS
-    public static enum SystemArch {
+    public enum SystemArch {
         BIT_32, BIT_64;
 
         public String toString() {
@@ -78,19 +81,19 @@ public class Constants {
     }
 
     public static File file(File file, String... otherFiles) {
-        String othersJoined = Joiner.on('/').join(otherFiles);
+        String othersJoined = String.join("/", otherFiles);
         return new File(file, othersJoined);
     }
 
     public static File file(String... otherFiles) {
-        String othersJoined = Joiner.on('/').join(otherFiles);
+        String othersJoined = String.join("/", otherFiles);
         return new File(othersJoined);
     }
 
     public static List<String> getClassPath() {
         URL[] urls = ((URLClassLoader) Constants.class.getClassLoader()).getURLs();
 
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
         for (URL url : urls) {
             list.add(url.getPath());
         }
@@ -131,7 +134,7 @@ public class Constants {
     }
 
     public static List<String> hashAll(File file) {
-        LinkedList<String> list = new LinkedList<String>();
+        LinkedList<String> list = new LinkedList<>();
 
         if (file.isDirectory()) {
             for (File f : file.listFiles())
@@ -145,7 +148,7 @@ public class Constants {
     public static String hash(File file, String function) {
 
         try {
-            InputStream fis = new FileInputStream(file);
+            InputStream fis = Files.newInputStream(file.toPath());
             byte[] array = ByteStreams.toByteArray(fis);
             fis.close();
 
@@ -161,8 +164,8 @@ public class Constants {
         try {
             MessageDigest hasher = MessageDigest.getInstance(function);
 
-            ZipInputStream zin = new ZipInputStream(new FileInputStream(file));
-            ZipEntry entry = null;
+            ZipInputStream zin = new ZipInputStream(Files.newInputStream(file.toPath()));
+            ZipEntry entry;
             while ((entry = zin.getNextEntry()) != null) {
                 hasher.update(entry.getName().getBytes());
                 hasher.update(ByteStreams.toByteArray(zin));
@@ -173,12 +176,12 @@ public class Constants {
 
 
             // convert to string
-            String result = "";
+            StringBuilder result = new StringBuilder();
 
             for (int i = 0; i < hash.length; i++) {
-                result += Integer.toString((hash[i] & 0xff) + 0x100, 16).substring(1);
+                result.append(Integer.toString((hash[i] & 0xff) + 0x100, 16).substring(1));
             }
-            return result;
+            return result.toString();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -199,12 +202,12 @@ public class Constants {
             MessageDigest complete = MessageDigest.getInstance(function);
             byte[] hash = complete.digest(bytes);
 
-            String result = "";
+            StringBuilder result = new StringBuilder();
 
             for (int i = 0; i < hash.length; i++) {
-                result += Integer.toString((hash[i] & 0xff) + 0x100, 16).substring(1);
+                result.append(Integer.toString((hash[i] & 0xff) + 0x100, 16).substring(1));
             }
-            return result;
+            return result.toString();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -219,8 +222,7 @@ public class Constants {
         logFile.delete(); //Delete the old log
         try {
             return new PrintStream(logFile);
-        } catch (FileNotFoundException ignored) {
-        }
+        } catch (FileNotFoundException ignored) {}
         return null; // Should never get to here
     }
 

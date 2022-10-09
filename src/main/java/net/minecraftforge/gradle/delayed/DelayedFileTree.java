@@ -2,7 +2,6 @@ package net.minecraftforge.gradle.delayed;
 
 import org.gradle.api.Project;
 import org.gradle.api.file.FileTree;
-import org.gradle.api.internal.file.collections.FileTreeAdapter;
 
 @SuppressWarnings("serial")
 public class DelayedFileTree extends DelayedBase<FileTree> {
@@ -31,7 +30,7 @@ public class DelayedFileTree extends DelayedBase<FileTree> {
     @Override
     public FileTree resolveDelayed() {
         if (zipTree)
-            return project.zipTree(DelayedString.resolve(pattern, project, resolvers));
+            return project.zipTree(DelayedBase.resolve(pattern, project, resolvers));
         else
             return project.fileTree(DelayedBase.resolve(pattern, project, resolvers));
     }

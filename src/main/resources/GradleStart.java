@@ -112,8 +112,7 @@ public class GradleStart extends GradleStartCommon {
             auth.logIn();
         } catch (AuthenticationException e) {
             LOGGER.error("-- Login failed!  " + e.getMessage());
-            Throwables.propagate(e);
-            return; // dont set other variables
+            throw new RuntimeException(e);
         }
 
         LOGGER.info("Login Succesful!");
@@ -175,8 +174,8 @@ public class GradleStart extends GradleStartCommon {
                 File virtual = new File(assetVirtual, key);
                 virtual.delete();
             }
-        } catch (Throwable t) {
-            Throwables.propagate(t);
+        } catch (Throwable e) {
+            Throwables.propagate(e);
         }
     }
 

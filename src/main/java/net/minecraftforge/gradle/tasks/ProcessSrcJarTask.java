@@ -1,9 +1,6 @@
 package net.minecraftforge.gradle.tasks;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.io.FileWriteMode;
-import com.google.common.io.Files;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.patching.ContextualPatch;
@@ -17,10 +14,13 @@ import org.gradle.api.tasks.InputFiles;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public class ProcessSrcJarTask extends EditJarTask {
-    private List<ResourceHolder> stages = new LinkedList<ResourceHolder>();
+    private List<ResourceHolder> stages = new LinkedList<>();
 
     @Input
     private int maxFuzz = 0;
@@ -50,9 +50,9 @@ public class ProcessSrcJarTask extends EditJarTask {
 //                        continue; //ignore duplicates.
 
                     if (relative.endsWith(".java")) {
-                        sourceMap.put(relative, Files.asCharSource(rel.file, Charset.defaultCharset()).read());
+                        sourceMap.put(relative, FileUtils.readString(rel.file, Charset.defaultCharset()));
                     } else {
-                        resourceMap.put(relative, Files.asByteSource(rel.file).read());
+                        resourceMap.put(relative, Files.readAllBytes(rel.file.toPath()));
                     }
                 }
             }
@@ -91,9 +91,9 @@ public class ProcessSrcJarTask extends EditJarTask {
                         if (!hunk.getStatus().isSuccess()) {
                             failed++;
                             getLogger().error("  " + hunk.getHunkID() + ": " + (hunk.getFailure() != null ? hunk.getFailure().getMessage() : "") + " @ " + hunk.getIndex());
-                            Files.asCharSink(reject, Charsets.UTF_8, FileWriteMode.APPEND).write(String.format("++++ REJECTED PATCH %d\n", hunk.getHunkID()));
-                            Files.asCharSink(reject, Charsets.UTF_8, FileWriteMode.APPEND).write(Joiner.on('\n').join(hunk.hunk.lines));
-                            Files.asCharSink(reject, Charsets.UTF_8, FileWriteMode.APPEND).write(String.format("\n++++ END PATCH\n"));
+                            Files.write(reject.toPath(), String.format("++++ REJECTED PATCH %d\n", hunk.getHunkID()).getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
+                            Files.write(reject.toPath(), hunk.hunk.lines, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
+                            Files.write(reject.toPath(), "\n++++ END PATCH\n".getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
                         } else if (hunk.getStatus() == PatchStatus.Fuzzed) {
                             getLogger().info("  " + hunk.getHunkID() + " fuzzed " + hunk.getFuzz() + "!");
                         }
@@ -136,7 +136,7 @@ public class ProcessSrcJarTask extends EditJarTask {
     }
 
     private ArrayList<PatchedFile> readPatches(FileCollection patchFiles) throws IOException {
-        ArrayList<PatchedFile> patches = new ArrayList<PatchedFile>();
+        ArrayList<PatchedFile> patches = new ArrayList<>();
 
         for (File file : patchFiles.getFiles()) {
             if (file.getPath().endsWith(".patch")) {
@@ -190,7 +190,7 @@ public class ProcessSrcJarTask extends EditJarTask {
     }
 
     @Override
-    public void doStuffAfter() throws Exception {
+    public void doStuffAfter() {
     }
 
     public int getMaxFuzz() {
@@ -207,7 +207,7 @@ public class ProcessSrcJarTask extends EditJarTask {
 
         public PatchedFile(File file) throws IOException {
             this.fileToPatch = file;
-            this.patch = ContextualPatch.create(Files.asCharSource(file, Charset.defaultCharset()).read(), PROVIDER).setAccessC14N(true).setMaxFuzz(getMaxFuzz());
+            this.patch = ContextualPatch.create(FileUtils.readString(file, Charset.defaultCharset()), PROVIDER).setAccessC14N(true).setMaxFuzz(getMaxFuzz());
         }
 
         public File makeRejectFile() {
@@ -242,10 +242,8 @@ public class ProcessSrcJarTask extends EditJarTask {
 
             if (fileMap.containsKey(target)) {
                 String[] lines = fileMap.get(target).split("\r\n|\r|\n");
-                List<String> ret = new ArrayList<String>();
-                for (String line : lines) {
-                    ret.add(line);
-                }
+                List<String> ret = new ArrayList<>();
+                Collections.addAll(ret, lines);
                 return ret;
             }
 
@@ -255,7 +253,7 @@ public class ProcessSrcJarTask extends EditJarTask {
         @Override
         public void setData(String target, List<String> data) {
             target = strip(target);
-            fileMap.put(target, Joiner.on(Constants.NEWLINE).join(data));
+            fileMap.put(target, String.join(Constants.NEWLINE, data));
         }
     }
 
@@ -276,7 +274,7 @@ public class ProcessSrcJarTask extends EditJarTask {
         public ResourceHolder(String name, DelayedFile patchDir) {
             this.name = name;
             this.patchDir = patchDir;
-            this.srcDirs = new ArrayList<DelayedFile>(0);
+            this.srcDirs = new ArrayList<>(0);
         }
 
         public FileCollection getPatchFiles() {
@@ -290,14 +288,14 @@ public class ProcessSrcJarTask extends EditJarTask {
         }
 
         public FileCollection getInjects() {
-            ArrayList<FileCollection> trees = new ArrayList<FileCollection>(srcDirs.size());
+            ArrayList<FileCollection> trees = new ArrayList<>(srcDirs.size());
             for (DelayedFile f : srcDirs)
                 trees.add(getProject().fileTree(f.call()));
             return getProject().files(trees);
         }
 
         public List<RelFile> getRelInjects() {
-            LinkedList<RelFile> files = new LinkedList<RelFile>();
+            LinkedList<RelFile> files = new LinkedList<>();
 
             for (DelayedFile df : srcDirs) {
                 File dir = df.call();

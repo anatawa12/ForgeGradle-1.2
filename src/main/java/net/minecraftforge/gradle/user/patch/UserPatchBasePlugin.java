@@ -1,5 +1,6 @@
 package net.minecraftforge.gradle.user.patch;
 
+import net.minecraftforge.gradle.JavaExtensionHelper;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.tasks.ProcessJarTask;
@@ -11,8 +12,9 @@ import net.minecraftforge.gradle.user.UserConstants;
 import org.apache.tools.ant.types.Commandline;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
-import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.Task;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,7 +28,6 @@ import static net.minecraftforge.gradle.user.UserConstants.CLASSIFIER_DECOMPILED
 import static net.minecraftforge.gradle.user.patch.UserPatchConstants.*;
 
 public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtension> {
-    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public void applyPlugin() {
         super.applyPlugin();
@@ -44,7 +45,6 @@ public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtens
             project.getTasks().getByName("deobfBinJar").dependsOn(task);
 
             ProcessJarTask deobf = (ProcessJarTask) project.getTasks().getByName("deobfBinJar").dependsOn(task);
-            ;
             deobf.setInJar(delayedFile(JAR_BINPATCHED));
             deobf.dependsOn(task);
         }
@@ -66,10 +66,9 @@ public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtens
         }
 
         // configure eclipse task to do extra stuff.
-        project.getTasks().getByName("eclipse").doLast(new Action() {
-
+        project.getTasks().getByName("eclipse").doLast(new Action<Task>() {
             @Override
-            public void execute(Object arg0) {
+            public void execute(Task arg0) {
                 // find the file
                 File f = new File(ECLIPSE_LOCATION);
                 if (!f.exists()) // folder doesnt exist
@@ -84,7 +83,7 @@ public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtens
 
                 if (f.exists()) // if .location exists
                 {
-                    String projectDir = "URI//" + project.getProjectDir().toURI().toString();
+                    String projectDir = "URI//" + project.getProjectDir().toURI();
                     try {
                         byte[] LOCATION_BEFORE = new byte[]{0x40, (byte) 0xB1, (byte) 0x8B, (byte) 0x81, 0x23, (byte) 0xBC, 0x00, 0x14, 0x1A, 0x25, (byte) 0x96, (byte) 0xE7, (byte) 0xA3, (byte) 0x93, (byte) 0xBE, 0x1E};
                         byte[] LOCATION_AFTER = new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte) 0xC0, 0x58, (byte) 0xFB, (byte) 0xF3, 0x23, (byte) 0xBC, 0x00, 0x14, 0x1A, 0x51, (byte) 0xF3, (byte) 0x8C, 0x7B, (byte) 0xBB, 0x77, (byte) 0xC6};
@@ -101,7 +100,6 @@ public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtens
                     }
                 }
             }
-
         });
     }
 
@@ -122,6 +120,7 @@ public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtens
     /**
      * Allows for the configuration of tasks in AfterEvaluate
      */
+    @Override
     protected void delayedTaskConfig() {
         // add src ATs
         ProcessJarTask binDeobf = (ProcessJarTask) project.getTasks().getByName("deobfBinJar");
@@ -134,10 +133,10 @@ public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtens
 
         // from the resources dirs
         {
-            JavaPluginConvention javaConv = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
+            SourceSetContainer javaConv = JavaExtensionHelper.getSourceSet(project);
 
-            SourceSet main = javaConv.getSourceSets().getByName("main");
-            SourceSet api = javaConv.getSourceSets().getByName("api");
+            SourceSet main = javaConv.getByName(SourceSet.MAIN_SOURCE_SET_NAME);
+            SourceSet api = javaConv.getByName("api");
 
             for (File at : main.getResources().getFiles()) {
                 if (at.getName().toLowerCase().endsWith("_at.cfg")) {
@@ -243,7 +242,7 @@ public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtens
     }
 
     private Iterable<String> getRunArgsFromProperty() {
-        List<String> ret = new ArrayList<String>();
+        List<String> ret = new ArrayList<>();
         String arg = (String) project.getProperties().get("runArgs");
         if (arg != null) {
             ret.addAll(Arrays.asList(Commandline.translateCommandline(arg)));

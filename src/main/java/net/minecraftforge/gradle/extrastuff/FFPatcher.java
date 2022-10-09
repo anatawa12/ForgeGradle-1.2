@@ -1,16 +1,14 @@
 package net.minecraftforge.gradle.extrastuff;
 
-import com.google.code.regexp.Matcher;
-import com.google.code.regexp.Pattern;
-import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import net.minecraftforge.gradle.StringUtils;
 import net.minecraftforge.gradle.common.Constants;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FFPatcher {
     static final String MODIFIERS = "public|protected|private|static|abstract|final|native|synchronized|transient|volatile|strictfp";
@@ -38,7 +36,7 @@ public class FFPatcher {
     private static final String CONSTRUCTOR_CALL_REGEX = "(?<name>this|super)\\((?<body>.*?)\\)(?<end>;)";
     private static final String VALUE_FIELD_REGEX = "private static final %s\\[\\] [$\\w\\d]+ = new %s\\[\\]\\{.*?\\};";
 
-    public static String processFile(String fileName, String text, boolean fixInterfaces) throws IOException {
+    public static String processFile(String fileName, String text, boolean fixInterfaces) {
         StringBuffer out = new StringBuffer();
         Matcher m = SYNTHETICS.matcher(text);
         while (m.find()) {
@@ -51,11 +49,10 @@ public class FFPatcher {
 
         text = text.replaceAll(TRAILINGZERO, "$1$2");
 
-        List<String> lines = new ArrayList<String>();
-        lines.addAll(StringUtils.lines(text));
+        List<String> lines = new ArrayList<>(StringUtils.lines(text));
 
         processClass(lines, "", 0, "", ""); // mutates the list
-        text = Joiner.on(Constants.NEWLINE).join(lines);
+        text = String.join(Constants.NEWLINE, lines);
 
         text = text.replaceAll(NEWLINES, Constants.NEWLINE);
         text = text.replaceAll(EMPTY_SUPER, "");
@@ -145,7 +142,7 @@ public class FFPatcher {
                             args = Arrays.copyOf(args, args.length - 1);
                         }
                     }
-                    body = Joiner.on(", ").join(args);
+                    body = String.join(", ", args);
                 }
 
                 if (Strings.isNullOrEmpty(body))
@@ -180,7 +177,7 @@ public class FFPatcher {
                 if (!Strings.isNullOrEmpty(body)) {
                     String[] args = body.split(", ");
                     args = Arrays.copyOfRange(args, 2, args.length);
-                    body = Joiner.on(", ").join(args);
+                    body = String.join(", ", args);
                 }
 
                 newLine = newIndent + "   " + matcher.group("name") + "(" + body + ")" + matcher.group("end");

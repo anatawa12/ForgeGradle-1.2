@@ -1,14 +1,13 @@
 package net.minecraftforge.gradle.curseforge;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectIntHashMap;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.ArchiveTaskHelper;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.StringUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -22,12 +21,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
 import java.io.File;
@@ -36,10 +31,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class CurseUploadTask extends DefaultTask {
 
@@ -49,10 +46,10 @@ public class CurseUploadTask extends DefaultTask {
     Object projectId;
     Object artifact;
     Object displayName;
-    Collection<Object> additionalArtifacts = new ArrayList<Object>();
-    Map<Object, Object> curseProjectDeps = new HashMap<Object, Object>();
+    Collection<Object> additionalArtifacts = new ArrayList<>();
+    Map<Object, Object> curseProjectDeps = new HashMap<>();
     String apiKey;
-    Set<Object> gameVersions = new TreeSet<Object>();
+    Set<Object> gameVersions = new TreeSet<>();
     Object releaseType;
     Object changelog;
 
@@ -80,14 +77,14 @@ public class CurseUploadTask extends DefaultTask {
             }
         }
 
-        checkNotNull(meta.releaseType, "Curse releaseType cannot be null. Valid types are: " + validReleaseTypes);
+        requireNonNull(meta.releaseType, "Curse releaseType cannot be null. Valid types are: " + validReleaseTypes);
         checkArgument(validReleaseTypes.contains(meta.releaseType),
                 meta.releaseType + " is not a valid Curse relase type. Valid types are: " + validReleaseTypes);
 
         if (meta.relations != null) {
             for (CurseProjectDep projectDep : meta.relations.projects) {
-                checkNotNull(projectDep.slug, "Curse project relation slug cannot be null");
-                checkNotNull(projectDep.type, "Curse project relation type cannot be null");
+                requireNonNull(projectDep.slug, "Curse project relation slug cannot be null");
+                requireNonNull(projectDep.type, "Curse project relation type cannot be null");
                 checkArgument(validRelationTypes.contains(projectDep.type),
                         projectDep.type + " is not a valid Curse project relation type. Valid types are: " + validRelationTypes);
             }
@@ -156,7 +153,7 @@ public class CurseUploadTask extends DefaultTask {
     private int[] resolveGameVersion() throws IOException, URISyntaxException {
         String json = getWithEtag(VERSION_URL, VERSION_CACHE);
         CurseVersion[] versions = JsonFactory.GSON.fromJson(json, CurseVersion[].class);
-        TObjectIntHashMap<String> vMap = new TObjectIntHashMap<String>();
+        TObjectIntHashMap<String> vMap = new TObjectIntHashMap<>();
 
         for (CurseVersion v : versions) {
             if (v.gameDependencyID == 0) {
@@ -190,7 +187,7 @@ public class CurseUploadTask extends DefaultTask {
 
         String etag;
         if (etagFile.exists()) {
-            etag = Files.asCharSource(etagFile, Charsets.UTF_8).read();
+            etag = FileUtils.readString(etagFile);
         } else {
             etag = "";
         }
@@ -211,17 +208,17 @@ public class CurseUploadTask extends DefaultTask {
 
         if (statusCode == 304) // cached
         {
-            out = Files.asCharSource(cache, Charsets.UTF_8).read();
+            out = FileUtils.readString(cache);
         } else if (statusCode == 200) {
             InputStream stream = response.getEntity().getContent();
             byte[] data = ByteStreams.toByteArray(stream);
-            Files.write(data, cache);
+            Files.write(cache.toPath(), data);
             stream.close();
-            out = new String(data, Charsets.UTF_8);
+            out = new String(data, StandardCharsets.UTF_8);
 
             Header etagHeader = response.getFirstHeader("ETag");
             if (etagHeader != null) {
-                Files.asCharSink(etagFile, Charsets.UTF_8).write(etagHeader.getValue());
+                Files.write(etagFile.toPath(), etagHeader.getValue().getBytes(StandardCharsets.UTF_8));
             }
         } else if (response.getEntity().getContentType().getValue().contains("json")) {
             InputStreamReader stream = new InputStreamReader(response.getEntity().getContent());
@@ -386,13 +383,11 @@ public class CurseUploadTask extends DefaultTask {
      * @param map A map where each entry key is the project slug, and the entry value is the relation type.
      */
     public void relatedProject(Map<Object, Object> map) {
-        for (Map.Entry<Object, Object> entry : map.entrySet()) {
-            curseProjectDeps.put(entry.getKey(), entry.getValue());
-        }
+        curseProjectDeps.putAll(map);
     }
 
     private File resolveFile(Object object) {
-        checkNotNull(object, "Configured a null artifact!");
+        requireNonNull(object, "Configured a null artifact!");
 
         if (object instanceof File) {
             return (File) object;

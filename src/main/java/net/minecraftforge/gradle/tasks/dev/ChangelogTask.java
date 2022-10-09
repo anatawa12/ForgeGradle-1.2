@@ -1,7 +1,6 @@
 package net.minecraftforge.gradle.tasks.dev;
 
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import groovy.lang.Closure;
@@ -14,12 +13,12 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -50,7 +49,7 @@ public class ChangelogTask extends DefaultTask {
     public void doTask() throws IOException {
         if (getAuthName() != null && getAuthPassword() != null) {
             String raw = getAuthName() + ":" + getAuthPassword();
-            auth = "Basic " + DatatypeConverter.printBase64Binary(raw.getBytes());
+            auth = "Basic " + new String(Base64.getEncoder().encode(raw.getBytes()), StandardCharsets.ISO_8859_1);
         }
 
         List<Map<String, Object>> builds = getBuildInfo();
@@ -82,20 +81,19 @@ public class ChangelogTask extends DefaultTask {
             out.append('\n');
         }
 
-        Files.write(out.toString().getBytes(), getOutput());
+        Files.write(getOutput().toPath(), out.toString().getBytes());
         getProject().getArtifacts().add("archives", getOutput());
     }
 
-    private String read(String url) throws MalformedURLException, IOException {
+    private String read(String url) throws IOException {
         return read(new URL(getServerRoot() + "job/" + getJobName() + url));
     }
 
     private String read(URL url) throws IOException {
-        URLConnection con = null;
-        con = url.openConnection();
+        URLConnection con = url.openConnection();
         con.setRequestProperty("User-Agent", Constants.USER_AGENT);
         if (auth != null) {
-            getProject().getLogger().debug(auth);
+            getLogger().debug(auth);
             con.addRequestProperty("Authorization", auth);
         }
         return new String(ByteStreams.toByteArray(con.getInputStream()));
@@ -128,27 +126,15 @@ public class ChangelogTask extends DefaultTask {
             data = cleanJson(data, "{}"); //Empty entries, just for sanities sake
 
             List<Map<String, Object>> json = (List<Map<String, Object>>) new Gson().fromJson(data, Map.class).get("allBuilds");
-            Collections.sort(json, new Comparator<Map<String, Object>>() {
-                @Override
-                public int compare(Map<String, Object> o1, Map<String, Object> o2) {
-                    return (int) ((Double) o1.get("number") - (Double) o2.get("number"));
-                }
+            json.sort((o1, o2) -> (int) ((Double) o1.get("number") - (Double) o2.get("number")));
 
-            });
-
-            List<Entry<String, String>> items = new ArrayList<Entry<String, String>>();
+            List<Entry<String, String>> items = new ArrayList<>();
             Iterator<Map<String, Object>> bitr = json.iterator();
             while (bitr.hasNext()) {
                 Map<String, Object> build = bitr.next();
 
                 List<Map<String, String>> actions = (List<Map<String, String>>) build.get("actions");
-                Iterator<Map<String, String>> itr = actions.iterator();
-                while (itr.hasNext()) {
-                    Map<String, String> map = itr.next();
-                    if (!map.containsKey("text") || map.get("text").contains("http")) {
-                        itr.remove();
-                    }
-                }
+                actions.removeIf(map -> !map.containsKey("text") || map.get("text").contains("http"));
 
                 if (actions.size() == 0) {
                     build.put("version", versioned ? ((Double) build.get("number")).intValue() : getProject().getVersion());
@@ -164,7 +150,7 @@ public class ChangelogTask extends DefaultTask {
 
                 if (build.get("result").equals("SUCCESS")) {
                     if (items.size() == 0) bitr.remove();
-                    items = new ArrayList<Entry<String, String>>();
+                    items = new ArrayList<>();
                 } else {
                     bitr.remove();
                 }
@@ -174,19 +160,13 @@ public class ChangelogTask extends DefaultTask {
                 build.remove("actions");
             }
             //prettyPrint(json);
-            Collections.sort(json, new Comparator<Map<String, Object>>() {
-                @Override
-                public int compare(Map<String, Object> o1, Map<String, Object> o2) {
-                    return (int) ((Double) o2.get("number") - (Double) o1.get("number"));
-                }
-
-            });
+            json.sort((o1, o2) -> (int) ((Double) o2.get("number") - (Double) o1.get("number")));
             return json;
         } catch (Exception e) {
             e.printStackTrace();
             getLogger().lifecycle(data);
         }
-        return new ArrayList<Map<String, Object>>();
+        return new ArrayList<>();
     }
 
     @SuppressWarnings("unchecked")
@@ -208,7 +188,7 @@ public class ChangelogTask extends DefaultTask {
             }
             build.put("version", versioned ? "Build " + ((Double) build.get("number")).intValue() : getProject().getVersion());
 
-            List<Entry<String, String>> items = new ArrayList<Entry<String, String>>();
+            List<Entry<String, String>> items = new ArrayList<>();
             for (Map<String, Object> e : (List<Map<String, Object>>) ((Map<String, Object>) build.get("changeSet")).get("items")) {
                 items.add(new MapEntry(((Map<String, String>) e.get("author")).get("fullName"), e.get("comment")));
             }
@@ -271,7 +251,7 @@ public class ChangelogTask extends DefaultTask {
                     targetBuildResolved = Integer.MAX_VALUE;
                 }
             } catch (NumberFormatException e) {
-                getProject().getLogger().debug("Error reading target build: " + e.getMessage());
+                getLogger().debug("Error reading target build: " + e.getMessage());
             }
         }
 

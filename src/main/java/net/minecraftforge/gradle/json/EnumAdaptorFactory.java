@@ -19,7 +19,7 @@ public class EnumAdaptorFactory implements TypeAdapterFactory {
     @Override
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
         if (!type.getRawType().isEnum()) return null;
-        final Map<String, T> map = new HashMap<String, T>();
+        final Map<String, T> map = new HashMap<>();
         for (T c : (T[]) type.getRawType().getEnumConstants()) {
             map.put(c.toString().toLowerCase(Locale.US), c);
         }

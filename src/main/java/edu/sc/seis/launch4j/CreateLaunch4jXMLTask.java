@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.regex.Pattern;
 
 public class CreateLaunch4jXMLTask extends DefaultTask {
+    private final String projectName = getProject().getName();
     @OutputFile
     public File getXmlOutFile() {
         return ((Launch4jPluginExtension) getProject().getExtensions().getByName(Launch4jPlugin.LAUNCH4J_CONFIGURATION_NAME)).getXmlOutFileForProject(getProject());
@@ -70,12 +71,12 @@ public class CreateLaunch4jXMLTask extends DefaultTask {
 
             textElement(doc, child, "fileVersion", ensureLength(20, parseDotVersion(cfg.getVersion())));    //Max 20
             textElement(doc, child, "txtFileVersion", ensureLength(50, cfg.getVersion()));                     //Max 50
-            textElement(doc, child, "fileDescription", ensureLength(150, getProject().getName()));               //Max 150
+            textElement(doc, child, "fileDescription", ensureLength(150, projectName));               //Max 150
             textElement(doc, child, "copyright", ensureLength(20, cfg.getCopyright()));                   //Max 150
             textElement(doc, child, "productVersion", ensureLength(20, parseDotVersion(cfg.getVersion())));    //Max 20
             textElement(doc, child, "txtProductVersion", ensureLength(50, cfg.getVersion()));                     //Max 50
-            textElement(doc, child, "productName", ensureLength(150, getProject().getName()));               //Max 150
-            textElement(doc, child, "internalName", ensureLength(150, getProject().getName()));               //Max 50, Must NOT end in .exe
+            textElement(doc, child, "productName", ensureLength(150, projectName));               //Max 150
+            textElement(doc, child, "internalName", ensureLength(150, projectName));               //Max 50, Must NOT end in .exe
             textElement(doc, child, "originalFilename", originalFilename);                                         //Max 50, Must end in .exe
         }
 
@@ -166,9 +167,6 @@ public class CreateLaunch4jXMLTask extends DefaultTask {
      * launch4j fileVersion and productVersion are required to be x.y.z.w format, no text like beta or
      * SNAPSHOT. I think this is a windows thing. So we check the version, and if it is only dots and
      * numbers, we use it. If not we use 0.0.0.1
-     *
-     * @param version
-     * @return
      */
     private String parseDotVersion(String version) {
         if (VERSION1.matcher(version).matches()) {

@@ -1,21 +1,14 @@
 package net.minecraftforge.gradle.common;
 
 import com.anatawa12.forge.gradle.separated.SeparatedLauncher;
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import groovy.lang.Closure;
-import net.minecraftforge.gradle.FileLogListenner;
-import net.minecraftforge.gradle.GradleConfigurationException;
-import net.minecraftforge.gradle.GradleVersionUtils;
-import net.minecraftforge.gradle.ProjectUtils;
-import net.minecraftforge.gradle.ThrowableUtils;
+import net.minecraftforge.gradle.*;
 import net.minecraftforge.gradle.delayed.DelayedBase.IDelayedResolver;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedFileTree;
@@ -42,7 +35,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +56,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         project = arg;
 
         // search for overlays..
-        for (Plugin p : project.getPlugins()) {
+        for (Plugin<?> p : project.getPlugins()) {
             if (p instanceof BasePlugin && p != this) {
                 if (canOverlayPlugin()) {
                     project.getLogger().info("Applying Overlay");
@@ -82,7 +78,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             if (projectCacheDir == null)
                 projectCacheDir = new File(project.getProjectDir(), ".gradle");
 
-            FileLogListenner listener = new FileLogListenner(new File(projectCacheDir, "gradle.log"));
+            FileLogListenner listener = new FileLogListenner(projectCacheDir.toPath().resolve("gradle.log"));
             project.getLogging().addStandardOutputListener(listener);
             project.getLogging().addStandardErrorListener(listener);
             project.getGradle().addBuildListener(listener);
@@ -98,13 +94,11 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         project.getExtensions().create(Constants.EXT_NAME_JENKINS, JenkinsExtension.class, project);
 
         // repos
-        project.allprojects(new Action<Project>() {
-            public void execute(Project proj) {
-                // the forge's repository doesn't have pom file.
-                addMavenRepo(proj, "forge", Constants.FORGE_MAVEN, false);
-                proj.getRepositories().mavenCentral();
-                addMavenRepo(proj, "minecraft", Constants.LIBRARY_URL);
-            }
+        project.allprojects(proj -> {
+            // the forge's repository doesn't have pom file.
+            addMavenRepo(proj, "forge", Constants.FORGE_MAVEN, false);
+            proj.getRepositories().mavenCentral();
+            addMavenRepo(proj, "minecraft", Constants.LIBRARY_URL);
         });
 
         // do Mcp Snapshots Stuff
@@ -124,27 +118,24 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         }
 
         // after eval
-        project.afterEvaluate(new Action<Project>() {
-            @Override
-            public void execute(Project project) {
-                // dont continue if its already failed!
-                if (project.getState().getFailure() != null)
-                    return;
+        project.afterEvaluate(project -> {
+            // dont continue if its already failed!
+            if (project.getState().getFailure() != null)
+                return;
 
-                afterEvaluate();
+            afterEvaluate();
 
-                try {
-                    if (version != null) {
-                        File index = delayedFile(Constants.ASSETS + "/indexes/" + version.getAssets() + ".json").call();
-                        if (index.exists())
-                            parseAssetIndex();
-                    }
-                } catch (Exception e) {
-                    ThrowableUtils.propagate(e);
+            try {
+                if (version != null) {
+                    File index = delayedFile(Constants.ASSETS + "/indexes/" + version.getAssets() + ".json").call();
+                    if (index.exists())
+                        parseAssetIndex();
                 }
-
-                finalCall();
+            } catch (JsonSyntaxException | JsonIOException | IOException e) {
+                throw new RuntimeException(e);
             }
+
+            finalCall();
         });
 
         // some default tasks
@@ -223,13 +214,11 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     private boolean hasMavenCentralBeforeJCenterInBuildScriptRepositories() {
         if (ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.no-maven-central-warn"))
             return true;
-        java.net.URI mavenCentralUrl;
+        URI mavenCentralUrl;
         try {
             mavenCentralUrl = project.uri(ArtifactRepositoryContainer.class
                     .getField("MAVEN_CENTRAL_URL").get(null));
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchFieldException e) {
+        } catch (IllegalAccessException | NoSuchFieldException e) {
             throw new RuntimeException(e);
         }
         for (ArtifactRepository repository : project.getBuildscript().getRepositories()) {
@@ -303,11 +292,12 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             etagDlTask.setDieWithError(false);
 
             etagDlTask.doLast(new Action<Task>() {
-                public void execute(Task task) {
+                @Override
+                public void execute(Task task1) {
                     try {
                         parseAssetIndex();
-                    } catch (Exception e) {
-                        ThrowableUtils.propagate(e);
+                    } catch (JsonSyntaxException | JsonIOException | IOException e) {
+                        throw new RuntimeException(e);
                     }
                 }
             });
@@ -335,14 +325,14 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                         if (!json.exists())
                             return true;
 
-                        List<String> lines = Files.readLines(json, Charsets.UTF_8);
+                        List<String> lines = Files.readAllLines(json.toPath());
                         StringBuilder buf = new StringBuilder();
                         for (String line : lines) {
                             buf = buf.append(line).append('\n');
                         }
-                        Files.write(buf.toString().getBytes(Charsets.UTF_8), json);
-                    } catch (Throwable t) {
-                        ThrowableUtils.propagate(t);
+                        Files.write(json.toPath(), buf.toString().getBytes(StandardCharsets.UTF_8));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
                     return true;
                 }
@@ -361,7 +351,6 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         {
             extractMcpData.setOut(delayedFile(Constants.MCP_DATA_DIR));
             extractMcpData.setConfig(Constants.CONFIG_MCP_DATA);
-            extractMcpData.setDoesCache(true);
         }
     }
 
@@ -420,7 +409,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
 
     @SuppressWarnings("unchecked")
     public static <T extends Task> T makeTask(Project proj, String name, Class<T> type) {
-        HashMap<String, Object> map = new HashMap<String, Object>();
+        HashMap<String, Object> map = new HashMap<>();
         map.put("name", name);
         map.put("type", type);
         return (T) proj.task(map, name);
@@ -442,7 +431,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         Project project = builder.build();
 
         if (buildFile != null) {
-            HashMap<String, String> map = new HashMap<String, String>();
+            HashMap<String, String> map = new HashMap<>();
             map.put("from", buildFile.getAbsolutePath());
 
             project.apply(map);
@@ -452,7 +441,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     }
 
     public void applyExternalPlugin(String plugin) {
-        HashMap<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("plugin", plugin);
         project.apply(map);
     }
@@ -462,50 +451,34 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     }
 
     public MavenArtifactRepository addMavenRepo(final Project proj, final String name, final String url, final boolean usePom) {
-        return proj.getRepositories().maven(new Action<MavenArtifactRepository>() {
-            @Override
-            public void execute(final MavenArtifactRepository repo) {
-                repo.setName(name);
-                repo.setUrl(url);
-                if (!usePom) {
-                    GradleVersionUtils.ifAfter("4.5", new Runnable() {
-                        @Override
-                        public void run() {
-                            repo.metadataSources(new Action<MavenArtifactRepository.MetadataSources>() {
-                                @Override
-                                public void execute(MavenArtifactRepository.MetadataSources metadataSources) {
-                                    metadataSources.artifact();
-                                }
-                            });
-                        }
-                    });
-                }
+        return proj.getRepositories().maven(repo -> {
+            repo.setName(name);
+            repo.setUrl(url);
+            if (!usePom) {
+                GradleVersionUtils.ifAfter("4.5", () -> repo.metadataSources(MavenArtifactRepository.MetadataSources::artifact));
             }
         });
     }
 
     public FlatDirectoryArtifactRepository addFlatRepo(Project proj, final String name, final Object... dirs) {
-        return proj.getRepositories().flatDir(new Action<FlatDirectoryArtifactRepository>() {
-            @Override
-            public void execute(FlatDirectoryArtifactRepository repo) {
-                repo.setName(name);
-                repo.dirs(dirs);
-            }
+        return proj.getRepositories().flatDir(repo -> {
+            repo.setName(name);
+            repo.dirs(dirs);
         });
     }
 
     protected String getWithEtag(String strUrl, File cache, File etagFile) {
         try {
             if (project.getGradle().getStartParameter().isOffline()) // dont even try the internet
-                return Files.asCharSource(cache, Charsets.UTF_8).read();
+                return new String(Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
 
             // dude, its been less than 5 minutes since the last time..
             if (cache.exists() && cache.lastModified() + 300000 >= System.currentTimeMillis())
-                return Files.asCharSource(cache, Charsets.UTF_8).read();
+                return new String(Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
 
             String etag;
             if (etagFile.exists()) {
-                etag = Files.asCharSource(etagFile, Charsets.UTF_8).read();
+                etag = new String(Files.readAllBytes(etagFile.toPath()), StandardCharsets.UTF_8);
             } else {
                 etagFile.getParentFile().mkdirs();
                 etag = "";
@@ -526,20 +499,20 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             String out = null;
             if (con.getResponseCode() == 304) {
                 // the existing file is good
-                Files.touch(cache); // touch it to update last-modified time
-                out = Files.asCharSource(cache, Charsets.UTF_8).read();
+                FileUtils.updateDate(cache); // touch it to update last-modified time
+                out = new String(Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
             } else if (con.getResponseCode() == 200) {
                 InputStream stream = con.getInputStream();
                 byte[] data = ByteStreams.toByteArray(stream);
-                Files.write(data, cache);
+                Files.write(cache.toPath(), data);
                 stream.close();
 
                 // write etag
                 etag = con.getHeaderField("ETag");
                 if (Strings.isNullOrEmpty(etag)) {
-                    Files.touch(etagFile);
+                    FileUtils.updateDate(etagFile);
                 } else {
-                    Files.asCharSink(etagFile, Charsets.UTF_8).write(etag);
+                    Files.write(etagFile.toPath(), etag.getBytes(StandardCharsets.UTF_8));
                 }
 
                 out = new String(data);
@@ -556,9 +529,9 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
 
         if (cache.exists()) {
             try {
-                return Files.asCharSource(cache, Charsets.UTF_8).read();
+                return new String(Files.readAllBytes(cache.toPath()), StandardCharsets.UTF_8);
             } catch (IOException e) {
-                ThrowableUtils.propagate(e);
+                throw new RuntimeException(e);
             }
         }
 

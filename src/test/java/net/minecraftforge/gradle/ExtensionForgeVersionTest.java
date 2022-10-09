@@ -8,6 +8,9 @@ import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -16,8 +19,11 @@ public class ExtensionForgeVersionTest {
     private UserPatchExtension ext;
 
     @Before
-    public void setupProject() {
-        this.testProject = ProjectBuilder.builder().build();
+    public void setupProject() throws IOException {
+        this.testProject = ProjectBuilder.builder()
+                .withName("testProject")
+                .withProjectDir(Files.createTempDirectory(String.valueOf(System.currentTimeMillis())).toFile())
+                .build();
         assertNotNull(this.testProject);
         this.testProject.apply(ImmutableMap.of("plugin", ForgeUserPlugin.class));
 

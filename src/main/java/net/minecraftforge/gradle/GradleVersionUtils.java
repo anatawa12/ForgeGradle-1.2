@@ -48,11 +48,7 @@ public class GradleVersionUtils {
         GradleVersion gradleVersion = GradleVersion.current();
         GradleVersion version = GradleVersion.version(versionName);
 
-        if (gradleVersion.compareTo(version) < 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return gradleVersion.compareTo(version) < 0;
     }
 
     public interface Callable<T> {

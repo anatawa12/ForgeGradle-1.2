@@ -1,6 +1,5 @@
 package net.minecraftforge.gradle.tasks.dev;
 
-import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import org.gradle.api.DefaultTask;
@@ -15,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 
 public class SubmoduleChangelogTask extends DefaultTask {
     private DelayedFile submodule;
@@ -56,7 +56,7 @@ public class SubmoduleChangelogTask extends DefaultTask {
         output = runGit(getSubmodule(), "--no-pager", "log", "--reverse", "--pretty=oneline", start + "..." + end);
         getLogger().lifecycle("Updated " + getModuleName() + ":");
 
-        BufferedWriter writer = Files.newWriter(outputFile, Charset.defaultCharset());
+        BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), Charset.defaultCharset());
 
         for (String line : output) {
             String out = getPrefix() + "@" + line;

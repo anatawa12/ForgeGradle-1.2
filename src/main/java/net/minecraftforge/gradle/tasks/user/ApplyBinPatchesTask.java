@@ -1,54 +1,54 @@
 package net.minecraftforge.gradle.tasks.user;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
 import com.nothome.delta.GDiffPatcher;
 import lzma.sdk.lzma.Decoder;
 import lzma.streams.LzmaInputStream;
-import net.minecraftforge.gradle.ThrowableUtils;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedFileTree;
-import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
+import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.FileVisitor;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.*;
 
-public class ApplyBinPatchesTask extends CachedTask {
+@CacheableTask
+public class ApplyBinPatchesTask extends DefaultTask {
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     DelayedFile inJar;
 
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     DelayedFile classesJar;
 
     @OutputFile
-    @Cached
     DelayedFile outJar;
 
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     DelayedFile patches;  // this will be a patches.lzma
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     DelayedFileTree resources;
 
-    private HashMap<String, ClassPatch> patchlist = Maps.newHashMap();
+    private HashMap<String, ClassPatch> patchlist = new HashMap<>();
     private GDiffPatcher patcher = new GDiffPatcher();
 
     @TaskAction
@@ -59,12 +59,9 @@ public class ApplyBinPatchesTask extends CachedTask {
             getOutJar().delete();
         }
 
-        ZipFile in = new ZipFile(getInJar());
-        ZipInputStream classesIn = new ZipInputStream(new FileInputStream(getClassesJar()));
-        final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(getOutJar())));
-        final HashSet<String> entries = new HashSet<String>();
+        final HashSet<String> entries = new HashSet<>();
 
-        try {
+        try (ZipFile in = new ZipFile(getInJar()); ZipInputStream classesIn = new ZipInputStream(Files.newInputStream(getClassesJar().toPath())); ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(getOutJar().toPath())))) {
             // DO PATCHES
             log("Patching Class:");
             for (ZipEntry e : Collections.list(in.entries())) {
@@ -100,7 +97,7 @@ public class ApplyBinPatchesTask extends CachedTask {
             }
 
             // COPY DATA
-            ZipEntry entry = null;
+            ZipEntry entry;
             while ((entry = classesIn.getNextEntry()) != null) {
                 if (entries.contains(entry.getName()))
                     continue;
@@ -112,8 +109,7 @@ public class ApplyBinPatchesTask extends CachedTask {
 
             getResources().visit(new FileVisitor() {
                 @Override
-                public void visitDir(FileVisitDetails dirDetails) {
-                }
+                public void visitDir(FileVisitDetails dirDetails) {}
 
                 @Override
                 public void visitFile(FileVisitDetails file) {
@@ -127,15 +123,10 @@ public class ApplyBinPatchesTask extends CachedTask {
                             entries.add(name);
                         }
                     } catch (IOException e) {
-                        Throwables.throwIfUnchecked(e);
+                        throw new RuntimeException(e);
                     }
                 }
-
             });
-        } finally {
-            classesIn.close();
-            in.close();
-            out.close();
         }
     }
 
@@ -146,17 +137,17 @@ public class ApplyBinPatchesTask extends CachedTask {
     }
 
     public void setup() {
-        Pattern matcher = Pattern.compile(String.format("binpatch/merged/.*.binpatch"));
+        Pattern matcher = Pattern.compile("binpatch/merged/.*.binpatch");
 
         JarInputStream jis;
         try {
-            LzmaInputStream binpatchesDecompressed = new LzmaInputStream(new FileInputStream(getPatches()), new Decoder());
+            LzmaInputStream binpatchesDecompressed = new LzmaInputStream(Files.newInputStream(getPatches().toPath()), new Decoder());
             ByteArrayOutputStream jarBytes = new ByteArrayOutputStream();
             JarOutputStream jos = new JarOutputStream(jarBytes);
             Pack200.newUnpacker().unpack(binpatchesDecompressed, jos);
             jis = new JarInputStream(new ByteArrayInputStream(jarBytes.toByteArray()));
-        } catch (Exception e) {
-            throw ThrowableUtils.propagate(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
         log("Reading Patches:");
@@ -173,11 +164,11 @@ public class ApplyBinPatchesTask extends CachedTask {
                 } else {
                     jis.closeEntry();
                 }
-            } catch (IOException e) {
-            }
+            } catch (IOException e) {}
         } while (true);
         log("Read %d binary patches", patchlist.size());
-        log("Patch list :\n\t%s", Joiner.on("\n\t").join(patchlist.entrySet()));
+        List<String> parts = patchlist.entrySet().stream().map(Object::toString).collect(Collectors.toList());
+        log("Patch list :\n\t%s", String.join("\n\t", parts));
     }
 
     private ClassPatch readPatch(JarEntry patchEntry, JarInputStream jis) throws IOException {

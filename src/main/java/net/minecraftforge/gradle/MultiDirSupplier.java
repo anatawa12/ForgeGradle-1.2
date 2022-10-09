@@ -5,6 +5,7 @@ import net.minecraftforge.srg2source.util.io.InputSupplier;
 import net.minecraftforge.srg2source.util.io.OutputSupplier;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
@@ -25,7 +26,7 @@ public class MultiDirSupplier implements InputSupplier, OutputSupplier {
     public OutputStream getOutput(String relPath) {
         File f = getFileFor(relPath);
         try {
-            return f == null ? null : new FileOutputStream(f);
+            return f == null ? null : Files.newOutputStream(f.toPath());
         } catch (IOException e) {
             return null;
         }
@@ -41,7 +42,7 @@ public class MultiDirSupplier implements InputSupplier, OutputSupplier {
     public InputStream getInput(String relPath) {
         File f = getFileFor(relPath);
         try {
-            return f == null ? null : new FileInputStream(f);
+            return f == null ? null : Files.newInputStream(f.toPath());
         } catch (IOException e) {
             return null;
         }
@@ -50,8 +51,8 @@ public class MultiDirSupplier implements InputSupplier, OutputSupplier {
     @Override
     public List<String> gatherAll(String endFilter) {
         // stolen from the FolderSupplier.
-        LinkedList<String> out = new LinkedList<String>();
-        Stack<File> dirStack = new Stack<File>();
+        List<String> out = new LinkedList<>();
+        Stack<File> dirStack = new Stack<>();
 
         for (File root : dirs) {
             dirStack.push(root);

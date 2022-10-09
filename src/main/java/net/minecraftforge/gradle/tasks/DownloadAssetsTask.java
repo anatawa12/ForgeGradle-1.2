@@ -1,7 +1,6 @@
 package net.minecraftforge.gradle.tasks;
 
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -17,9 +16,9 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -34,8 +33,8 @@ public class DownloadAssetsTask extends DefaultTask {
 
     private boolean errored = false;
     private File virtualRoot = null;
-    private final ConcurrentLinkedQueue<Asset> filesLeft = new ConcurrentLinkedQueue<Asset>();
-    private final ArrayList<AssetsThread> threads = new ArrayList<AssetsThread>();
+    private final ConcurrentLinkedQueue<Asset> filesLeft = new ConcurrentLinkedQueue<>();
+    private final ArrayList<AssetsThread> threads = new ArrayList<>();
     private final File minecraftDir = new File(Constants.getMinecraftDirectory(), "assets/objects");
 
     private static final int MAX_THREADS = Runtime.getRuntime().availableProcessors();
@@ -106,7 +105,6 @@ public class DownloadAssetsTask extends DefaultTask {
             // CRASH!
             getLogger().error("Something went wrong with the assets downloading!");
             this.setDidWork(false);
-            return;
         }
     }
 
@@ -194,11 +192,11 @@ public class DownloadAssetsTask extends DefaultTask {
 
                             // check for local copy
                             if (localMc.exists() && Constants.hash(localMc, "SHA").equals(asset.hash))
-                                stream = new BufferedInputStream(new FileInputStream(localMc)); // if so, copy
+                                stream = new BufferedInputStream(Files.newInputStream(localMc.toPath())); // if so, copy
                             else
                                 stream = new BufferedInputStream(new URL(Constants.ASSETS_URL + "/" + asset.path).openStream()); // otherwise download
 
-                            Files.write(ByteStreams.toByteArray(stream), file);
+                            Files.write(file.toPath(), ByteStreams.toByteArray(stream));
                             stream.close();
                         }
 
@@ -219,7 +217,7 @@ public class DownloadAssetsTask extends DefaultTask {
                             }
 
                             if (!virtual.exists()) {
-                                Files.copy(file, virtual);
+                                Files.copy(file.toPath(), virtual.toPath());
                             }
                         }
                     } catch (Exception e) {

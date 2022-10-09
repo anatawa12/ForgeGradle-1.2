@@ -2,11 +2,8 @@ package net.minecraftforge.gradle.tasks.user.reobf;
 
 import COM.rl.NameProvider;
 import COM.rl.obf.RetroGuardImpl;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.md_5.specialsource.Jar;
 import net.md_5.specialsource.JarMapping;
@@ -14,6 +11,7 @@ import net.md_5.specialsource.JarRemapper;
 import net.md_5.specialsource.provider.ClassLoaderProvider;
 import net.md_5.specialsource.provider.JarProvider;
 import net.md_5.specialsource.provider.JointProvider;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedThingy;
@@ -26,12 +24,13 @@ import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -75,7 +74,7 @@ public class ObfArtifact implements PublishArtifact {
      */
     public ObfArtifact(AbstractArchiveTask toObf, ArtifactSpec artifactSpec, ReobfTask task) {
         this(new DelayedThingy(toObf), artifactSpec, task);
-        this.toObfArtifact = (PublishArtifact) toObf;
+        this.toObfArtifact = toObf;
     }
 
     /**
@@ -201,7 +200,7 @@ public class ObfArtifact implements PublishArtifact {
         else if (spec.getExtension() != null)
             return spec.getExtension().toString();
         else
-            return Files.getFileExtension(getFile() == null ? null : getFile().getName());
+            return FileUtils.getFileExtension(getFile() == null ? null : getFile().getName());
     }
 
     public String getType() {
@@ -308,8 +307,7 @@ public class ObfArtifact implements PublishArtifact {
     /**
      * Obfuscates the file
      *
-     * @throws IOException
-     * @throws org.gradle.api.InvalidUserDataException if the there is insufficient information available to generate the signature.
+     * @throws InvalidUserDataException if the there is insufficient information available to generate the signature.
      */
     void generate(ReobfExceptor exc, File defaultSrg, File extraSrg, FileCollection extraSrgFiles) throws Exception {
         File toObf = getToObf();
@@ -319,16 +317,16 @@ public class ObfArtifact implements PublishArtifact {
 
         // ready artifacts
         File output = getFile();
-        File toObfTemp = File.createTempFile("toObf", ".jar", caller.getTemporaryDir());
-        File toInjectTemp = File.createTempFile("toInject", ".jar", caller.getTemporaryDir());
-        Files.copy(toObf, toObfTemp);
+        File toObfTemp = Files.createTempFile(caller.getTemporaryDir().toPath(), "toObf", ".jar").toFile();
+        File toInjectTemp = Files.createTempFile(caller.getTemporaryDir().toPath(), "toInject", ".jar").toFile();
+        Files.copy(toObf.toPath(), toObfTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         // ready Srg
         File srg = (File) (spec.srg == null ? defaultSrg : spec.srg);
         boolean isTempSrg = false;
         if (exc != null && srg != defaultSrg) // defualt SRG is already passed through this.
         {
-            File tempSrg = File.createTempFile("reobf", ".srg", caller.getTemporaryDir());
+            File tempSrg = Files.createTempFile(caller.getTemporaryDir().toPath(), "reobf", ".srg").toFile();
             isTempSrg = true;
 
             exc.buildSrg(srg, tempSrg);
@@ -346,7 +344,7 @@ public class ObfArtifact implements PublishArtifact {
         if (caller.getMcVersion().startsWith("1.8")) {
             new McVersionTransformer(toInjectTemp, output).transform(caller.getMcVersion());
         } else {
-            Files.copy(toInjectTemp, output);
+            Files.copy(toInjectTemp.toPath(), output.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
 
         // delete temporary files
@@ -392,13 +390,13 @@ public class ObfArtifact implements PublishArtifact {
         File packedJar = new File(caller.getTemporaryDir(), "rgPackaged.jar");
         File outPackedJar = new File(caller.getTemporaryDir(), "rgOutPackaged.jar");
 
-        HashSet<String> modFiles = Sets.newHashSet();
+        HashSet<String> modFiles = new HashSet<>();
         { // pack in classPath
-            ZipOutputStream out = new ZipOutputStream(new FileOutputStream(packedJar));
-            ZipEntry entry = null;
+            ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(packedJar.toPath()));
+            ZipEntry entry;
 
             // pack input jar
-            ZipInputStream in = new ZipInputStream(new FileInputStream(input));
+            ZipInputStream in = new ZipInputStream(Files.newInputStream(input.toPath()));
             while ((entry = in.getNextEntry()) != null) {
                 modFiles.add(entry.getName());
                 out.putNextEntry(entry);
@@ -408,10 +406,10 @@ public class ObfArtifact implements PublishArtifact {
             }
             in.close();
 
-            HashSet<String> antiDuplicate = Sets.newHashSet();
+            HashSet<String> antiDuplicate = new HashSet<>();
             for (File f : classpath) {
                 if (f.isDirectory()) {
-                    LinkedList<File> dirStack = new LinkedList<File>();
+                    LinkedList<File> dirStack = new LinkedList<>();
                     dirStack.push(f);
                     String root = f.getCanonicalPath();
 
@@ -434,7 +432,7 @@ public class ObfArtifact implements PublishArtifact {
                         }
                     }
                 } else if (f.getName().endsWith("jar") || f.getName().endsWith("zip")) {
-                    in = new ZipInputStream(new FileInputStream(f));
+                    in = new ZipInputStream(Files.newInputStream(f.toPath()));
                     while ((entry = in.getNextEntry()) != null) {
                         if (antiDuplicate.contains(entry.getName()) || modFiles.contains(entry.getName()))
                             continue;
@@ -478,11 +476,11 @@ public class ObfArtifact implements PublishArtifact {
 
         // unpack jar.
         {
-            ZipOutputStream out = new ZipOutputStream(new FileOutputStream(output));
-            ZipEntry entry = null;
+            ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(output.toPath()));
+            ZipEntry entry;
 
             // pack input jar
-            ZipInputStream in = new ZipInputStream(new FileInputStream(outPackedJar));
+            ZipInputStream in = new ZipInputStream(Files.newInputStream(outPackedJar.toPath()));
             while ((entry = in.getNextEntry()) != null) {
                 if (modFiles.contains(entry.getName())) {
                     out.putNextEntry(entry);
@@ -498,7 +496,7 @@ public class ObfArtifact implements PublishArtifact {
 
     private void generateRgConfig(File config, File script, File srg, File extraSrg, FileCollection extraSrgFiles) throws IOException {
         // the config
-        ArrayList<String> configOut = new ArrayList<String>(10);
+        ArrayList<String> configOut = new ArrayList<>(10);
 
         configOut.add("reob = " + srg.getCanonicalPath());
         configOut.add("reob = " + extraSrg.getCanonicalPath()); // because it should work
@@ -513,7 +511,7 @@ public class ObfArtifact implements PublishArtifact {
         configOut.add("fullmap = 0");
         configOut.add("startindex = 0");
 
-        Files.asCharSink(config, Charset.defaultCharset()).write(Joiner.on(Constants.NEWLINE).join(configOut));
+        Files.write(config.toPath(), String.join(Constants.NEWLINE, configOut).getBytes(Charset.defaultCharset()));
 
         // the script.
         String[] lines = new String[]{
@@ -527,15 +525,15 @@ public class ObfArtifact implements PublishArtifact {
                 ".attribute Deprecated"
         };
 
-        Files.asCharSink(script, Charset.defaultCharset()).write(Joiner.on(Constants.NEWLINE).join(lines));
+        Files.write(script.toPath(), String.join(Constants.NEWLINE, lines).getBytes(Charset.defaultCharset()));
     }
 
     public static URL[] toUrls(FileCollection collection) throws MalformedURLException {
-        ArrayList<URL> urls = new ArrayList<URL>();
+        ArrayList<URL> urls = new ArrayList<>();
 
         for (File file : collection.getFiles())
             urls.add(file.toURI().toURL());
 
-        return urls.toArray(new URL[urls.size()]);
+        return urls.toArray(new URL[0]);
     }
 }

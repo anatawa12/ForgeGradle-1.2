@@ -4,9 +4,7 @@ import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.user.UserConstants;
 
 final class DevConstants {
-    private DevConstants() {
-
-    }
+    private DevConstants() {}
 
     static final String INSTALLER_URL = "https://maven.minecraftforge.net/net/minecraftforge/installer/{INSTALLER_VERSION}/installer-{INSTALLER_VERSION}-shrunk.jar";
     static final String LAUNCH4J_URL = "https://files.minecraftforge.net/launch4j/launch4j-3.0.0-" + Constants.OPERATING_SYSTEM + "-" + Constants.SYSTEM_ARCH + ".zip";

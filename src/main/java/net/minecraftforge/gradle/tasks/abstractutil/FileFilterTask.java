@@ -1,9 +1,8 @@
 package net.minecraftforge.gradle.tasks.abstractutil;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import groovy.lang.Closure;
 import groovy.util.MapEntry;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import org.gradle.api.DefaultTask;
@@ -13,6 +12,8 @@ import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 
 public class FileFilterTask extends DefaultTask {
@@ -22,7 +23,7 @@ public class FileFilterTask extends DefaultTask {
     @OutputFile
     DelayedFile outputFile;
 
-    ArrayList<MapEntry> replacements = new ArrayList<MapEntry>();
+    ArrayList<MapEntry> replacements = new ArrayList<>();
 
     public FileFilterTask() {
         this.getOutputs().upToDateWhen(Constants.CALL_FALSE);
@@ -30,13 +31,13 @@ public class FileFilterTask extends DefaultTask {
 
     @TaskAction
     public void doTask() throws IOException {
-        String input = Files.asCharSource(getInputFile(), Charsets.UTF_8).read();
+        String input = FileUtils.readString(getInputFile());
 
         for (MapEntry e : replacements) {
             input = input.replaceAll(toString(e.getKey()), toString(e.getValue()));
         }
 
-        Files.write(input.getBytes(Charsets.UTF_8), getOutputFile());
+        Files.write(getOutputFile().toPath(), input.getBytes(StandardCharsets.UTF_8));
     }
 
     @SuppressWarnings("unchecked")

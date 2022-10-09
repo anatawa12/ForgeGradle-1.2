@@ -81,11 +81,11 @@ public abstract class UserLibBasePlugin extends UserBasePlugin<UserExtension> {
         return getFmlCacheDir() + "/unpacked";
     }
 
-    private final String getFmlCacheDir() {
+    private String getFmlCacheDir() {
         return "{CACHE_DIR}/minecraft/cpw/mods/fml/{FML_VERSION}";
     }
 
-    private final String getFmlVersion(String mcVer) {
+    private String getFmlVersion(String mcVer) {
         // hardcoded because MCP snapshots should be soon, and this will be removed
         if ("1.7.2".equals(mcVer))
             return "1.7.2-7.2.158.889";

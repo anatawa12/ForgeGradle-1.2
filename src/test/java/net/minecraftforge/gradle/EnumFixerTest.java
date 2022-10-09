@@ -1,12 +1,12 @@
 package net.minecraftforge.gradle;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import net.minecraftforge.gradle.extrastuff.FFPatcher;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class EnumFixerTest {
     private static final String INPUT = "TestClass";
@@ -32,7 +32,6 @@ public class EnumFixerTest {
     }
 
     private String readResource(String name) throws IOException {
-        return Resources.toString(Resources.getResource(name), Charsets.UTF_8);
+        return Resources.toString(Resources.getResource(name), StandardCharsets.UTF_8);
     }
-
 }

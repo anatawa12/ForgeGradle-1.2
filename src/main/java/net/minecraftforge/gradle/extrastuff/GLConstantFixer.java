@@ -1,14 +1,14 @@
 package net.minecraftforge.gradle.extrastuff;
 
-import com.google.common.base.Joiner;
-import com.google.common.io.Resources;
+import com.google.common.io.ByteStreams;
 import com.google.gson.reflect.TypeToken;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.json.GLConstantGroup;
 import net.minecraftforge.gradle.json.JsonFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -30,7 +30,7 @@ public class GLConstantFixer {
     };
 
     private final List<GLConstantGroup> json;
-    public static final Pattern CALL_REGEX = Pattern.compile("(" + Joiner.on("|").join(PACKAGES) + ")\\.([\\w]+)\\(.+\\)");
+    public static final Pattern CALL_REGEX = Pattern.compile("(" + String.join("|", PACKAGES) + ")\\.([\\w]+)\\(.+\\)");
     public static final Pattern CONSTANT_REGEX = Pattern.compile("(?<![-.\\w])\\d+(?![.\\w])");
     private static final String ADD_AFTER = "org.lwjgl.opengl.GL11";
     private static final String CHECK = "org.lwjgl.opengl.";
@@ -38,7 +38,9 @@ public class GLConstantFixer {
     private static final String IMPORT_REPLACE = "import " + ADD_AFTER + ";";
 
     public GLConstantFixer() throws IOException {
-        String text = Resources.toString(Resources.getResource(GLConstantFixer.class, "gl.json"), Charset.defaultCharset());
+        InputStream resource = GLConstantFixer.class.getResourceAsStream("gl.json");
+        if (resource == null) throw new FileNotFoundException("resource gl.json not found.");
+        String text = new String(ByteStreams.toByteArray(resource));
         json = JsonFactory.GSON.fromJson(text, new TypeToken<List<GLConstantGroup>>() {}.getType());
     }
 

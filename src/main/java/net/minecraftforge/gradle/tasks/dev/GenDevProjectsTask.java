@@ -1,6 +1,5 @@
 package net.minecraftforge.gradle.tasks.dev;
 
-import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -9,17 +8,13 @@ import net.minecraftforge.gradle.json.JsonFactory;
 import net.minecraftforge.gradle.json.version.Library;
 import net.minecraftforge.gradle.json.version.Version;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputDirectory;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.Optional;
-import org.gradle.api.tasks.OutputDirectory;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,12 +29,12 @@ public class GenDevProjectsTask extends DefaultTask {
     @Optional
     private DelayedString mappingChannel, mappingVersion, mcVersion;
 
-    private List<DelayedFile> sources = new ArrayList<DelayedFile>();
-    private List<DelayedFile> resources = new ArrayList<DelayedFile>();
-    private List<DelayedFile> testSources = new ArrayList<DelayedFile>();
-    private List<DelayedFile> testResources = new ArrayList<DelayedFile>();
+    private List<DelayedFile> sources = new ArrayList<>();
+    private List<DelayedFile> resources = new ArrayList<>();
+    private List<DelayedFile> testSources = new ArrayList<>();
+    private List<DelayedFile> testResources = new ArrayList<>();
 
-    private final ArrayList<String> deps = new ArrayList<String>();
+    private final ArrayList<String> deps = new ArrayList<>();
 
     public GenDevProjectsTask() {
         this.getOutputs().file(getTargetFile());
@@ -66,7 +61,8 @@ public class GenDevProjectsTask extends DefaultTask {
     private void writeFile() throws IOException {
         File file = getProject().file(getTargetFile().call());
         file.getParentFile().mkdirs();
-        Files.touch(file);
+        file.createNewFile();
+        file.setLastModified(System.currentTimeMillis());
 
         // prepare file string for writing.
         StringBuilder o = new StringBuilder();
@@ -169,7 +165,7 @@ public class GenDevProjectsTask extends DefaultTask {
         // and now start stuff
         a(o,
                 "",
-                "jar { exclude \'GradleStart*\', \'net/minecraftforge/gradle/**\' }",
+                "jar { exclude 'GradleStart*', 'net/minecraftforge/gradle/**' }",
                 ""
         );
 
@@ -211,7 +207,7 @@ public class GenDevProjectsTask extends DefaultTask {
                 "tasks.eclipseClasspath.dependsOn 'eclipseProject' //Make them run in correct order"
         );
 
-        Files.asCharSink(file, Charset.defaultCharset()).write(o.toString());
+        Files.write(file.toPath(), o.toString().getBytes(Charset.defaultCharset()));
     }
 
     private String relative(URI base, DelayedFile src) {

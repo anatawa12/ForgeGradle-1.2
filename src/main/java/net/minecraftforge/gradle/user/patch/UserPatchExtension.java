@@ -11,7 +11,7 @@ public class UserPatchExtension extends UserExtension {
     private int maxFuzz = 0;
 
     private String apiVersion;
-    private ArrayList<Object> ats = new ArrayList<Object>();
+    private ArrayList<Object> ats = new ArrayList<>();
 
     public UserPatchExtension(UserPatchBasePlugin plugin) {
         super(plugin);

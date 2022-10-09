@@ -3,12 +3,12 @@ package net.minecraftforge.gradle.tasks;
 import com.github.abrarsyed.jastyle.ASFormatter;
 import com.github.abrarsyed.jastyle.FileWildcardFilter;
 import com.github.abrarsyed.jastyle.OptParser;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.FileUtils;
+import net.minecraftforge.gradle.JavaExecSpecHelper;
 import net.minecraftforge.gradle.common.BaseExtension;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -23,16 +23,12 @@ import net.minecraftforge.gradle.patching.ContextualPatch.PatchStatus;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.LogLevel;
-import org.gradle.api.tasks.InputDirectory;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 import org.gradle.process.JavaExecSpec;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -57,8 +53,8 @@ public class DecompileTask extends CachedTask {
     @Cached
     private DelayedFile outJar;
 
-    private HashMap<String, String> sourceMap = new HashMap<String, String>();
-    private HashMap<String, byte[]> resourceMap = new HashMap<String, byte[]>();
+    private HashMap<String, String> sourceMap = new HashMap<>();
+    private HashMap<String, byte[]> resourceMap = new HashMap<>();
 
     private static final Pattern BEFORE = Pattern.compile("(?m)((case|default).+(?:\\r\\n|\\r|\\n))(?:\\r\\n|\\r|\\n)");
     private static final Pattern AFTER = Pattern.compile("(?m)(?:\\r\\n|\\r|\\n)((?:\\r\\n|\\r|\\n)[ \\t]+(case|default))");
@@ -115,7 +111,7 @@ public class DecompileTask extends CachedTask {
                         outJar.getAbsolutePath()
                 );
 
-                exec.setMain("-jar");
+                JavaExecSpecHelper.setMainClass(exec, "-jar");
                 exec.setWorkingDir(fernFlower.getParentFile());
 
                 exec.classpath(Constants.getClassPath());
@@ -134,8 +130,8 @@ public class DecompileTask extends CachedTask {
 
     private void readJarAndFix(final File jar) throws IOException {
         // begin reading jar
-        final ZipInputStream zin = new ZipInputStream(new FileInputStream(jar));
-        ZipEntry entry = null;
+        final ZipInputStream zin = new ZipInputStream(Files.newInputStream(jar.toPath()));
+        ZipEntry entry;
         String fileStr;
 
         BaseExtension exten = (BaseExtension) getProject().getExtensions().getByName(EXT_NAME_MC);
@@ -165,7 +161,7 @@ public class DecompileTask extends CachedTask {
     }
 
     private void applySingleMcpPatch(File patchFile) throws Throwable {
-        ContextualPatch patch = ContextualPatch.create(Files.asCharSource(patchFile, Charset.defaultCharset()).read(), new ContextProvider(sourceMap));
+        ContextualPatch patch = ContextualPatch.create(FileUtils.readString(patchFile, Charset.defaultCharset()), new ContextProvider(sourceMap));
         printPatchErrors(patch.patch(false));
     }
 
@@ -223,12 +219,15 @@ public class DecompileTask extends CachedTask {
     private ContextualPatch findPatch(Collection<File> files) throws Throwable {
         ContextualPatch patch = null;
         for (File f : files) {
-            patch = ContextualPatch.create(Files.asCharSource(f, Charset.defaultCharset()).read(), new ContextProvider(sourceMap));
+            patch = ContextualPatch.create(FileUtils.readString(f, Charset.defaultCharset()), new ContextProvider(sourceMap));
             List<PatchReport> errors = patch.patch(true);
 
             boolean success = true;
             for (PatchReport rep : errors) {
-                if (!rep.getStatus().isSuccess()) success = false;
+                if (!rep.getStatus().isSuccess()) {
+                    success = false;
+                    break;
+                }
             }
             if (success) break;
         }
@@ -244,7 +243,7 @@ public class DecompileTask extends CachedTask {
         Writer writer;
 
         GLConstantFixer fixer = new GLConstantFixer();
-        ArrayList<String> files = new ArrayList<String>(sourceMap.keySet());
+        ArrayList<String> files = new ArrayList<>(sourceMap.keySet());
         Collections.sort(files); // Just to make sure we have the same order.. shouldn't matter on anything but lets be careful.
 
         for (String file : files) {
@@ -283,7 +282,7 @@ public class DecompileTask extends CachedTask {
     }
 
     private void saveJar(File output) throws IOException {
-        ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(output));
+        ZipOutputStream zout = new ZipOutputStream(Files.newOutputStream(output.toPath()));
 
         // write in resources
         for (Map.Entry<String, byte[]> entry : resourceMap.entrySet()) {
@@ -397,11 +396,7 @@ public class DecompileTask extends CachedTask {
 
             if (fileMap.containsKey(target)) {
                 String[] lines = fileMap.get(target).split("\r\n|\r|\n");
-                List<String> ret = new ArrayList<String>();
-                for (String line : lines) {
-                    ret.add(line);
-                }
-                return ret;
+                return new ArrayList<>(Arrays.asList(lines));
             }
 
             return null;
@@ -409,7 +404,7 @@ public class DecompileTask extends CachedTask {
 
         @Override
         public void setData(String target, List<String> data) {
-            fileMap.put(strip(target), Joiner.on(Constants.NEWLINE).join(data));
+            fileMap.put(strip(target), String.join(Constants.NEWLINE, data));
         }
     }
 }

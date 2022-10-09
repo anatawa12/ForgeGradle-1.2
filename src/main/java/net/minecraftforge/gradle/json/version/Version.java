@@ -22,7 +22,7 @@ public class Version {
 
     public List<Library> getLibraries() {
         if (_libraries == null) {
-            _libraries = new ArrayList<Library>();
+            _libraries = new ArrayList<>();
             if (libraries == null) return _libraries;
             for (Library lib : libraries) {
                 if (lib.applies()) {

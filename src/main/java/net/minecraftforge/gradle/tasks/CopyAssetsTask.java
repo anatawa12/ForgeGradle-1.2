@@ -1,6 +1,5 @@
 package net.minecraftforge.gradle.tasks;
 
-import com.google.common.io.Files;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.json.version.AssetIndex;
@@ -11,6 +10,8 @@ import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Map.Entry;
 
 public class CopyAssetsTask extends DefaultTask {
@@ -41,14 +42,13 @@ public class CopyAssetsTask extends DefaultTask {
                     continue;
                 else {
                     out.getParentFile().mkdirs();
-                    Files.copy(in, out);
+                    Files.copy(in.toPath(), out.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
             }
         } catch (Throwable t) {
             // CRASH!
             getLogger().error("Something went wrong with the assets copying");
             this.setDidWork(false);
-            return;
         }
     }
 
@@ -57,7 +57,7 @@ public class CopyAssetsTask extends DefaultTask {
     }
 
     public AssetIndex getAssetIndex() {
-        return (AssetIndex) assetIndex.call();
+        return assetIndex.call();
     }
 
     public void setAssetIndex(Closure<AssetIndex> assetIndex) {

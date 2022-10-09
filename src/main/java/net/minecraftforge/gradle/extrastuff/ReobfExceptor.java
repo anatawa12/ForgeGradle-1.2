@@ -1,20 +1,17 @@
 package net.minecraftforge.gradle.extrastuff;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-import com.google.common.io.LineProcessor;
 import de.oceanlabs.mcp.mcinjector.StringUtil;
 import org.objectweb.asm.*;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -29,8 +26,8 @@ public class ReobfExceptor {
     public File excConfig;
 
     // state stuff
-    Map<String, String> clsMap = Maps.newHashMap();
-    Map<String, String> access = Maps.newHashMap();
+    Map<String, String> clsMap = new HashMap<>();
+    Map<String, String> access = new HashMap<>();
 
 
     public void buildSrg(File inSrg, File outSrg) throws IOException {
@@ -41,8 +38,12 @@ public class ReobfExceptor {
             outSrg.delete();
 
         // rewrite it.
-        String fixed = Files.asCharSource(inSrg, Charset.defaultCharset()).readLines(new SrgLineProcessor(clsMap, access));
-        Files.write(fixed.getBytes(), outSrg);
+        SrgLineProcessor processor = new SrgLineProcessor(clsMap, access);
+        for (String line : Files.readAllLines(inSrg.toPath(), Charset.defaultCharset())) {
+            processor.processLine(line);
+        }
+        String fixed = processor.getResult();
+        Files.write(outSrg.toPath(), fixed.getBytes());
     }
 
     /**
@@ -64,7 +65,7 @@ public class ReobfExceptor {
     // Preliminary things here
 
     private Map<String, String> readCSVs() throws IOException {
-        final Map<String, String> csvData = Maps.newHashMap();
+        final Map<String, String> csvData = new HashMap<>();
         File[] csvs = new File[]
                 {
                         fieldCSV == null ? null : fieldCSV,
@@ -74,19 +75,10 @@ public class ReobfExceptor {
         for (File f : csvs) {
             if (f == null) continue;
 
-            Files.asCharSource(f, Charset.defaultCharset()).readLines(new LineProcessor<Object>() {
-                @Override
-                public boolean processLine(String line) throws IOException {
-                    String[] s = line.split(",");
-                    csvData.put(s[0], s[1]);
-                    return true;
-                }
-
-                @Override
-                public Object getResult() {
-                    return null;
-                }
-            });
+            for (String line : Files.readAllLines(f.toPath(), Charset.defaultCharset())) {
+                String[] s = line.split(",");
+                csvData.put(s[0], s[1]);
+            }
         }
 
         return csvData;
@@ -94,7 +86,7 @@ public class ReobfExceptor {
 
     // ACTUAL things here...
 
-    private void renameAccess(Map<String, AccessInfo> data, Map<String, String> csvData) throws IOException {
+    private void renameAccess(Map<String, AccessInfo> data, Map<String, String> csvData) {
         for (AccessInfo info : data.values()) {
             for (Insn i : info.insns) {
                 String tmp = csvData.get(i.name);
@@ -132,28 +124,17 @@ public class ReobfExceptor {
     }
 
     private Map<String, String> createClassMap(Map<String, String> markerMap, final List<String> interfaces) throws IOException {
-        Map<String, String> excMap = Files.asCharSource(excConfig, Charset.defaultCharset()).readLines(new LineProcessor<Map<String, String>>() {
-            Map<String, String> tmp = Maps.newHashMap();
+        Map<String, String> excMap = new HashMap<>();
+        for (String line : Files.readAllLines(excConfig.toPath(), Charset.defaultCharset())) {
+            if (line.contains(".") ||
+                    !line.contains("=") ||
+                    line.startsWith("#")) continue;
 
-            @Override
-            public boolean processLine(String line) throws IOException {
-                if (line.contains(".") ||
-                        !line.contains("=") ||
-                        line.startsWith("#")) return true;
+            String[] s = line.split("=");
+            if (!interfaces.contains(s[0])) excMap.put(s[0], s[1] + "_");
+        }
 
-                String[] s = line.split("=");
-                if (!interfaces.contains(s[0])) tmp.put(s[0], s[1] + "_");
-
-                return true;
-            }
-
-            @Override
-            public Map<String, String> getResult() {
-                return tmp;
-            }
-        });
-
-        Map<String, String> map = Maps.newHashMap();
+        Map<String, String> map = new HashMap<>();
         for (Entry<String, String> e : excMap.entrySet()) {
             String renamed = markerMap.get(e.getValue());
             if (renamed != null) {
@@ -178,7 +159,7 @@ public class ReobfExceptor {
             }
         }
 
-        Map<String, String> matched = Maps.newHashMap();
+        Map<String, String> matched = new HashMap<>();
 
         //System.out.println("Matched: ");
         itr = old_data.entrySet().iterator();
@@ -203,7 +184,7 @@ public class ReobfExceptor {
         return matched;
     }
 
-    private static class SrgLineProcessor implements LineProcessor<String> {
+    private static class SrgLineProcessor {
         Map<String, String> map;
         Map<String, String> access;
         StringBuilder out = new StringBuilder();
@@ -221,52 +202,54 @@ public class ReobfExceptor {
 
         private String[] rsplit(String value, String delim) {
             int idx = value.lastIndexOf(delim);
-            return new String[]
-                    {
-                            value.substring(0, idx),
-                            value.substring(idx + 1)
-                    };
+            return new String[] {
+                    value.substring(0, idx),
+                    value.substring(idx + 1)
+            };
         }
 
-        @Override
-        public boolean processLine(String line) throws IOException {
+        public boolean processLine(String line) {
             String[] split = line.split(" ");
-            if (split[0].equals("CL:")) {
-                split[2] = rename(split[2]);
-            } else if (split[0].equals("FD:")) {
-                String[] s = rsplit(split[2], "/");
-                split[2] = rename(s[0]) + "/" + s[1];
-            } else if (split[0].equals("MD:")) {
-                String[] s = rsplit(split[3], "/");
-                split[3] = rename(s[0]) + "/" + s[1];
-
-                if (access.containsKey(split[3])) {
-                    split[3] = access.get(split[3]);
+            switch (split[0]) {
+                case "CL:":
+                    split[2] = rename(split[2]);
+                    break;
+                case "FD:": {
+                    String[] s = rsplit(split[2], "/");
+                    split[2] = rename(s[0]) + "/" + s[1];
+                    break;
                 }
+                case "MD:": {
+                    String[] s = rsplit(split[3], "/");
+                    split[3] = rename(s[0]) + "/" + s[1];
 
-                Matcher m = reg.matcher(split[4]);
-                StringBuffer b = new StringBuffer();
-                while (m.find()) {
-                    m.appendReplacement(b, "L" + rename(m.group(1)).replace("$", "\\$") + ";");
+                    if (access.containsKey(split[3])) {
+                        split[3] = access.get(split[3]);
+                    }
+
+                    Matcher m = reg.matcher(split[4]);
+                    StringBuffer b = new StringBuffer();
+                    while (m.find()) {
+                        m.appendReplacement(b, "L" + rename(m.group(1)).replace("$", "\\$") + ";");
+                    }
+                    m.appendTail(b);
+                    split[4] = b.toString();
+                    break;
                 }
-                m.appendTail(b);
-                split[4] = b.toString();
             }
             out.append(StringUtil.joinString(Arrays.asList(split), " ")).append('\n');
             return true;
         }
 
-        @Override
         public String getResult() {
             return out.toString();
         }
-
     }
 
     private static class JarInfo extends ClassVisitor {
-        private final Map<String, String> map = Maps.newHashMap();
-        private final List<String> interfaces = Lists.newArrayList();
-        private final Map<String, AccessInfo> access = Maps.newHashMap();
+        private final Map<String, String> map = new HashMap<>();
+        private final List<String> interfaces = new ArrayList<>();
+        private final Map<String, AccessInfo> access = new HashMap<>();
 
         public JarInfo() {
             super(Opcodes.ASM4, null);
@@ -278,7 +261,6 @@ public class ReobfExceptor {
         public void visit(int version, int access, String name, String signature, String superName, String[] ints) {
             //System.out.println("Class: " + name);
             this.className = name;
-            ;
             if ((access & ACC_INTERFACE) == ACC_INTERFACE) {
                 interfaces.add(className);
                 //System.out.println("  Interface: True");
@@ -291,7 +273,7 @@ public class ReobfExceptor {
                 if (!className.startsWith("net/minecraft/")) {
                     throw new RuntimeException("Modder stupidity detected, DO NOT USE __OBFID, Copy pasting code you don't understand is bad: " + className);
                 }
-                map.put(String.valueOf(value) + "_", className);
+                map.put(value + "_", className);
                 //System.out.println("  Marker:    " + String.valueOf(value));
             }
             return null;
@@ -329,7 +311,7 @@ public class ReobfExceptor {
         public String name;
         public String desc;
         public int access;
-        public List<Insn> insns = new ArrayList<Insn>();
+        public List<Insn> insns = new ArrayList<>();
         private String cache = null;
 
         public AccessInfo(String owner, String name, String desc) {
@@ -350,7 +332,7 @@ public class ReobfExceptor {
                 if (insns.size() < 1)
                     throw new RuntimeException("Empty Intruction!!!  IMPOSSIBURU");
 
-                cache = "[" + Joiner.on(", ").join(insns) + "]";
+                cache = "[" + insns.stream().map(Object::toString).collect(Collectors.joining(", ")) + "]";
             }
             return cache;
         }

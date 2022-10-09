@@ -9,6 +9,7 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.*;
+import java.nio.file.Files;
 
 public class CompressLZMA extends DefaultTask {
     @InputFile
@@ -19,8 +20,8 @@ public class CompressLZMA extends DefaultTask {
 
     @TaskAction
     public void doTask() throws IOException {
-        final BufferedInputStream in = new BufferedInputStream(new FileInputStream(getInputFile()));
-        final OutputStream out = new LzmaOutputStream.Builder(new FileOutputStream(getOutputFile()))
+        final BufferedInputStream in = new BufferedInputStream(Files.newInputStream(getInputFile().toPath()));
+        final OutputStream out = new LzmaOutputStream.Builder(Files.newOutputStream(getOutputFile().toPath()))
                 .useEndMarkerMode(true)
                 .build();
 

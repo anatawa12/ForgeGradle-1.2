@@ -1,37 +1,41 @@
 package net.minecraftforge.gradle;
 
-import com.google.common.io.Files;
 import org.gradle.BuildAdapter;
 import org.gradle.BuildListener;
 import org.gradle.BuildResult;
-import org.gradle.api.initialization.Settings;
-import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.StandardOutputListener;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class FileLogListenner extends BuildAdapter implements StandardOutputListener, BuildListener {
-    private final File out;
+    private final Path out;
     private BufferedWriter writer;
 
+    /**
+     * @deprecated use {@link #FileLogListenner(Path)}
+     */
+    @Deprecated
     public FileLogListenner(File file) {
-        out = file;
+        this(file.toPath());
+    }
+
+    public FileLogListenner(Path path) {
+        out = path;
 
         try {
-            if (out.exists())
-                out.delete();
+            if (Files.exists(out))
+                Files.delete(out);
             else
-                out.getParentFile().mkdirs();
+                Files.createDirectories(out.getParent());
 
-            out.createNewFile();
+            Files.createFile(out);
 
-            writer = Files.newWriter(out, Charset.defaultCharset());
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            writer = Files.newBufferedWriter(out, Charset.defaultCharset());
         } catch (IOException e) {
             e.printStackTrace();
         }

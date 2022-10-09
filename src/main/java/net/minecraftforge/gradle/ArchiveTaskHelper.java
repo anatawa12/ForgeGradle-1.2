@@ -11,19 +11,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class ArchiveTaskHelper {
-    private static AbstractArchiveTaskHelperBack back = GradleVersionUtils.choose("5.1",
-            new GradleVersionUtils.Callable<AbstractArchiveTaskHelperBack>() {
-                @Override
-                public AbstractArchiveTaskHelperBack call() {
-                    return new AbstractArchiveTaskHelperBackImplOld();
-                }
-            },
-            new GradleVersionUtils.Callable<AbstractArchiveTaskHelperBack>() {
-                @Override
-                public AbstractArchiveTaskHelperBack call() {
-                    return new AbstractArchiveTaskHelperBackImplNew();
-                }
-            });
+    private static final AbstractArchiveTaskHelperBack back = GradleVersionUtils.choose("5.1",
+            AbstractArchiveTaskHelperBackImplOld::new,
+            AbstractArchiveTaskHelperBackImplNew::new);
 
     private ArchiveTaskHelper() {
     }
@@ -149,16 +139,19 @@ public class ArchiveTaskHelper {
 
     private static class AbstractArchiveTaskHelperBackImplOld implements AbstractArchiveTaskHelperBack {
         @Override
+        @Deprecated
         public File getArchivePath(AbstractArchiveTask task) {
             return task.getArchivePath();
         }
 
         @Override
+        @Deprecated
         public File getDestinationDir(AbstractArchiveTask task) {
             return task.getDestinationDir();
         }
 
         @Override
+        @Deprecated
         public void setDestinationDir(AbstractArchiveTask task, File destinationDir) {
             task.setDestinationDir(destinationDir);
         }
@@ -218,9 +211,7 @@ public class ArchiveTaskHelper {
     private static <T> T call(Method method, Object self, Object... args) {
         try {
             return (T) method.invoke(self, args);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
+        } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }

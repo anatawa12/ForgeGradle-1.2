@@ -1,9 +1,8 @@
 package net.minecraftforge.gradle.tasks.user.reobf;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
+import com.google.common.base.Throwables;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -16,7 +15,6 @@ import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.DefaultDomainObjectSet;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
@@ -25,43 +23,24 @@ import javax.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ReobfTask extends DefaultTask {
     final private DomainObjectSet<ObfArtifact> obfOutput = GradleVersionUtils.choose("5.5",
-            new GradleVersionUtils.Callable<DefaultDomainObjectSet<ObfArtifact>>() {
-                @Override
-                public DefaultDomainObjectSet<ObfArtifact> call() {
-                    return new DefaultDomainObjectSet<ObfArtifact>(ObfArtifact.class);
-                }
-            }, new GradleVersionUtils.Callable<DomainObjectSet<ObfArtifact>>() {
-                @Override
-                public DomainObjectSet<ObfArtifact> call() {
-                    return ObfOutputCreateHelper.domainObjectSet(getInjectedObjectFactory(), ObfArtifact.class);
-                }
-            });
-    private static class ObfOutputCreateHelper {
-        static Method method;
+            ReobfTask::getInternalDeprecatedDefaultDomain,
+            () -> getInjectedObjectFactory().domainObjectSet(ObfArtifact.class));
 
-        static {
-            try {
-                method = ObjectFactory.class.getMethod("domainObjectSet", Class.class);
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public static <T> DomainObjectSet<T> domainObjectSet(ObjectFactory factory, Class<T> elementType) {
-            try {
-                return (DomainObjectSet<T>) method.invoke(factory, elementType);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
+    @SuppressWarnings("unchecked")
+    private static DomainObjectSet<ObfArtifact> getInternalDeprecatedDefaultDomain() {
+        try {
+            Class<?> aClass = Class.forName("org.gradle.api.internal.DefaultDomainObjectSet");
+            return (DomainObjectSet<ObfArtifact>) aClass.getConstructor(Class.class).newInstance(ObfArtifact.class);
+        } catch (Throwable t) {
+            Throwables.throwIfUnchecked(t);
+            throw new IllegalStateException(t);
         }
     }
 
@@ -95,9 +74,9 @@ public class ReobfTask extends DefaultTask {
     private DelayedFile recompFile;
 
     @Input
-    private List<String> extraSrg = Lists.newArrayList();
+    private List<String> extraSrg = new ArrayList<>();
 
-    private List<Object> extraSrgFiles = Lists.newArrayList();
+    private List<Object> extraSrgFiles = new ArrayList<>();
 
     @SuppressWarnings("serial")
     public ReobfTask() {
@@ -218,29 +197,23 @@ public class ReobfTask extends DefaultTask {
      * @param artifactSpec  configuration closure
      */
     public void reobf(Configuration configuration, final Closure<Object> artifactSpec) {
-        configuration.getAllArtifacts().all(new Action<PublishArtifact>() {
-            public void execute(PublishArtifact artifact) {
-                if (!(artifact instanceof ObfArtifact)) {
-                    reobf(artifact, artifactSpec);
-                }
+        configuration.getAllArtifacts().all(artifact -> {
+            if (!(artifact instanceof ObfArtifact)) {
+                reobf(artifact, artifactSpec);
             }
-
         });
 
-        configuration.getAllArtifacts().whenObjectRemoved(new Action<PublishArtifact>() {
-            public void execute(PublishArtifact artifact) {
-                ObfArtifact removed = null;
-                for (ObfArtifact it : obfOutput) {
-                    if (it.toObfArtifact == artifact) {
-                        removed = it;
-                        break;
-                    }
+        configuration.getAllArtifacts().whenObjectRemoved(artifact -> {
+            ObfArtifact removed = null;
+            for (ObfArtifact it : obfOutput) {
+                if (it.toObfArtifact == artifact) {
+                    removed = it;
+                    break;
                 }
-
-                if (removed != null)
-                    obfOutput.remove(removed);
             }
 
+            if (removed != null)
+                obfOutput.remove(removed);
         });
     }
 
@@ -251,29 +224,23 @@ public class ReobfTask extends DefaultTask {
      */
     public void reobf(Configuration... configurations) {
         for (Configuration configuration : configurations) {
-            configuration.getAllArtifacts().all(new Action<PublishArtifact>() {
-                public void execute(PublishArtifact artifact) {
-                    if (!(artifact instanceof ObfArtifact)) {
-                        reobf(artifact);
-                    }
+            configuration.getAllArtifacts().all(artifact -> {
+                if (!(artifact instanceof ObfArtifact)) {
+                    reobf(artifact);
                 }
-
             });
 
-            configuration.getAllArtifacts().whenObjectRemoved(new Action<PublishArtifact>() {
-                public void execute(PublishArtifact artifact) {
-                    ObfArtifact removed = null;
-                    for (ObfArtifact it : obfOutput) {
-                        if (it.toObfArtifact == artifact) {
-                            removed = it;
-                            break;
-                        }
+            configuration.getAllArtifacts().whenObjectRemoved(artifact -> {
+                ObfArtifact removed = null;
+                for (ObfArtifact it : obfOutput) {
+                    if (it.toObfArtifact == artifact) {
+                        removed = it;
+                        break;
                     }
-
-                    if (removed != null)
-                        obfOutput.remove(removed);
                 }
 
+                if (removed != null)
+                    obfOutput.remove(removed);
             });
         }
     }
@@ -287,8 +254,8 @@ public class ReobfTask extends DefaultTask {
     public void doTask() throws Exception {
         // do stuff.
         ReobfExceptor exc = null;
-        File srg = File.createTempFile("reobf-default", ".srg", getTemporaryDir());
-        File extraSrg = File.createTempFile("reobf-extra", ".srg", getTemporaryDir());
+        File srg = Files.createTempFile(getTemporaryDir().toPath(), "reobf-default", ".srg").toFile();
+        File extraSrg = Files.createTempFile(getTemporaryDir().toPath(), "reobf-extra", ".srg").toFile();
 
         UserExtension ext = (UserExtension) getProject().getExtensions().getByName(Constants.EXT_NAME_MC);
 
@@ -296,7 +263,7 @@ public class ReobfTask extends DefaultTask {
             exc = getExceptor();
             exc.buildSrg(getSrg(), srg);
         } else
-            Files.copy(getSrg(), srg);
+            Files.copy(getSrg().toPath(), srg.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         // generate extraSrg
         {
@@ -305,7 +272,7 @@ public class ReobfTask extends DefaultTask {
                 extraSrg.createNewFile();
             }
 
-            BufferedWriter writer = Files.newWriter(extraSrg, Charsets.UTF_8);
+            BufferedWriter writer = Files.newBufferedWriter(extraSrg.toPath());
             for (String line : getExtraSrg()) {
                 writer.write(line);
                 writer.newLine();
@@ -353,7 +320,7 @@ public class ReobfTask extends DefaultTask {
      */
     @InputFiles
     FileCollection getFilesToObfuscate() {
-        ArrayList<File> collect = new ArrayList<File>();
+        List<File> collect = new ArrayList<>();
 
         for (ObfArtifact obf : getObfuscated()) {
             if (obf != null && obf.getToObf() != null)
@@ -368,7 +335,7 @@ public class ReobfTask extends DefaultTask {
      */
     @OutputFiles
     FileCollection getObfuscatedFiles() {
-        ArrayList<File> collect = new ArrayList<File>();
+        List<File> collect = new ArrayList<>();
 
         for (ObfArtifact obf : getObfuscated()) {
             if (obf != null && obf.getFile() != null)
@@ -380,18 +347,16 @@ public class ReobfTask extends DefaultTask {
 
     @SuppressWarnings({"serial"})
     private class ActionClosure extends Closure<Object> {
-        @SuppressWarnings("rawtypes")
-        private final Action act;
+        private final Action<ArtifactSpec> act;
 
-        @SuppressWarnings("rawtypes")
-        public ActionClosure(Action artifactSpec) {
+        public ActionClosure(Action<ArtifactSpec> artifactSpec) {
             super(null);
             this.act = artifactSpec;
         }
 
-        @SuppressWarnings("unchecked")
-        public Object call(Object obj) {
-            act.execute(obj);
+        @Override
+        public ArtifactSpec call(Object obj) {
+            act.execute((ArtifactSpec) obj);
             return null;
         }
     }
@@ -450,17 +415,17 @@ public class ReobfTask extends DefaultTask {
 
     @InputFiles
     public FileCollection getExtraSrgFiles() {
-        List<File> files = new ArrayList<File>(extraSrgFiles.size());
+        List<File> files = new ArrayList<>(extraSrgFiles.size());
 
         for (Object thing : getProject().files(extraSrgFiles)) {
             File f = getProject().file(thing);
             if (f.isDirectory()) {
                 for (File nested : getProject().fileTree(f)) {
-                    if ("srg".equals(Files.getFileExtension(nested.getName()).toLowerCase())) {
+                    if ("srg".equalsIgnoreCase(FileUtils.getFileExtension(nested.getName()))) {
                         files.add(nested.getAbsoluteFile());
                     }
                 }
-            } else if ("srg".equals(Files.getFileExtension(f.getName()).toLowerCase())) {
+            } else if ("srg".equalsIgnoreCase(FileUtils.getFileExtension(f.getName()))) {
                 files.add(f.getAbsoluteFile());
             }
         }

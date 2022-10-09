@@ -11,7 +11,7 @@ import java.util.HashMap;
 public class CopyInto extends Closure<Object> {
     private String dir;
     private String[] filters;
-    private HashMap<String, Object> expands = new HashMap<String, Object>();
+    private HashMap<String, Object> expands = new HashMap<>();
 
     public CopyInto(String dir) {
         super(null);
@@ -55,4 +55,4 @@ public class CopyInto extends Closure<Object> {
 
         return null;
     }
-};
+}

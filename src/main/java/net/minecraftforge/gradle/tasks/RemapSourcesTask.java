@@ -2,9 +2,7 @@ package net.minecraftforge.gradle.tasks;
 
 import au.com.bytecode.opencsv.CSVParser;
 import au.com.bytecode.opencsv.CSVReader;
-import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.io.Files;
 import net.minecraftforge.gradle.StringUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -15,6 +13,7 @@ import org.gradle.api.tasks.InputFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,9 +34,9 @@ public class RemapSourcesTask extends EditJarTask {
     private boolean doesJavadocs = false;
     private boolean noJavadocs = false;
 
-    private final Map<String, Map<String, String>> methods = new HashMap<String, Map<String, String>>();
-    private final Map<String, Map<String, String>> fields = new HashMap<String, Map<String, String>>();
-    private final Map<String, String> params = new HashMap<String, String>();
+    private final Map<String, Map<String, String>> methods = new HashMap<>();
+    private final Map<String, Map<String, String>> fields = new HashMap<>();
+    private final Map<String, String> params = new HashMap<>();
 
     private static final Pattern SRG_FINDER = Pattern.compile("(func_[0-9]+_[a-zA-Z_]+|field_[0-9]+_[a-zA-Z_]+|p_[\\w]+_\\d+_)([^\\w\\$])");
     private static final Pattern METHOD = Pattern.compile("^((?: {4})+|\\t+)(?:[\\w$.\\[\\]]+ )+(func_[0-9]+_[a-zA-Z_]+)\\(");
@@ -51,7 +50,7 @@ public class RemapSourcesTask extends EditJarTask {
     @Override
     public String asRead(String text) {
         Matcher matcher;
-        ArrayList<String> newLines = new ArrayList<String>();
+        List<String> newLines = new ArrayList<>();
         for (String line : StringUtils.lines(text)) {
             if (noJavadocs) // noajavadocs? dont bothe with the rest of this crap...
             {
@@ -114,7 +113,7 @@ public class RemapSourcesTask extends EditJarTask {
             newLines.add(replaceInLine(line));
         }
 
-        return Joiner.on(Constants.NEWLINE).join(newLines);
+        return String.join(Constants.NEWLINE, newLines);
     }
 
     private void insetAboveAnnotations(List<String> list, String line) {
@@ -157,7 +156,7 @@ public class RemapSourcesTask extends EditJarTask {
     private void readCsvFiles() throws IOException {
         CSVReader reader = getReader(getMethodsCsv());
         for (String[] s : reader.readAll()) {
-            Map<String, String> temp = new HashMap<String, String>();
+            Map<String, String> temp = new HashMap<>();
             temp.put("name", s[1]);
             temp.put("javadoc", s[3]);
             methods.put(s[0], temp);
@@ -165,7 +164,7 @@ public class RemapSourcesTask extends EditJarTask {
 
         reader = getReader(getFieldsCsv());
         for (String[] s : reader.readAll()) {
-            Map<String, String> temp = new HashMap<String, String>();
+            Map<String, String> temp = new HashMap<>();
             temp.put("name", s[1]);
             temp.put("javadoc", s[3]);
             fields.put(s[0], temp);
@@ -178,7 +177,7 @@ public class RemapSourcesTask extends EditJarTask {
     }
 
     public static CSVReader getReader(File file) throws IOException {
-        return new CSVReader(Files.newReader(file, Charset.defaultCharset()), CSVParser.DEFAULT_SEPARATOR, CSVParser.DEFAULT_QUOTE_CHARACTER, CSVParser.NULL_CHARACTER, 1, false);
+        return new CSVReader(Files.newBufferedReader(file.toPath(), Charset.defaultCharset()), CSVParser.DEFAULT_SEPARATOR, CSVParser.DEFAULT_QUOTE_CHARACTER, CSVParser.NULL_CHARACTER, 1, false);
     }
 
     public File getMethodsCsv() {
@@ -218,10 +217,8 @@ public class RemapSourcesTask extends EditJarTask {
     }
 
     @Override
-    public void doStuffAfter() throws Exception {
-    }
+    public void doStuffAfter() {}
 
     @Override
-    public void doStuffMiddle() throws Exception {
-    }
+    public void doStuffMiddle() {}
 }

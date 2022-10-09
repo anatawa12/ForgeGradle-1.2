@@ -8,13 +8,13 @@ public enum OS {
     OSX("osx", "mac"),
     UNKNOWN("unknown");
 
-    private String name;
-    private String[] aliases;
+    private final String name;
+    private final String[] aliases;
 
     public static final OS CURRENT = getCurrentPlatform();
     public static final String VERSION = System.getProperty("os.version");
 
-    private OS(String name, String... aliases) {
+    OS(String name, String... aliases) {
         this.name = name;
         this.aliases = aliases;
     }

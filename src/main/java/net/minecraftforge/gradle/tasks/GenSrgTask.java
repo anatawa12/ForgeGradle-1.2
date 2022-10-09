@@ -1,77 +1,79 @@
 package net.minecraftforge.gradle.tasks;
 
 import au.com.bytecode.opencsv.CSVReader;
-import com.google.common.base.Charsets;
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
+import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.delayed.DelayedFile;
-import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
 import net.minecraftforge.srg2source.rangeapplier.MethodData;
 import net.minecraftforge.srg2source.rangeapplier.SrgContainer;
+import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.tasks.*;
 
+import javax.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class GenSrgTask extends CachedTask {
+@CacheableTask
+public class GenSrgTask extends DefaultTask {
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile inSrg;
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile inExc;
 
     @InputFiles
-    private final LinkedList<File> extraExcs = new LinkedList<File>();
+    @PathSensitive(PathSensitivity.ABSOLUTE)
+    private final LinkedList<File> extraExcs = new LinkedList<>();
     @InputFiles
-    private final LinkedList<File> extraSrgs = new LinkedList<File>();
+    @PathSensitive(PathSensitivity.ABSOLUTE)
+    private final LinkedList<File> extraSrgs = new LinkedList<>();
 
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile methodsCsv;
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile fieldsCsv;
 
-    @Cached
     @OutputFile
     private DelayedFile notchToSrg;
 
-    @Cached
     @OutputFile
     private DelayedFile notchToMcp;
 
-    @Cached
     @OutputFile
     private DelayedFile mcpToNotch;
 
-    @Cached
     @OutputFile
     private DelayedFile srgToMcp;
 
-    @Cached
     @OutputFile
     private DelayedFile mcpToSrg;
 
-    @Cached
     @OutputFile
     private DelayedFile srgExc;
 
-    @Cached
     @OutputFile
     private DelayedFile mcpExc;
+
+    public GenSrgTask() {
+        getOutputs().doNotCacheIf("Old gradle version", e -> GradleVersionUtils.isBefore("5.3"));
+    }
 
     @TaskAction
     public void doTask() throws IOException {
         // csv data.  SRG -> MCP
-        HashMap<String, String> methods = new HashMap<String, String>();
-        HashMap<String, String> fields = new HashMap<String, String>();
+        HashMap<String, String> methods = new HashMap<>();
+        HashMap<String, String> fields = new HashMap<>();
         readCSVs(getMethodsCsv(), getFieldsCsv(), methods, fields);
 
         // Do SRG stuff
@@ -100,7 +102,7 @@ public class GenSrgTask extends CachedTask {
     }
 
     private Map<String, String> readExtraSrgs(FileCollection extras, SrgContainer inSrg) {
-        return Maps.newHashMap(); //Nop this out.
+        return new HashMap<>(); //Nop this out.
         /*
         SrgContainer extraSrg = new SrgContainer().readSrgs(extras);
         // Need to convert these to Notch-SRG names. and add them to the other one.
@@ -118,8 +120,8 @@ public class GenSrgTask extends CachedTask {
         {
             String notchSig = remapSig(e.getValue().sig, classMap);
             String notchName = remapMethodName(e.getKey().name, notchSig, classMap, methodMap);
-            //getProject().getLogger().lifecycle(e.getKey().name + " " + e.getKey().sig + " " + e.getValue().name + " " + e.getValue().sig);
-            //getProject().getLogger().lifecycle(notchName       + " " + notchSig       + " " + e.getValue().name + " " + e.getValue().sig);
+            //getLogger().lifecycle(e.getKey().name + " " + e.getKey().sig + " " + e.getValue().name + " " + e.getValue().sig);
+            //getLogger().lifecycle(notchName       + " " + notchSig       + " " + e.getValue().name + " " + e.getValue().sig);
             inSrg.methodMap.put(new MethodData(notchName, notchSig), e.getValue());
             excRemap.put(e.getKey().name, e.getValue().name);
         }
@@ -130,18 +132,18 @@ public class GenSrgTask extends CachedTask {
 
     private void writeOutSrgs(SrgContainer inSrg, Map<String, String> methods, Map<String, String> fields) throws IOException {
         // ensure folders exist
-        Files.createParentDirs(getNotchToSrg());
-        Files.createParentDirs(getNotchToMcp());
-        Files.createParentDirs(getSrgToMcp());
-        Files.createParentDirs(getMcpToSrg());
-        Files.createParentDirs(getMcpToNotch());
+        getNotchToSrg().getParentFile().mkdirs();
+        getNotchToMcp().getParentFile().mkdirs();
+        getSrgToMcp().getParentFile().mkdirs();
+        getMcpToSrg().getParentFile().mkdirs();
+        getMcpToNotch().getParentFile().mkdirs();
 
         // create streams
-        BufferedWriter notchToSrg = Files.newWriter(getNotchToSrg(), Charsets.UTF_8);
-        BufferedWriter notchToMcp = Files.newWriter(getNotchToMcp(), Charsets.UTF_8);
-        BufferedWriter srgToMcp = Files.newWriter(getSrgToMcp(), Charsets.UTF_8);
-        BufferedWriter mcpToSrg = Files.newWriter(getMcpToSrg(), Charsets.UTF_8);
-        BufferedWriter mcpToNotch = Files.newWriter(getMcpToNotch(), Charsets.UTF_8);
+        BufferedWriter notchToSrg = Files.newBufferedWriter(getNotchToSrg().toPath());
+        BufferedWriter notchToMcp = Files.newBufferedWriter(getNotchToMcp().toPath());
+        BufferedWriter srgToMcp = Files.newBufferedWriter(getSrgToMcp().toPath());
+        BufferedWriter mcpToSrg = Files.newBufferedWriter(getMcpToSrg().toPath());
+        BufferedWriter mcpToNotch = Files.newBufferedWriter(getMcpToNotch().toPath());
 
         String line, temp, mcpName;
         // packages
@@ -273,15 +275,15 @@ public class GenSrgTask extends CachedTask {
 
     private void writeOutExcs(Map<String, String> excRemap, Map<String, String> methods) throws IOException {
         // ensure folders exist
-        Files.createParentDirs(getSrgExc());
-        Files.createParentDirs(getMcpExc());
+        getSrgExc().getParentFile().mkdirs();
+        getMcpExc().getParentFile().mkdirs();
 
         // create streams
-        BufferedWriter srgOut = Files.newWriter(getSrgExc(), Charsets.UTF_8);
-        BufferedWriter mcpOut = Files.newWriter(getMcpExc(), Charsets.UTF_8);
+        BufferedWriter srgOut = Files.newBufferedWriter(getSrgExc().toPath());
+        BufferedWriter mcpOut = Files.newBufferedWriter(getMcpExc().toPath());
 
         // read and write existing lines
-        List<String> excLines = Files.readLines(getInExc(), Charsets.UTF_8);
+        List<String> excLines = Files.readAllLines(getInExc().toPath());
         String[] split;
         for (String line : excLines) {
             // its already in SRG names.
@@ -314,7 +316,7 @@ public class GenSrgTask extends CachedTask {
         }
 
         for (File f : getExtraExcs()) {
-            List<String> lines = Files.readLines(f, Charsets.UTF_8);
+            List<String> lines = Files.readAllLines(f.toPath());
 
             for (String line : lines) {
                 // these are in MCP names
@@ -365,8 +367,8 @@ public class GenSrgTask extends CachedTask {
 
             String cls = qualified.substring(0, qualified.lastIndexOf('/'));
             String name = qualified.substring(cls.length() + 1);
-            getProject().getLogger().lifecycle(qualified);
-            getProject().getLogger().lifecycle(cls + " " + name);
+            getLogger().lifecycle(qualified);
+            getLogger().lifecycle(cls + " " + name);
 
             String ret = classMap.get(cls);
             if (ret != null)
@@ -402,6 +404,12 @@ public class GenSrgTask extends CachedTask {
                 return thing;
         }
     */
+
+    @Inject
+    protected ObjectFactory getInjectedObjectFactory() {
+        throw new IllegalStateException("must be injected");
+    }
+
     public File getInSrg() {
         return inSrg.call();
     }
@@ -491,7 +499,7 @@ public class GenSrgTask extends CachedTask {
     }
 
     public FileCollection getExtraExcs() {
-        return getProject().files(extraExcs);
+        return GradleVersionUtils.choose("5.3", () -> getProject().files(extraExcs), () -> getInjectedObjectFactory().fileCollection().from(extraExcs));
     }
 
     public void addExtraExc(File file) {
@@ -499,7 +507,7 @@ public class GenSrgTask extends CachedTask {
     }
 
     public FileCollection getExtraSrgs() {
-        return getProject().files(extraSrgs);
+        return GradleVersionUtils.choose("5.3", () -> getProject().files(extraSrgs), () -> getInjectedObjectFactory().fileCollection().from(extraSrgs));
     }
 
     public void addExtraSrg(File file) {

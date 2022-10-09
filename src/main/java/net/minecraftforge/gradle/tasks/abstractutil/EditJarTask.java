@@ -8,10 +8,9 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -27,8 +26,8 @@ public abstract class EditJarTask extends CachedTask {
     @Cached
     protected DelayedFile outJar;
 
-    protected HashMap<String, String> sourceMap = new HashMap<String, String>();
-    protected HashMap<String, byte[]> resourceMap = new HashMap<String, byte[]>();
+    protected HashMap<String, String> sourceMap = new HashMap<>();
+    protected HashMap<String, byte[]> resourceMap = new HashMap<>();
 
     @TaskAction
     public void doTask() throws Throwable {
@@ -68,8 +67,8 @@ public abstract class EditJarTask extends CachedTask {
 
     private void readJarAndClean(final File jar) throws IOException {
         // begin reading jar
-        final ZipInputStream zin = new ZipInputStream(new FileInputStream(jar));
-        ZipEntry entry = null;
+        final ZipInputStream zin = new ZipInputStream(Files.newInputStream(jar.toPath()));
+        ZipEntry entry;
         String fileStr;
 
         while ((entry = zin.getNextEntry()) != null) {
@@ -95,7 +94,7 @@ public abstract class EditJarTask extends CachedTask {
     }
 
     private void saveJar(File output) throws IOException {
-        JarOutputStream zout = new JarOutputStream(new FileOutputStream(output));
+        JarOutputStream zout = new JarOutputStream(Files.newOutputStream(output.toPath()));
 
         // write in resources
         for (Map.Entry<String, byte[]> entry : resourceMap.entrySet()) {
