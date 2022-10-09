@@ -170,15 +170,15 @@ public class ExtractTask extends DefaultTask {
     }
 
     public FileCollection getSourcePaths() {
-        FileCollection collection = getFiles();
+        FileCollection collection = createFileCollection();
 
         for (DelayedFile file : sourcePaths)
-            collection = collection.plus(getFiles(file));
+            collection = collection.plus(createFileCollection(file));
 
         return collection;
     }
 
-    private FileCollection getFiles(Object... paths) {
+    private FileCollection createFileCollection(Object... paths) {
         return GradleVersionUtils.choose("5.3", () -> getProject().files(paths), () -> getInjectedObjectFactory().fileCollection().from(paths));
     }
 
