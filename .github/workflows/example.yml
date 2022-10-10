@@ -57,8 +57,17 @@ jobs:
           - true
           - false
     steps:
+      - name: choose branch
+        env:
+          GRADLE: ${{ matrix.gradle }}
+        run: |
+          case $GRADLE in
+            4.*) echo "EXAMPLE_BRANCH=test-heads/4" >> $GITHUB_ENV ;;
+            *) echo "EXAMPLE_BRANCH=master" >> $GITHUB_ENV ;;
+          esac
       - uses: actions/checkout@v3
         with:
+          ref: ${{ env.EXAMPLE_BRANCH }}
           repository: anatawa12/ForgeGradle-example
       - name: Set up JDK 8
         uses: actions/setup-java@v3
