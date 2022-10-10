@@ -53,6 +53,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
     @SuppressWarnings("rawtypes")
     @Override
     public final void apply(Project arg) {
+        GradleVersionUtils.checkSupportedVersion();
         project = arg;
 
         // search for overlays..

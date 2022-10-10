@@ -1,6 +1,7 @@
 package edu.sc.seis.launch4j;
 
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.user.UserConstants;
 import org.gradle.api.*;
 import org.gradle.api.file.CopySpec;
@@ -26,6 +27,7 @@ public class Launch4jPlugin implements Plugin<Project> {
     Project project;
 
     public void apply(Project project) {
+        GradleVersionUtils.checkSupportedVersion();
         this.project = project;
 
         project.getConfigurations().create(LAUNCH4J_CONFIGURATION_NAME)

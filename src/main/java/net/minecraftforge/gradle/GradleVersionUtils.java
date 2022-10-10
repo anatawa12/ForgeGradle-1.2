@@ -3,6 +3,12 @@ package net.minecraftforge.gradle;
 import org.gradle.util.GradleVersion;
 
 public class GradleVersionUtils {
+    public static void checkSupportedVersion() {
+        GradleVersionUtils.ifBefore("4.0", () -> {
+            throw new IllegalStateException("Gradle 3.x or older is not supported. Please upgrade to 4.x or later, including 8.x version.");
+        });
+    }
+
     /**
      * @param versionName includes this version
      * @param action the action runs if gradle version is equals to or after {@code versionName}.
