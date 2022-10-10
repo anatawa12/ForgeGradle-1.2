@@ -98,7 +98,7 @@ jobs:
         env:
           VERSION: ${{ needs.build.outputs.version }}
         run: |
-          sed -i "/com\.anatawa12\.forge:ForgeGradle:1\.2-.*/com.anatawa12.forge:ForgeGradle:$VERSION" build.gradle
+          sed -i "s/com\.anatawa12\.forge:ForgeGradle:1\.2-[.+0-9a-zA-Z-]*/com.anatawa12.forge:ForgeGradle:$VERSION/" build.gradle
 
       - name: setup for wrapper artifact
         if: ${{ matrix.useWrapper == 'true' }}
