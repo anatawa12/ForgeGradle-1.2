@@ -26,10 +26,16 @@ jobs:
     - name: copy useLocal.init.gradle
       run: cp ./scripts/useLocal.init.gradle ~/.m2/repository/
 
+    - name: get version name
+      id: get-version
+      run: echo "::set-output name=version::$(./gradlew properties -q | grep "^version:" | awk '{print $2}')"
+
     - uses: actions/upload-artifact@v3
       with:
         name: maven-repository
         path: ~/.m2/repository
+    outputs: 
+      version: ${{ steps.get-version.outputs.version }}
 
   example:
     needs: build
@@ -87,6 +93,12 @@ jobs:
           ./gradlew --build-file=empty wrapper --gradle-version=${{ matrix.gradle }}
           ./gradlew --build-file=empty wrapper
           rm empty
+
+      - name: Patch requested ForgeGradle version
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          sed -i "s/com\.anatawa12\.forge:ForgeGradle:1\.2-[.+0-9a-zA-Z-]*/com.anatawa12.forge:ForgeGradle:$VERSION/" build.gradle
 
       - name: setup for wrapper artifact
         if: ${{ matrix.useWrapper == 'true' }}
