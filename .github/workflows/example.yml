@@ -46,8 +46,7 @@ jobs:
           - "6.9.1"
           - "7.0"
           - "7.5.1"
-          # TODO: support for 8.0 in example project
-          #- "8.0-20221008221539+0000" # nightly for next major version
+          - "8.0-20221008221539+0000" # nightly for next major version
         setting:
           - none # just build
           - setupDecompWorkspace
@@ -63,6 +62,7 @@ jobs:
         run: |
           case $GRADLE in
             4.*) echo "EXAMPLE_BRANCH=test-heads/4" >> $GITHUB_ENV ;;
+            8.*) echo "EXAMPLE_BRANCH=test-heads/8" >> $GITHUB_ENV ;;
             *) echo "EXAMPLE_BRANCH=master" >> $GITHUB_ENV ;;
           esac
       - uses: actions/checkout@v3
