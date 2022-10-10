@@ -2,6 +2,7 @@ package net.minecraftforge.gradle.curseforge;
 
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.ArchiveTaskHelper;
+import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.user.UserBasePlugin;
 import net.minecraftforge.gradle.user.UserExtension;
 import org.gradle.api.Plugin;
@@ -15,6 +16,7 @@ public class CursePlugin implements Plugin<Project> {
     @SuppressWarnings("serial")
     @Override
     public void apply(final Project project) {
+        GradleVersionUtils.checkSupportedVersion();
         // create task
         final CurseUploadTask upload = project.getTasks().create("curse", CurseUploadTask.class);
         upload.setGroup("ForgeGradle");
