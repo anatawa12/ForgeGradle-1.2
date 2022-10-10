@@ -2,9 +2,13 @@ name: Build
 
 on:
   push:
-    branches: [FG_1.2]
+    branches:
+      - FG_1.2
+      - FG_1.2-*
   pull_request:
-    branches: [FG_1.2]
+    branches:
+      - FG_1.2
+      - FG_1.2-*
   workflow_dispatch: {}
 
 jobs:
