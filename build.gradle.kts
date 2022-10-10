@@ -27,10 +27,6 @@ repositories {
         // because Srg2Source needs an eclipse dependency.
         name = "eclipse"
     }
-    maven("https://oss.sonatype.org/content/repositories/snapshots/") {
-        // because SpecialSource doesnt have a full release
-        name = "sonatype"
-    }
     mavenCentral()
     maven("https://libraries.minecraft.net/") {
         name = "mojang"
