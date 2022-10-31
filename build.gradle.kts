@@ -94,6 +94,7 @@ val compileJava by tasks.getting(JavaCompile::class) {
 val javadoc by tasks.getting(Javadoc::class) {
     // linked javadoc urls.. why not...
 
+    classpath = classpath.filter { !(it.name == "main" && it.parentFile.name == "resources") } 
     val options = options as StandardJavadocDocletOptions
     options.links("https://gradle.org/docs/current/javadoc/")
     options.links("https://guava.dev/releases/18.0/api/docs/")
