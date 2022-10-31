@@ -74,6 +74,22 @@ dependencies {
     implementation("de.oceanlabs.mcp:mcinjector:3.2-SNAPSHOT")
     implementation("net.minecraftforge:Srg2Source:4.2.7")
 
+    // pin jdt deps
+    implementation("org.eclipse.jdt:org.eclipse.jdt.core:3.14.0")
+    implementation("org.eclipse.platform:org.eclipse.core.commands:3.10.200")
+    implementation("org.eclipse.platform:org.eclipse.core.contenttype:3.8.200")
+    implementation("org.eclipse.platform:org.eclipse.core.expressions:3.8.200")
+    implementation("org.eclipse.platform:org.eclipse.core.filesystem:1.9.500")
+    implementation("org.eclipse.platform:org.eclipse.core.jobs:3.13.100")
+    implementation("org.eclipse.platform:org.eclipse.core.resources:3.18.0")
+    implementation("org.eclipse.platform:org.eclipse.core.runtime:3.26.0")
+    implementation("org.eclipse.platform:org.eclipse.equinox.app:1.6.200")
+    implementation("org.eclipse.platform:org.eclipse.equinox.common:3.16.200")
+    implementation("org.eclipse.platform:org.eclipse.equinox.preferences:3.10.100")
+    implementation("org.eclipse.platform:org.eclipse.equinox.registry:3.11.200")
+    implementation("org.eclipse.platform:org.eclipse.osgi:3.18.100")
+    implementation("org.eclipse.platform:org.eclipse.text:3.12.200")
+
     // stupid maven
     deployerJars("org.apache.maven.wagon:wagon-ssh:3.5.1")
 
