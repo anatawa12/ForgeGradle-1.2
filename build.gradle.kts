@@ -75,7 +75,7 @@ dependencies {
     implementation("net.minecraftforge:Srg2Source:4.2.7")
 
     // pin jdt deps
-    implementation("org.eclipse.jdt:org.eclipse.jdt.core:3.14.0")
+    implementation("org.eclipse.jdt:org.eclipse.jdt.core:3.31.0")
     implementation("org.eclipse.platform:org.eclipse.core.commands:3.10.200")
     implementation("org.eclipse.platform:org.eclipse.core.contenttype:3.8.200")
     implementation("org.eclipse.platform:org.eclipse.core.expressions:3.8.200")
