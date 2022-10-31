@@ -89,6 +89,8 @@ dependencies {
     implementation("org.eclipse.platform:org.eclipse.equinox.registry:3.11.200")
     implementation("org.eclipse.platform:org.eclipse.osgi:3.18.100")
     implementation("org.eclipse.platform:org.eclipse.text:3.12.200")
+    implementation("org.osgi:org.osgi.service.prefs:1.1.2")
+    implementation("org.osgi:osgi.annotation:8.0.1")
 
     // stupid maven
     deployerJars("org.apache.maven.wagon:wagon-ssh:3.5.1")
