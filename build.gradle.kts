@@ -19,18 +19,17 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
+val gradleStartDev = false
+
 repositories {
-    mavenLocal()
     maven("https://maven.minecraftforge.net") {
         name = "forge"
     }
-    maven("https://repo.eclipse.org/content/groups/eclipse/") {
-        // because Srg2Source needs an eclipse dependency.
-        name = "eclipse"
-    }
     mavenCentral()
-    maven("https://libraries.minecraft.net/") {
-        name = "mojang"
+    if (gradleStartDev) {
+        maven("https://libraries.minecraft.net/") {
+            name = "mojang"
+        }
     }
 }
 
@@ -75,12 +74,32 @@ dependencies {
     implementation("de.oceanlabs.mcp:mcinjector:3.2-SNAPSHOT")
     implementation("net.minecraftforge:Srg2Source:4.2.7")
 
+    // pin jdt deps
+    implementation("org.eclipse.jdt:org.eclipse.jdt.core:3.14.0")
+    implementation("org.eclipse.platform:org.eclipse.core.commands:3.10.200")
+    implementation("org.eclipse.platform:org.eclipse.core.contenttype:3.8.200")
+    implementation("org.eclipse.platform:org.eclipse.core.expressions:3.8.200")
+    implementation("org.eclipse.platform:org.eclipse.core.filesystem:1.9.500")
+    implementation("org.eclipse.platform:org.eclipse.core.jobs:3.13.100")
+    implementation("org.eclipse.platform:org.eclipse.core.resources:3.18.0")
+    implementation("org.eclipse.platform:org.eclipse.core.runtime:3.26.0")
+    implementation("org.eclipse.platform:org.eclipse.equinox.app:1.6.200")
+    implementation("org.eclipse.platform:org.eclipse.equinox.common:3.16.200")
+    implementation("org.eclipse.platform:org.eclipse.equinox.preferences:3.10.100")
+    implementation("org.eclipse.platform:org.eclipse.equinox.registry:3.11.200")
+    implementation("org.eclipse.platform:org.eclipse.osgi:3.18.100")
+    implementation("org.eclipse.platform:org.eclipse.text:3.12.200")
+    implementation("org.osgi:org.osgi.service.prefs:1.1.2")
+    implementation("org.osgi:osgi.annotation:8.0.1")
+
     // stupid maven
     deployerJars("org.apache.maven.wagon:wagon-ssh:3.5.1")
 
     //Stuff used in the GradleStart classes
-    compileOnly("com.mojang:authlib:1.5.16")
-    compileOnly("net.minecraft:launchwrapper:1.11")
+    if (gradleStartDev) {
+        compileOnly("com.mojang:authlib:1.5.16")
+        compileOnly("net.minecraft:launchwrapper:1.11")
+    }
 
     testImplementation("junit:junit:4.+")
 }
@@ -93,6 +112,7 @@ val compileJava by tasks.getting(JavaCompile::class) {
 val javadoc by tasks.getting(Javadoc::class) {
     // linked javadoc urls.. why not...
 
+    classpath = classpath.filter { !(it.name == "main" && it.parentFile.name == "resources") } 
     val options = options as StandardJavadocDocletOptions
     options.links("https://gradle.org/docs/current/javadoc/")
     options.links("https://guava.dev/releases/18.0/api/docs/")
