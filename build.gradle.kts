@@ -19,18 +19,17 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
+val gradleStartDev = false
+
 repositories {
-    mavenLocal()
     maven("https://maven.minecraftforge.net") {
         name = "forge"
     }
-    maven("https://repo.eclipse.org/content/groups/eclipse/") {
-        // because Srg2Source needs an eclipse dependency.
-        name = "eclipse"
-    }
     mavenCentral()
-    maven("https://libraries.minecraft.net/") {
-        name = "mojang"
+    if (gradleStartDev) {
+        maven("https://libraries.minecraft.net/") {
+            name = "mojang"
+        }
     }
 }
 
@@ -79,8 +78,10 @@ dependencies {
     deployerJars("org.apache.maven.wagon:wagon-ssh:3.5.1")
 
     //Stuff used in the GradleStart classes
-    compileOnly("com.mojang:authlib:1.5.16")
-    compileOnly("net.minecraft:launchwrapper:1.11")
+    if (gradleStartDev) {
+        compileOnly("com.mojang:authlib:1.5.16")
+        compileOnly("net.minecraft:launchwrapper:1.11")
+    }
 
     testImplementation("junit:junit:4.+")
 }
