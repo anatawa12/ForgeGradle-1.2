@@ -17,6 +17,8 @@ public class Version {
     public String incompatibilityReason;
     private String assets;
     public List<OSRule> rules;
+    public Downloads downloads;
+    public Downloads.DownloadFileInfo assetIndex;
 
     private List<Library> _libraries;
 
