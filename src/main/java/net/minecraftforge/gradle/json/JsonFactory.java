@@ -60,6 +60,13 @@ public class JsonFactory {
         return a;
     }
 
+    public static MCVersionManifest loadMCVersionManifest(File json) throws JsonSyntaxException, JsonIOException, IOException {
+        FileReader reader = new FileReader(json);
+        MCVersionManifest a = GSON.fromJson(reader, MCVersionManifest.class);
+        reader.close();
+        return a;
+    }
+
     public static Map<String, MCInjectorStruct> loadMCIJson(File json) throws IOException {
         FileReader reader = new FileReader(json);
         Map<String, MCInjectorStruct> ret = new LinkedHashMap<>();
