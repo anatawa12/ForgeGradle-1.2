@@ -330,19 +330,19 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                 }
             });
         }
-        class GetDataFromJson extends DelayedString {
-            private final Function<Version, String> function;
+        abstract class GetDataFromJson extends DelayedString {
 
-            public GetDataFromJson(Function<Version, String> function) {
+            public GetDataFromJson() {
                 super(BasePlugin.this.project, "");
-                this.function = function;
             }
+
+            public abstract String resolve(Version json);
 
             @Override
             public String resolveDelayed() {
                 try {
                     Version manifest = JsonFactory.loadVersion(delayedFile(Constants.VERSION_JSON).call(), null);
-                    return function.apply(manifest);
+                    return resolve(manifest);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -355,7 +355,12 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             task.dependsOn("getVersionJson");
 
             task.setOutput(delayedFile(Constants.JAR_CLIENT_FRESH));
-            task.setUrl(new GetDataFromJson(json -> json.downloads.client.url));
+            task.setUrl(new GetDataFromJson() {
+                @Override
+                public String resolve(Version json) {
+                    return json.downloads.client.url;
+                }
+            });
         }
 
         task = makeTask("downloadServer", DownloadTask.class);
@@ -364,7 +369,12 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             task.dependsOn("getVersionJson");
 
             task.setOutput(delayedFile(Constants.JAR_SERVER_FRESH));
-            task.setUrl(new GetDataFromJson(json -> json.downloads.server.url));
+            task.setUrl(new GetDataFromJson() {
+                @Override
+                public String resolve(Version json) {
+                    return json.downloads.server.url;
+                }
+            });
         }
 
         ObtainFernFlowerTask mcpTask = makeTask("downloadMcpTools", ObtainFernFlowerTask.class);
@@ -378,7 +388,12 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             task.getInputs().file(delayedFile(Constants.VERSION_JSON));
             task.dependsOn("getVersionJson");
 
-            etagDlTask.setUrl(new GetDataFromJson(json -> json.assetIndex.url));
+            etagDlTask.setUrl(new GetDataFromJson() {
+                @Override
+                public String resolve(Version json) {
+                    return json.assetIndex.url;
+                }
+            });
             etagDlTask.setFile(delayedFile(Constants.ASSETS + "/indexes/{ASSET_INDEX}.json"));
             etagDlTask.setDieWithError(false);
 
