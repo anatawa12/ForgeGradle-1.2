@@ -47,13 +47,18 @@ public class Constants {
     };
 
     // urls
+    /** @deprecated AWS s3 Minecraft.Download is not live */
     public static final String MC_JSON_URL = "https://s3.amazonaws.com/Minecraft.Download/versions/{MC_VERSION}/{MC_VERSION}.json";
+    /** @deprecated AWS s3 Minecraft.Download is not live */
     public static final String MC_JAR_URL = "https://s3.amazonaws.com/Minecraft.Download/versions/{MC_VERSION}/{MC_VERSION}.jar";
+    /** @deprecated AWS s3 Minecraft.Download is not live */
     public static final String MC_SERVER_URL = "https://s3.amazonaws.com/Minecraft.Download/versions/{MC_VERSION}/minecraft_server.{MC_VERSION}.jar";
+    public static final String MC_JSON_INDEX_URL = "https://piston-meta.mojang.com/mc/game/version_manifest.json";
     public static final String MCP_URL = "https://files.minecraftforge.net/fernflower-fix-1.0.zip";
     public static final String ASSETS_URL = "https://resources.download.minecraft.net";
     public static final String LIBRARY_URL = "https://libraries.minecraft.net/";
     public static final String FORGE_MAVEN = "https://maven.minecraftforge.net";
+    /** @deprecated AWS s3 Minecraft.Download is not live */
     public static final String ASSETS_INDEX_URL = "https://s3.amazonaws.com/Minecraft.Download/indexes/{ASSET_INDEX}.json";
 
     // MCP things
@@ -70,6 +75,7 @@ public class Constants {
     public static final String EXCEPTOR = "{CACHE_DIR}/minecraft/exceptor.jar";
     public static final String ASSETS = "{CACHE_DIR}/minecraft/assets";
     public static final String JSONS_DIR = "{CACHE_DIR}/minecraft/versionJsons";
+    public static final String VERSION_JSON_INDEX = JSONS_DIR + "/index.json";
     public static final String VERSION_JSON = JSONS_DIR + "/{MC_VERSION}.json";
 
     // util
