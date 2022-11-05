@@ -9,10 +9,12 @@ public class MCVersionManifest {
     public List<Version> versions;
 
     public Version findVersion(String versionId) {
-        return versions.stream()
-                .filter(x -> versionId.equals(x.id))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(versionId + " not found"));
+        for (Version version : versions) {
+            if (versionId.equals(version.id)) {
+                return version;
+            }
+        }
+        throw new IllegalArgumentException(versionId + " not found");
     }
 
     public static class LatestInfo {
