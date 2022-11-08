@@ -118,6 +118,10 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                 version = version.substring(0, version.lastIndexOf('-'));
                 project.getDependencies().add(SeparatedLauncher.configurationName,
                         "com.anatawa12.forge:separated:" + version);
+                // for SNAPSHOTs, add snapshots repository for separated module
+                if (version.contains("SNAPSHOT"))
+                    addMavenRepo(project, "ossrh-repo", "https://oss.sonatype.org/content/repositories/snapshots")
+                            .content(desc -> desc.includeModule("com.anatawa12.forge", "separated"));
             }
         }
 
