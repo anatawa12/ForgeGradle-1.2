@@ -30,10 +30,12 @@ public class ApplyS2STask extends DefaultTask {
     private final File buildDir = getProject().getBuildDir();
 
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile rangeMap;
 
     @Optional
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile excModifiers;
 
     // stuff defined on the tasks..
@@ -244,11 +246,13 @@ public class ApplyS2STask extends DefaultTask {
     }
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     public FileCollection getIns() {
         return createFileCollection(in);
     }
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     public List<File> getIn() {
         List<File> files = new LinkedList<>();
         for (DelayedFile f : in)
@@ -279,6 +283,7 @@ public class ApplyS2STask extends DefaultTask {
     }
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     public FileCollection getSrgs() {
         return createFileCollection(srg);
     }
@@ -296,6 +301,7 @@ public class ApplyS2STask extends DefaultTask {
     }
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     public FileCollection getExcs() {
         return createFileCollection(exc);
     }
