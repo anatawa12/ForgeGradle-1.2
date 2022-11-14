@@ -255,7 +255,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                 // requires before the jcenter
                 if (mvnRepo.getUrl().toString().contains("//files.minecraftforge.net/maven"))
                     return false;
-                if (mvnRepo.getUrl().toString().equals("https://maven.minecraftforge.net/"))
+                if (mvnRepo.getUrl().toString().contains("//maven.minecraftforge.net"))
                     return true;
             }
         }
