@@ -101,7 +101,6 @@ dependencies {
         compileOnly("net.minecraft:launchwrapper:1.11")
     }
 
-    testImplementation("junit:junit:4.+")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
 }
 
@@ -134,9 +133,6 @@ val test by tasks.getting(Test::class) {
     {
         exclude("**/ExtensionMcpMappingTest*")
         exclude("**/ExtensionForgeVersionTest*")
-    }
-    reports {
-        junitXml.required.set(true)
     }
     useJUnitPlatform()
 }
