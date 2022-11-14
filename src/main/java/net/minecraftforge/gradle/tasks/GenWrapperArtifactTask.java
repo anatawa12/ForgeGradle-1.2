@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.function.BooleanSupplier;
 
 import static net.minecraftforge.gradle.user.UserConstants.WRAPPER_ARTIFACT_GROUP_ID;
 
@@ -26,7 +27,7 @@ public class GenWrapperArtifactTask extends DefaultTask {
     DelayedString moduleName;
 
     @Input
-    DelayedBase<Boolean> isDecomp;
+    BooleanSupplier isDecomp;
 
     @Input
     DelayedString srcDepName;
@@ -80,21 +81,23 @@ public class GenWrapperArtifactTask extends DefaultTask {
     }
 
     public boolean getIsDecomp() {
-        return isDecomp.call();
+        return isDecomp.getAsBoolean();
     }
 
+    /**
+     * @deprecated use {@link #setIsDecomp(BooleanSupplier)} variant
+     */
+    @Deprecated
     public void setIsDecomp(DelayedBase<Boolean> isDecomp) {
+        this.isDecomp = isDecomp::call;
+    }
+
+    public void setIsDecomp(BooleanSupplier isDecomp) {
         this.isDecomp = isDecomp;
     }
 
-    
     public void setIsDecomp(final boolean isDecomp) {
-        this.isDecomp = new DelayedBase<Boolean>(null, null) {
-            @Override
-            public Boolean resolveDelayed() {
-                return isDecomp;
-            }
-        };
+        this.isDecomp = () -> isDecomp;
     }
 
     public String getSrcDepName() {

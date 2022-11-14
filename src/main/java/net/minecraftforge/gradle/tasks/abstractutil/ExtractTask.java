@@ -187,7 +187,6 @@ public class ExtractTask extends DefaultTask {
         throw new IllegalStateException("must be injected");
     }
 
-
     public boolean isIncludeEmptyDirs() {
         return includeEmptyDirs;
     }

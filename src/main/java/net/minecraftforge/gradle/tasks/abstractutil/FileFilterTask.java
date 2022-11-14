@@ -26,7 +26,7 @@ public class FileFilterTask extends DefaultTask {
     ArrayList<MapEntry> replacements = new ArrayList<>();
 
     public FileFilterTask() {
-        this.getOutputs().upToDateWhen(Constants.CALL_FALSE);
+        this.getOutputs().upToDateWhen(Constants.SPEC_FALSE);
     }
 
     @TaskAction

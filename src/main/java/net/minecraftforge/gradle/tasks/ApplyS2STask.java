@@ -1,6 +1,7 @@
 package net.minecraftforge.gradle.tasks;
 
 import com.google.common.base.Strings;
+import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.SequencedInputSupplier;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -8,9 +9,11 @@ import net.minecraftforge.srg2source.rangeapplier.RangeApplier;
 import net.minecraftforge.srg2source.util.io.*;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.*;
 
+import javax.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -19,21 +22,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+@CacheableTask
 public class ApplyS2STask extends DefaultTask {
     private final List<Object> srg = new LinkedList<>();
 
     private final List<Object> exc = new LinkedList<>();
+    private final File buildDir = getProject().getBuildDir();
 
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile rangeMap;
 
     @Optional
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     private DelayedFile excModifiers;
 
     // stuff defined on the tasks..
     private final List<DelayedFile> in = new LinkedList<>();
     private DelayedFile out;
+
+    public ApplyS2STask() {
+        this.getOutputs().doNotCacheIf("Gradle Version is Old", e -> GradleVersionUtils.isBefore("6.0"));
+    }
 
     @TaskAction
     public void doTask() throws IOException {
@@ -100,7 +111,7 @@ public class ApplyS2STask extends DefaultTask {
     private void applyRangeMap(InputSupplier inSup, OutputSupplier outSup, FileCollection srg, FileCollection exc, File rangeMap, Path rangeLog) throws IOException {
         RangeApplier app = new RangeApplier().readSrg(srg.getFiles());
 
-        app.setOutLogger(Constants.getTaskLogStream(getProject(), this.getName() + ".log"));
+        app.setOutLogger(Constants.getTaskLogStream(buildDir, this.getName() + ".log"));
 
         if (!exc.isEmpty()) {
             app.readParamMap(exc);
@@ -112,6 +123,18 @@ public class ApplyS2STask extends DefaultTask {
         app.remapSources(inSup, outSup, rangeMap, false);
     }
 
+    @Inject
+    protected ObjectFactory getInjectedObjectFactory() {
+        throw new IllegalStateException("must be injected");
+    }
+
+    private FileCollection createFileCollection(Object... paths) {
+        return GradleVersionUtils.choose("5.3", () -> getProject().files(paths), () -> getInjectedObjectFactory().fileCollection().from(paths));
+    }
+
+    private FileCollection createFileTree(Object baseDir) {
+        return GradleVersionUtils.choose("6.0", () -> getProject().fileTree(baseDir), () -> getInjectedObjectFactory().fileTree().from(baseDir));
+    }
 
     private FileCollection generateDefaultExc(File modifiers, FileCollection currentExcs, FileCollection srgs) {
         if (modifiers == null || !modifiers.exists())
@@ -216,18 +239,20 @@ public class ApplyS2STask extends DefaultTask {
             for (File f : currentExcs)
                 files.add(f);
 
-            return getProject().files(files.toArray());
+            return createFileCollection(files.toArray());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     public FileCollection getIns() {
-        return getProject().files(in);
+        return createFileCollection(in);
     }
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     public List<File> getIn() {
         List<File> files = new LinkedList<>();
         for (DelayedFile f : in)
@@ -243,9 +268,9 @@ public class ApplyS2STask extends DefaultTask {
     public FileCollection getOuts() {
         File outFile = getOut();
         if (outFile.isDirectory())
-            return getProject().fileTree(outFile);
+            return createFileTree(outFile);
         else
-            return getProject().files(outFile);
+            return createFileCollection(outFile);
     }
 
     @Internal
@@ -258,8 +283,9 @@ public class ApplyS2STask extends DefaultTask {
     }
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     public FileCollection getSrgs() {
-        return getProject().files(srg);
+        return createFileCollection(srg);
     }
 
     public void addSrg(DelayedFile srg) {
@@ -275,8 +301,9 @@ public class ApplyS2STask extends DefaultTask {
     }
 
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     public FileCollection getExcs() {
-        return getProject().files(exc);
+        return createFileCollection(exc);
     }
 
     public void addExc(DelayedFile exc) {

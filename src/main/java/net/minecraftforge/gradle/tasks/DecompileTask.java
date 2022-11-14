@@ -6,7 +6,6 @@ import com.github.abrarsyed.jastyle.OptParser;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
-import groovy.lang.Closure;
 import net.minecraftforge.gradle.FileUtils;
 import net.minecraftforge.gradle.JavaExecSpecHelper;
 import net.minecraftforge.gradle.common.BaseExtension;
@@ -23,8 +22,8 @@ import net.minecraftforge.gradle.patching.ContextualPatch.PatchStatus;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.LogLevel;
+import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.*;
-import org.gradle.process.JavaExecSpec;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -38,6 +37,8 @@ import java.util.zip.ZipOutputStream;
 import static net.minecraftforge.gradle.common.Constants.EXT_NAME_MC;
 
 public class DecompileTask extends CachedTask {
+    private final File buildDir = getProject().getBuildDir();
+    private final ExtensionContainer extensions = getProject().getExtensions();
     @InputFile
     private DelayedFile inJar;
 
@@ -94,37 +95,25 @@ public class DecompileTask extends CachedTask {
     }
 
     private void decompile(final File inJar, final File outJar, final File fernFlower) {
-        getProject().javaexec(new Closure<JavaExecSpec>(this) {
-            private static final long serialVersionUID = 4608694547855396167L;
+        getProject().javaexec(exec -> {
+            exec.args(
+                    fernFlower.getAbsolutePath(),
+                    "-din=1",
+                    "-rbr=0",
+                    "-dgs=1",
+                    "-asc=1",
+                    "-log=ERROR",
+                    inJar.getAbsolutePath(),
+                    outJar.getAbsolutePath()
+            );
 
-            public JavaExecSpec call() {
-                JavaExecSpec exec = (JavaExecSpec) getDelegate();
+            JavaExecSpecHelper.setMainClass(exec, "-jar");
+            exec.setWorkingDir(fernFlower.getParentFile());
 
-                exec.args(
-                        fernFlower.getAbsolutePath(),
-                        "-din=1",
-                        "-rbr=0",
-                        "-dgs=1",
-                        "-asc=1",
-                        "-log=ERROR",
-                        inJar.getAbsolutePath(),
-                        outJar.getAbsolutePath()
-                );
+            exec.classpath(Constants.getClassPath());
+            exec.setStandardOutput(Constants.getTaskLogStream(buildDir, getName() + ".log"));
 
-                JavaExecSpecHelper.setMainClass(exec, "-jar");
-                exec.setWorkingDir(fernFlower.getParentFile());
-
-                exec.classpath(Constants.getClassPath());
-                exec.setStandardOutput(Constants.getTaskLogStream(getProject(), getName() + ".log"));
-
-                exec.setMaxHeapSize("512M");
-
-                return exec;
-            }
-
-            public JavaExecSpec call(Object obj) {
-                return call();
-            }
+            exec.setMaxHeapSize("512M");
         });
     }
 
@@ -134,7 +123,7 @@ public class DecompileTask extends CachedTask {
         ZipEntry entry;
         String fileStr;
 
-        BaseExtension exten = (BaseExtension) getProject().getExtensions().getByName(EXT_NAME_MC);
+        BaseExtension exten = (BaseExtension) extensions.getByName(EXT_NAME_MC);
         boolean fixInterfaces = !exten.getVersion().equals("1.7.2");
 
         while ((entry = zin.getNextEntry()) != null) {

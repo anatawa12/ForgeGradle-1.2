@@ -1,9 +1,11 @@
 package edu.sc.seis.launch4j;
 
-import groovy.lang.Closure;
 import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.user.UserConstants;
-import org.gradle.api.*;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.Plugin;
+import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.file.CopySpec;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.Exec;
@@ -12,6 +14,7 @@ import org.gradle.api.tasks.bundling.Jar;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.concurrent.Callable;
 
 public class Launch4jPlugin implements Plugin<Project> {
 
@@ -63,19 +66,15 @@ public class Launch4jPlugin implements Plugin<Project> {
         return task;
     }
 
-    @SuppressWarnings("serial")
     private Task addCopyToLibTask(Project project, Launch4jPluginExtension configuration) {
         final Sync task = makeTask(TASK_LIB_COPY_NAME, Sync.class);
         task.setDescription("Copies the project dependency jars in the lib directory.");
         task.setGroup(LAUNCH4J_GROUP);
         // more stuff with the java plugin
         //task.with(configureDistSpec(project));
-        task.into(new Closure<File>(null) {
-            @Override
-            public File call(Object... obj) {
-                Launch4jPluginExtension ext = ((Launch4jPluginExtension) task.getProject().getExtensions().getByName(Launch4jPlugin.LAUNCH4J_CONFIGURATION_NAME));
-                return task.getProject().file(task.getProject().getBuildDir() + "/" + ext.getOutputDir() + "/lib");
-            }
+        task.into((Callable<File>) () -> {
+            Launch4jPluginExtension ext = ((Launch4jPluginExtension) task.getProject().getExtensions().getByName(Launch4jPlugin.LAUNCH4J_CONFIGURATION_NAME));
+            return task.getProject().file(task.getProject().getBuildDir() + "/" + ext.getOutputDir() + "/lib");
         });
         return task;
     }
@@ -101,9 +100,9 @@ public class Launch4jPlugin implements Plugin<Project> {
         return task;
     }
 
-    @SuppressWarnings({"serial", "unused"})
+    @SuppressWarnings({"unused"})
     private CopySpec configureDistSpec(Project project) {
-        CopySpec distSpec = project.copySpec(new Closure<Object>(null) {});
+        CopySpec distSpec = project.copySpec();
         Jar jar = (Jar) project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
 
         distSpec.from(jar);

@@ -16,6 +16,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
@@ -27,11 +28,13 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class ReobfTask extends DefaultTask {
     final private DomainObjectSet<ObfArtifact> obfOutput = GradleVersionUtils.choose("5.5",
             ReobfTask::getInternalDeprecatedDefaultDomain,
             () -> getInjectedObjectFactory().domainObjectSet(ObfArtifact.class));
+    private final ExtensionContainer extensions = getProject().getExtensions();
 
     @SuppressWarnings("unchecked")
     private static DomainObjectSet<ObfArtifact> getInternalDeprecatedDefaultDomain() {
@@ -78,21 +81,11 @@ public class ReobfTask extends DefaultTask {
 
     private List<Object> extraSrgFiles = new ArrayList<>();
 
-    @SuppressWarnings("serial")
     public ReobfTask() {
         super();
 
-        getInputs().files(new Closure<Object>(obfOutput) {
-            public Object call(Object... objects) {
-                return getFilesToObfuscate();
-            }
-        });
-
-        getOutputs().files(new Closure<Object>(obfOutput) {
-            public Object call(Object... objects) {
-                return getObfuscatedFiles();
-            }
-        });
+        getInputs().files((Callable<FileCollection>) this::getFilesToObfuscate);
+        getOutputs().files((Callable<FileCollection>) this::getObfuscatedFiles);
     }
 
     @Inject
@@ -101,7 +94,15 @@ public class ReobfTask extends DefaultTask {
     }
 
     public void reobf(Task task, Action<ArtifactSpec> artifactSpec) {
-        reobf(task, new ActionClosure(artifactSpec));
+        if (!(task instanceof AbstractArchiveTask)) {
+            throw new InvalidUserDataException("You cannot reobfuscate tasks that are not 'archive' tasks, such as 'jar', 'zip' etc. (you tried to sign $task)");
+        }
+
+        ArtifactSpec spec = new ArtifactSpec((AbstractArchiveTask) task);
+        artifactSpec.execute(spec);
+
+        dependsOn(task);
+        addArtifact(new ObfArtifact(new DelayedThingy(task), spec, this));
     }
 
     public void reobf(Task task, Closure<Object> artifactSpec) {
@@ -132,8 +133,12 @@ public class ReobfTask extends DefaultTask {
         }
     }
 
-    public void reobf(PublishArtifact art, Action<ArtifactSpec> artifactSpec) {
-        reobf(art, new ActionClosure(artifactSpec));
+    public void reobf(PublishArtifact publishArtifact, Action<ArtifactSpec> artifactSpec) {
+        ArtifactSpec spec = new ArtifactSpec(publishArtifact, getProject());
+        artifactSpec.execute(spec);
+
+        dependsOn(publishArtifact);
+        addArtifact(new ObfArtifact(publishArtifact, spec, this));
     }
 
     /**
@@ -163,7 +168,10 @@ public class ReobfTask extends DefaultTask {
     }
 
     public void reobf(File file, Action<ArtifactSpec> artifactSpec) {
-        reobf(file, new ActionClosure(artifactSpec));
+        ArtifactSpec spec = new ArtifactSpec(file, getProject());
+        artifactSpec.execute(spec);
+
+        addArtifact(new ObfArtifact(file, spec, this));
     }
 
     /**
@@ -257,7 +265,7 @@ public class ReobfTask extends DefaultTask {
         File srg = Files.createTempFile(getTemporaryDir().toPath(), "reobf-default", ".srg").toFile();
         File extraSrg = Files.createTempFile(getTemporaryDir().toPath(), "reobf-extra", ".srg").toFile();
 
-        UserExtension ext = (UserExtension) getProject().getExtensions().getByName(Constants.EXT_NAME_MC);
+        UserExtension ext = (UserExtension) extensions.getByName(Constants.EXT_NAME_MC);
 
         if (ext.isDecomp()) {
             exc = getExceptor();
@@ -345,22 +353,6 @@ public class ReobfTask extends DefaultTask {
         return getProject().files(collect);
     }
 
-    @SuppressWarnings({"serial"})
-    private class ActionClosure extends Closure<Object> {
-        private final Action<ArtifactSpec> act;
-
-        public ActionClosure(Action<ArtifactSpec> artifactSpec) {
-            super(null);
-            this.act = artifactSpec;
-        }
-
-        @Override
-        public ArtifactSpec call(Object obj) {
-            act.execute((ArtifactSpec) obj);
-            return null;
-        }
-    }
-
     public boolean getUseRetroGuard() {
         return useRetroGuard;
     }
@@ -446,11 +438,11 @@ public class ReobfTask extends DefaultTask {
     }
 
     public void setSrgSrg() {
-        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_SRG, ((UserExtension) getProject().getExtensions().getByName(Constants.EXT_NAME_MC)).plugin);
+        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_SRG, ((UserExtension) extensions.getByName(Constants.EXT_NAME_MC)).plugin);
     }
 
     public void setSrgMcp() {
-        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_NOTCH_SRG, ((UserExtension) getProject().getExtensions().getByName(Constants.EXT_NAME_MC)).plugin);
+        this.srg = new DelayedFile(getProject(), UserConstants.REOBF_NOTCH_SRG, ((UserExtension) extensions.getByName(Constants.EXT_NAME_MC)).plugin);
     }
 
     public File getFieldCsv() {

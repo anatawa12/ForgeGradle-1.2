@@ -12,6 +12,7 @@ import net.minecraftforge.gradle.json.MCInjectorStruct;
 import net.minecraftforge.gradle.json.MCInjectorStruct.InnerClass;
 import net.minecraftforge.gradle.tasks.abstractutil.CachedTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.*;
 import org.objectweb.asm.ClassReader;
@@ -33,6 +34,7 @@ import static net.minecraftforge.gradle.common.Constants.EXT_NAME_MC;
 import static org.objectweb.asm.Opcodes.*;
 
 public class ProcessJarTask extends CachedTask {
+    private final ExtensionContainer extensions = getProject().getExtensions();
     @InputFile
     @Optional
     private DelayedFile fieldCsv;
@@ -266,7 +268,7 @@ public class ProcessJarTask extends CachedTask {
             Files.write(jsonTmp.toPath(), JsonFactory.GSON.toJson(struct).getBytes());
         }
 
-        BaseExtension exten = (BaseExtension) getProject().getExtensions().getByName(EXT_NAME_MC);
+        BaseExtension exten = (BaseExtension) extensions.getByName(EXT_NAME_MC);
         boolean genParams = !exten.getVersion().equals("1.7.2");
         getLogger().debug("INPUT: " + inJar);
         getLogger().debug("OUTPUT: " + outJar);

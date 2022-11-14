@@ -5,20 +5,20 @@ import net.minecraftforge.gradle.user.patch.ForgeUserPlugin;
 import net.minecraftforge.gradle.user.patch.UserPatchExtension;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
 import java.nio.file.Files;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ExtensionForgeVersionTest {
     private Project testProject;
     private UserPatchExtension ext;
 
-    @Before
+    @BeforeEach
     public void setupProject() throws IOException {
         this.testProject = ProjectBuilder.builder()
                 .withName("testProject")

@@ -323,7 +323,7 @@ public abstract class UserPatchBasePlugin extends UserBasePlugin<UserPatchExtens
         super.configurePostDecomp(decomp, remove);
 
         if (decomp && remove) {
-            (project.getTasks().getByName("applyBinPatches")).onlyIf(Constants.CALL_FALSE);
+            project.getTasks().getByName("applyBinPatches").onlyIf(Constants.SPEC_FALSE);
         }
     }
 }

@@ -3,10 +3,10 @@ package net.minecraftforge.gradle;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.minecraftforge.srg2source.util.io.InputSupplier;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class MultiDirSupplierTest {
     private final Random rand = new Random();
     private static final String END = ".tmp";
 
-    @Before // before each test
+    @BeforeEach // before each test
     public void setup() throws IOException {
         int dirNum = rand.nextInt(4) + 1; // 0-5
 
@@ -38,7 +38,7 @@ public class MultiDirSupplierTest {
         }
     }
 
-    @After // after each test
+    @AfterEach // after each test
     public void cleanup() {
         // delete the files.
         for (File f : dirs)
@@ -75,7 +75,7 @@ public class MultiDirSupplierTest {
 
         // gather all the relative paths
         for (String rel : supp.gatherAll(END)) {
-            Assert.assertTrue(expectedFiles.containsValue(rel));
+            Assertions.assertTrue(expectedFiles.containsValue(rel));
         }
 
         supp.close(); // to please the compiler..
@@ -87,7 +87,7 @@ public class MultiDirSupplierTest {
 
         for (File dir : expectedFiles.keySet()) {
             for (String rel : expectedFiles.get(dir)) {
-                Assert.assertEquals(dir, new File(supp.getRoot(rel)).getCanonicalFile());
+                Assertions.assertEquals(dir, new File(supp.getRoot(rel)).getCanonicalFile());
             }
         }
 
@@ -127,7 +127,7 @@ public class MultiDirSupplierTest {
             stream.read(actual);
             stream.close();
 
-            Assert.assertArrayEquals(expected, actual);
+            Assertions.assertArrayEquals(expected, actual);
         }
 
         supp.close(); // to please the compiler..

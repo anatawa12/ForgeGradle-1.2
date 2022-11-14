@@ -22,10 +22,10 @@ java {
 val gradleStartDev = false
 
 repositories {
+    mavenCentral()
     maven("https://maven.minecraftforge.net") {
         name = "forge"
     }
-    mavenCentral()
     if (gradleStartDev) {
         maven("https://libraries.minecraft.net/") {
             name = "mojang"
@@ -101,7 +101,7 @@ dependencies {
         compileOnly("net.minecraft:launchwrapper:1.11")
     }
 
-    testImplementation("junit:junit:4.+")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
 }
 
 val compileJava by tasks.getting(JavaCompile::class) {
@@ -134,9 +134,7 @@ val test by tasks.getting(Test::class) {
         exclude("**/ExtensionMcpMappingTest*")
         exclude("**/ExtensionForgeVersionTest*")
     }
-    reports {
-        junitXml.required.set(true)
-    }
+    useJUnitPlatform()
 }
 
 publishing {

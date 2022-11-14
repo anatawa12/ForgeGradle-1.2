@@ -5,11 +5,13 @@ import net.minecraftforge.gradle.common.BaseExtension;
 import net.minecraftforge.gradle.common.JenkinsExtension;
 import org.gradle.api.Project;
 
+import java.util.function.Supplier;
+
 import static net.minecraftforge.gradle.common.Constants.EXT_NAME_JENKINS;
 import static net.minecraftforge.gradle.common.Constants.EXT_NAME_MC;
 
 @SuppressWarnings("serial")
-public abstract class DelayedBase<V> extends Closure<V> {
+public abstract class DelayedBase<V> extends Closure<V> implements Supplier<V> {
     protected Project project;
     private V resolved;
     protected String pattern;
@@ -39,6 +41,11 @@ public abstract class DelayedBase<V> extends Closure<V> {
         }
 
         return resolved;
+    }
+
+    @Override
+    public final V get() {
+        return call();
     }
 
     @Override
