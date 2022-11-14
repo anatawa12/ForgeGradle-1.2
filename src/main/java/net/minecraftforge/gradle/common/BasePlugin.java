@@ -9,7 +9,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.*;
-import net.minecraftforge.gradle.delayed.DelayedBase;
 import net.minecraftforge.gradle.delayed.DelayedBase.IDelayedResolver;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.delayed.DelayedFileTree;
@@ -45,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Project>, IDelayedResolver<K> {
     public Project project;
@@ -311,25 +311,23 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             etagDlTask.setFile(delayedFile(Constants.VERSION_JSON));
             etagDlTask.setDieWithError(false);
             //TODO: this is not necessary?
-            etagDlTask.doLast(new Closure<Boolean>(project) // normalizes to linux endings
-            {
+            etagDlTask.doLast(new Action<Task>() { // normalizes to linux endings
                 @Override
-                public Boolean call() {
+                public void execute(Task task) {
                     try {
                         File json = delayedFile(Constants.VERSION_JSON).call();
                         if (!json.exists())
-                            return true;
+                            return;
 
                         List<String> lines = Files.readAllLines(json.toPath());
                         StringBuilder buf = new StringBuilder();
                         for (String line : lines) {
-                            buf = buf.append(line).append('\n');
+                            buf.append(line).append('\n');
                         }
                         Files.write(json.toPath(), buf.toString().getBytes(StandardCharsets.UTF_8));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    return true;
                 }
             });
         }
@@ -400,7 +398,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         DownloadAssetsTask assets = makeTask("getAssets", DownloadAssetsTask.class);
         {
             assets.setAssetsDir(delayedFile(Constants.ASSETS));
-            assets.setIndex(getAssetIndexClosure());
+            assets.setIndex(getAssetIndexSupplier());
             assets.setIndexName(delayedString("{ASSET_INDEX}"));
             assets.dependsOn("getAssetsIndex");
         }
@@ -426,13 +424,21 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         assetIndex = JsonFactory.loadAssetsIndex(delayedFile(Constants.ASSETS + "/indexes/{ASSET_INDEX}.json").call());
     }
 
+    /**
+     * @deprecated unused
+     */
     @SuppressWarnings("serial")
+    @Deprecated
     public Closure<AssetIndex> getAssetIndexClosure() {
         return new Closure<AssetIndex>(this, null) {
             public AssetIndex call(Object... obj) {
                 return getAssetIndex();
             }
         };
+    }
+
+    public Supplier<AssetIndex> getAssetIndexSupplier() {
+        return this::getAssetIndex;
     }
 
     public AssetIndex getAssetIndex() {

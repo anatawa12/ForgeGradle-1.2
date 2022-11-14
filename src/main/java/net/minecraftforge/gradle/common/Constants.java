@@ -5,6 +5,8 @@ import groovy.lang.Closure;
 import net.minecraftforge.gradle.StringUtils;
 import net.minecraftforge.gradle.json.version.OS;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
+import org.gradle.api.specs.Spec;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -39,12 +41,18 @@ public class Constants {
     public static final String EXT_NAME_MC = "minecraft";
     public static final String EXT_NAME_JENKINS = "jenkins";
 
+    /**
+     * @deprecated unused
+     */
     @SuppressWarnings("serial")
+    @Deprecated
     public static final Closure<Boolean> CALL_FALSE = new Closure<Boolean>(null) {
         public Boolean call(Object o) {
             return false;
         }
     };
+
+    public static final Spec<? super Task> SPEC_FALSE = e -> false;
 
     // urls
     /** @deprecated AWS s3 Minecraft.Download is not live */
@@ -221,8 +229,16 @@ public class Constants {
         return null;
     }
 
+    /**
+     * @deprecated breaks task cache
+     */
+    @Deprecated
     public static PrintStream getTaskLogStream(Project project, String name) {
-        final File taskLogs = new File(project.getBuildDir(), "taskLogs");
+        return getTaskLogStream(project.getBuildDir(), name);
+    }
+
+    public static PrintStream getTaskLogStream(File buildDir, String name) {
+        final File taskLogs = new File(buildDir, "taskLogs");
         taskLogs.mkdirs();
         final File logFile = new File(taskLogs, name);
         logFile.delete(); //Delete the old log
@@ -231,6 +247,7 @@ public class Constants {
         } catch (FileNotFoundException ignored) {}
         return null; // Should never get to here
     }
+
 
     /**
      * Throws a null runtime exception if the resource isnt found.

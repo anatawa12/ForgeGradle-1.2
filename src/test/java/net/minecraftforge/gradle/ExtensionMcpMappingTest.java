@@ -5,17 +5,16 @@ import net.minecraftforge.gradle.user.patch.ForgeUserPlugin;
 import net.minecraftforge.gradle.user.patch.UserPatchExtension;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ExtensionMcpMappingTest {
     private Project testProject;
     private UserPatchExtension ext;
 
-    @Before
+    @BeforeEach
     public void setupProject() {
         this.testProject = ProjectBuilder.builder().build();
         assertNotNull(this.testProject);
@@ -76,16 +75,20 @@ public class ExtensionMcpMappingTest {
         assertEquals(this.ext.getMappingsVersion(), "12");
     }
 
-    @Test(expected = GradleConfigurationException.class)
+    @Test
     public void testInvalidSnapshot17() {
-        this.ext.setVersion(VERSION_17);
-        this.ext.setMappings("snapshot_20141205");
+        assertThrows(GradleConfigurationException.class, () -> {
+            this.ext.setVersion(VERSION_17);
+            this.ext.setMappings("snapshot_20141205");
+        });
     }
 
-    @Test(expected = GradleConfigurationException.class)
+    @Test
     public void testInvalidSnapshot18() {
-        this.ext.setVersion(VERSION_18);
-        this.ext.setMappings("snapshot_20140909");
+        assertThrows(GradleConfigurationException.class, () -> {
+            this.ext.setVersion(VERSION_18);
+            this.ext.setMappings("snapshot_20140909");
+        });
     }
 
     @Test
@@ -96,22 +99,28 @@ public class ExtensionMcpMappingTest {
         assertEquals(this.ext.getMappingsVersion(), "20140925");
     }
 
-    @Test(expected = GradleConfigurationException.class)
+    @Test
     public void testInvalidSnapshot() {
-        this.ext.setVersion(VERSION_17);
-        this.ext.setMappings("snapshot_15");
+        assertThrows(GradleConfigurationException.class, () -> {
+            this.ext.setVersion(VERSION_17);
+            this.ext.setMappings("snapshot_15");
+        });
     }
 
-    @Test(expected = GradleConfigurationException.class)
+    @Test
     public void testInvalidStable() {
-        this.ext.setVersion(VERSION_17);
-        this.ext.setMappings("stable_20140925");
+        assertThrows(GradleConfigurationException.class, () -> {
+            this.ext.setVersion(VERSION_17);
+            this.ext.setMappings("stable_20140925");
+        });
     }
 
-    @Test(expected = GradleConfigurationException.class)
+    @Test
     public void testInvalidCustom() {
-        this.ext.setVersion(VERSION_17);
-        this.ext.setMappings("abrar_blahblah");
+        assertThrows(GradleConfigurationException.class, () -> {
+            this.ext.setVersion(VERSION_17);
+            this.ext.setMappings("abrar_blahblah");
+        });
     }
 
     @Test

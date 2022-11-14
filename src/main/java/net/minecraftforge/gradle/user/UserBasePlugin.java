@@ -9,7 +9,6 @@ import groovy.lang.Closure;
 import net.minecraftforge.gradle.*;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
-import net.minecraftforge.gradle.delayed.DelayedBase;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.gradle.json.JsonFactory;
 import net.minecraftforge.gradle.json.version.Library;
@@ -20,7 +19,6 @@ import net.minecraftforge.gradle.tasks.user.reobf.ReobfTask;
 import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration.State;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
-import org.gradle.api.execution.TaskExecutionGraph;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
@@ -60,7 +58,6 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
     boolean mavenPluginEnabled = false;
     boolean wrapperArtifact = false;
 
-    @SuppressWarnings("serial")
     @Override
     public void applyPlugin() {
         this.applyExternalPlugin("java");
@@ -119,27 +116,12 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         if (wrapperArtifact) task.dependsOn("genWrapperArtifact");
         //configureDecompSetup(task);
 
-        project.getGradle().getTaskGraph().whenReady(new Closure<Object>(this, null) {
-            @Override
-            public Object call() {
-                TaskExecutionGraph graph = project.getGradle().getTaskGraph();
-                String path = project.getPath();
+        project.getGradle().getTaskGraph().whenReady(graph -> {
+            String path = project.getPath();
 
-                if (graph.hasTask(path + "setupDecompWorkspace")) {
-                    getExtension().setDecomp();
-                    configurePostDecomp(true, true);
-                }
-                return null;
-            }
-
-            @Override
-            public Object call(Object obj) {
-                return call();
-            }
-
-            @Override
-            public Object call(Object... obj) {
-                return call();
+            if (graph.hasTask(path + "setupDecompWorkspace")) {
+                getExtension().setDecomp();
+                configurePostDecomp(true, true);
             }
         });
     }
@@ -430,7 +412,6 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         hasAppliedJson = true;
     }
 
-    @SuppressWarnings("serial")
     protected void configureIntellij() {
         IdeaModel ideaConv = (IdeaModel) project.getExtensions().getByName("idea");
 
@@ -499,17 +480,16 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         if (ideaConv.getWorkspace().getIws() == null)
             return;
 
-        ideaConv.getWorkspace().getIws().withXml(new Closure<Object>(this, null) {
-            public Object call(Object... obj) {
-                Element root = ((XmlProvider) this.getDelegate()).asElement();
+        ideaConv.getWorkspace().getIws().withXml(new Action<XmlProvider>() {
+            @Override
+            public void execute(XmlProvider xmlProvider) {
+                Element root = xmlProvider.asElement();
                 Document doc = root.getOwnerDocument();
                 try {
                     injectIntellijRuns(doc, project.getProjectDir().getCanonicalPath());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
-                return null;
             }
         });
     }
@@ -610,12 +590,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             task.setIvyXml(delayedDirtyFile("wrapper-of-{API_NAME}", "ivy", "xml"));
             task.setEmptyJar(delayedDirtyFile("wrapper-of-{API_NAME}", "ivy", "jar"));
             task.setModuleName(delayedString("{API_NAME}"));
-            task.setIsDecomp(new DelayedBase<Boolean>(null, null) {
-                @Override
-                public Boolean resolveDelayed() {
-                    return getExtension().isDecomp();
-                }
-            });
+            task.setIsDecomp(() -> getExtension().isDecomp());
             task.setSrcDepName(getSrcDepName());
             task.setBinDepName(getBinDepName());
             task.setVersion(delayedString(hasApiVersion() ? "{API_VERSION}" : "{MC_VERSION}"));
@@ -1172,7 +1147,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         setMinecraftDeps(decomp, remove);
 
         if (decomp && remove) {
-            (project.getTasks().getByName("deobfBinJar")).onlyIf(Constants.CALL_FALSE);
+            project.getTasks().getByName("deobfBinJar").onlyIf(SPEC_FALSE);
         }
     }
 

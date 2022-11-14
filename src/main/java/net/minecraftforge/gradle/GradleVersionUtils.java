@@ -2,6 +2,8 @@ package net.minecraftforge.gradle;
 
 import org.gradle.util.GradleVersion;
 
+import java.util.function.Supplier;
+
 public class GradleVersionUtils {
     public static void checkSupportedVersion() {
         GradleVersionUtils.ifBefore("4.0", () -> {
@@ -34,15 +36,16 @@ public class GradleVersionUtils {
             action.run();
         }
     }
+
     /**
      * same version includes after
      * @param versionName includes this version
      */
-    public static <T> T choose(String versionName, Callable<? extends T> before, Callable<? extends T> after) {
+    public static <T> T choose(String versionName, Supplier<? extends T> before, Supplier<? extends T> after) {
         if (isBefore(versionName)) {
-            return before.call();
+            return before.get();
         } else {
-            return after.call();
+            return after.get();
         }
     }
 
@@ -55,9 +58,5 @@ public class GradleVersionUtils {
         GradleVersion version = GradleVersion.version(versionName);
 
         return gradleVersion.compareTo(version) < 0;
-    }
-
-    public interface Callable<T> {
-        T call();
     }
 }

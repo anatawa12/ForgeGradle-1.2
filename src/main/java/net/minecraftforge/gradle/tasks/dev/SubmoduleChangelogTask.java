@@ -1,13 +1,11 @@
 package net.minecraftforge.gradle.tasks.dev;
 
-import groovy.lang.Closure;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.process.ExecSpec;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -70,20 +68,14 @@ public class SubmoduleChangelogTask extends DefaultTask {
         getLogger().lifecycle("");
     }
 
-    @SuppressWarnings("serial")
     private String[] runGit(final File dir, final String... args) {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        getProject().exec(new Closure<ExecSpec>(getProject(), getProject()) {
-            @Override
-            public ExecSpec call() {
-                ExecSpec exec = (ExecSpec) getDelegate();
-                exec.setExecutable("git");
-                exec.args((Object[]) args);
-                exec.setStandardOutput(out);
-                exec.setWorkingDir(dir);
-                return exec;
-            }
+        getProject().exec(exec -> {
+            exec.setExecutable("git");
+            exec.args((Object[]) args);
+            exec.setStandardOutput(out);
+            exec.setWorkingDir(dir);
         });
 
         return out.toString().trim().split("\n");

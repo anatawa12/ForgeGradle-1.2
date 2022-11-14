@@ -22,11 +22,12 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Supplier;
 
 public class DownloadAssetsTask extends DefaultTask {
     DelayedFile assetsDir;
 
-    Closure<AssetIndex> index;
+    Supplier<AssetIndex> index;
 
     @Input
     DelayedString indexName;
@@ -138,10 +139,18 @@ public class DownloadAssetsTask extends DefaultTask {
 
     @Input
     public AssetIndex getIndex() {
-        return index.call();
+        return index.get();
     }
 
+    /**
+     * @deprecated use {@link #setIndex(Supplier)} variant
+     */
+    @Deprecated
     public void setIndex(Closure<AssetIndex> index) {
+        this.index = index::call;
+    }
+
+    public void setIndex(Supplier<AssetIndex> index) {
         this.index = index;
     }
 

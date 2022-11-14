@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class ReobfTask extends DefaultTask {
     final private DomainObjectSet<ObfArtifact> obfOutput = GradleVersionUtils.choose("5.5",
@@ -78,21 +79,11 @@ public class ReobfTask extends DefaultTask {
 
     private List<Object> extraSrgFiles = new ArrayList<>();
 
-    @SuppressWarnings("serial")
     public ReobfTask() {
         super();
 
-        getInputs().files(new Closure<Object>(obfOutput) {
-            public Object call(Object... objects) {
-                return getFilesToObfuscate();
-            }
-        });
-
-        getOutputs().files(new Closure<Object>(obfOutput) {
-            public Object call(Object... objects) {
-                return getObfuscatedFiles();
-            }
-        });
+        getInputs().files((Callable<FileCollection>) this::getFilesToObfuscate);
+        getOutputs().files((Callable<FileCollection>) this::getObfuscatedFiles);
     }
 
     @Inject
