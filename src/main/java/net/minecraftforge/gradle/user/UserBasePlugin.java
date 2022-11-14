@@ -97,7 +97,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
 
         Task task = makeTask("setupCIWorkspace", DefaultTask.class);
         task.dependsOn("genSrgs", "deobfBinJar");
-        task.setDescription("Sets up the bare minimum to build a minecraft mod. Idea for CI servers");
+        task.setDescription("Sets up the bare minimum to build a minecraft mod. Ideal for CI servers");
         task.setGroup("ForgeGradle");
         if (wrapperArtifact) task.dependsOn("genWrapperArtifact");
         //configureCISetup(task);

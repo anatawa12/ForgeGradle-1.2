@@ -146,7 +146,7 @@ public class DownloadAssetsTask extends DefaultTask {
      * @deprecated use {@link #setIndex(Supplier)} variant
      */
     @Deprecated
-    public void setIndex(Closure<AssetIndex> index) {
+    public void setIndex(@Deprecated Closure<AssetIndex> index) {
         this.index = index::call;
     }
 
