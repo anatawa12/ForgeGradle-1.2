@@ -368,6 +368,7 @@ public class ObfArtifact implements PublishArtifact {
 
         // make remapper
         JarRemapper remapper = new JarRemapper(null, mapping);
+        remapper.setCopyEmptyDirectories(false);
 
         // load jar
         Jar inputJar = Jar.init(input);

@@ -193,6 +193,7 @@ public class ProcessJarTask extends CachedTask {
         RemapperProcessor atProcessor = new RemapperProcessor(null, null, accessMap);
         // make remapper
         JarRemapper remapper = new JarRemapper(srgProcessor, mapping, atProcessor);
+        remapper.setCopyEmptyDirectories(false);
 
         // load jar
         Jar input = Jar.init(inJar);
