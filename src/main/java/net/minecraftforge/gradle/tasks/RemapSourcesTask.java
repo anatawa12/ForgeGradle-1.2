@@ -1,8 +1,9 @@
 package net.minecraftforge.gradle.tasks;
 
-import au.com.bytecode.opencsv.CSVParser;
-import au.com.bytecode.opencsv.CSVReader;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVReader;
 import com.google.common.base.Strings;
+import com.opencsv.exceptions.CsvException;
 import net.minecraftforge.gradle.StringUtils;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -153,7 +154,7 @@ public class RemapSourcesTask extends EditJarTask {
         return s == null ? null : s.get("name");
     }
 
-    private void readCsvFiles() throws IOException {
+    private void readCsvFiles() throws IOException, CsvException {
         CSVReader reader = getReader(getMethodsCsv());
         for (String[] s : reader.readAll()) {
             Map<String, String> temp = new HashMap<>();
@@ -177,7 +178,7 @@ public class RemapSourcesTask extends EditJarTask {
     }
 
     public static CSVReader getReader(File file) throws IOException {
-        return new CSVReader(Files.newBufferedReader(file.toPath(), Charset.defaultCharset()), CSVParser.DEFAULT_SEPARATOR, CSVParser.DEFAULT_QUOTE_CHARACTER, CSVParser.NULL_CHARACTER, 1, false);
+        return new CSVReader(Files.newBufferedReader(file.toPath(), Charset.defaultCharset()));
     }
 
     public File getMethodsCsv() {

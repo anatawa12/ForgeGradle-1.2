@@ -1,6 +1,7 @@
 package net.minecraftforge.gradle.tasks;
 
-import au.com.bytecode.opencsv.CSVReader;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvException;
 import net.minecraftforge.gradle.GradleVersionUtils;
 import net.minecraftforge.gradle.delayed.DelayedFile;
 import net.minecraftforge.srg2source.rangeapplier.MethodData;
@@ -70,7 +71,7 @@ public class GenSrgTask extends DefaultTask {
     }
 
     @TaskAction
-    public void doTask() throws IOException {
+    public void doTask() throws IOException, CsvException {
         // csv data.  SRG -> MCP
         HashMap<String, String> methods = new HashMap<>();
         HashMap<String, String> fields = new HashMap<>();
@@ -86,7 +87,7 @@ public class GenSrgTask extends DefaultTask {
 
     }
 
-    private static void readCSVs(File methodCsv, File fieldCsv, Map<String, String> methodMap, Map<String, String> fieldMap) throws IOException {
+    private static void readCSVs(File methodCsv, File fieldCsv, Map<String, String> methodMap, Map<String, String> fieldMap) throws IOException, CsvException {
 
         // read methods
         CSVReader csvReader = RemapSourcesTask.getReader(methodCsv);
