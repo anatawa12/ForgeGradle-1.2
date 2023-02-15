@@ -87,7 +87,7 @@ dependencies {
     implementation("org.eclipse.platform:org.eclipse.core.resources:3.14.0") // locked
     implementation("org.eclipse.platform:org.eclipse.core.runtime:3.22.0") // locked
     implementation("org.eclipse.platform:org.eclipse.equinox.app:1.5.100") // locked
-    implementation("org.eclipse.platform:org.eclipse.equinox.common:3.14.100") // locked
+    implementation("org.eclipse.platform:org.eclipse.equinox.common:3.17.0") // locked
     implementation("org.eclipse.platform:org.eclipse.equinox.preferences:3.9.100") // locked
     implementation("org.eclipse.platform:org.eclipse.equinox.registry:3.10.200") // locked
     implementation("org.eclipse.platform:org.eclipse.osgi:3.18.100")
