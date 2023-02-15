@@ -69,7 +69,7 @@ dependencies {
 
     // because curse
     implementation("org.apache.httpcomponents:httpclient:4.5.14")
-    implementation("org.apache.httpcomponents:httpmime:4.5.13")
+    implementation("org.apache.httpcomponents:httpmime:4.5.14")
 
     // mcp stuff
     implementation("de.oceanlabs.mcp:RetroGuard:3.6.6")
