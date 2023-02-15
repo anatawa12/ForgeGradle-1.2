@@ -77,20 +77,21 @@ dependencies {
     implementation("net.minecraftforge:Srg2Source:4.2.7")
 
     // pin jdt deps
-    implementation("org.eclipse.jdt:org.eclipse.jdt.core:3.31.0")
-    implementation("org.eclipse.platform:org.eclipse.core.commands:3.10.200")
-    implementation("org.eclipse.platform:org.eclipse.core.contenttype:3.8.200")
-    implementation("org.eclipse.platform:org.eclipse.core.expressions:3.8.200")
-    implementation("org.eclipse.platform:org.eclipse.core.filesystem:1.9.500")
-    implementation("org.eclipse.platform:org.eclipse.core.jobs:3.13.100")
-    implementation("org.eclipse.platform:org.eclipse.core.resources:3.18.0")
-    implementation("org.eclipse.platform:org.eclipse.core.runtime:3.26.0")
-    implementation("org.eclipse.platform:org.eclipse.equinox.app:1.6.200")
-    implementation("org.eclipse.platform:org.eclipse.equinox.common:3.16.200")
-    implementation("org.eclipse.platform:org.eclipse.equinox.preferences:3.10.100")
-    implementation("org.eclipse.platform:org.eclipse.equinox.registry:3.11.200")
+    // locked means locked due to java 8
+    implementation("org.eclipse.jdt:org.eclipse.jdt.core:3.26.0") // locked
+    implementation("org.eclipse.platform:org.eclipse.core.commands:3.9.800") // locked
+    implementation("org.eclipse.platform:org.eclipse.core.contenttype:3.7.1000") // locked
+    implementation("org.eclipse.platform:org.eclipse.core.expressions:3.7.100") // locked
+    implementation("org.eclipse.platform:org.eclipse.core.filesystem:1.7.700") // locked
+    implementation("org.eclipse.platform:org.eclipse.core.jobs:3.11.0") // locked
+    implementation("org.eclipse.platform:org.eclipse.core.resources:3.14.0") // locked
+    implementation("org.eclipse.platform:org.eclipse.core.runtime:3.22.0") // locked
+    implementation("org.eclipse.platform:org.eclipse.equinox.app:1.5.100") // locked
+    implementation("org.eclipse.platform:org.eclipse.equinox.common:3.14.100") // locked
+    implementation("org.eclipse.platform:org.eclipse.equinox.preferences:3.9.100") // locked
+    implementation("org.eclipse.platform:org.eclipse.equinox.registry:3.10.200") // locked
     implementation("org.eclipse.platform:org.eclipse.osgi:3.18.100")
-    implementation("org.eclipse.platform:org.eclipse.text:3.12.200")
+    implementation("org.eclipse.platform:org.eclipse.text:3.11.0") // locked
     implementation("org.osgi:org.osgi.service.prefs:1.1.2")
     implementation("org.osgi:osgi.annotation:8.1.0")
 
