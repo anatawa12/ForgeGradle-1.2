@@ -24,6 +24,8 @@ jobs:
         distribution: 'zulu'
         java-version: '8'
     - name: Build with Gradle
+      env: 
+        CHECK_JDK_COMPATIBILITY: true
       run: ./gradlew build
     - name: Upload Test Report
       uses: actions/upload-artifact@v3
