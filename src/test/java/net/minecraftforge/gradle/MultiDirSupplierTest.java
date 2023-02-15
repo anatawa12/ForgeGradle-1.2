@@ -87,7 +87,7 @@ public class MultiDirSupplierTest {
 
         for (File dir : expectedFiles.keySet()) {
             for (String rel : expectedFiles.get(dir)) {
-                Assertions.assertEquals(dir, new File(supp.getRoot(rel)).getCanonicalFile());
+                Assertions.assertEquals(dir.getCanonicalFile(), new File(supp.getRoot(rel)).getCanonicalFile());
             }
         }
 
