@@ -55,8 +55,8 @@ jobs:
           - "6.0"
           - "6.9.1"
           - "7.0"
-          - "7.5.1"
-          - "8.0-20221008221539+0000" # nightly for next major version
+          - "7.6"
+          - "8.0"
         setting:
           - none # just build
           - setupDecompWorkspace
