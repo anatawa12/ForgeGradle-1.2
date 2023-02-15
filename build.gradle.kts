@@ -25,6 +25,7 @@ val gradleStartDev = false
 
 repositories {
     mavenCentral()
+    maven("https://oss.sonatype.org/content/repositories/snapshots") // SpecialSource: temporal
     maven("https://maven.minecraftforge.net") {
         name = "forge"
     }
@@ -56,7 +57,7 @@ dependencies {
     implementation("org.ow2.asm:asm-tree:9.4")
     implementation("com.google.guava:guava:31.1-jre")
 
-    implementation("net.sf.opencsv:opencsv:2.3") // reading CSVs.. also used by SpecialSource
+    implementation("com.opencsv:opencsv:5.7.0") // reading CSVs.. also used by SpecialSource
     implementation("com.cloudbees:diff4j:1.3") // for difing and patching
     implementation("com.github.abrarsyed.jastyle:jAstyle:1.2") // formatting
     implementation("net.sf.trove4j:trove4j:2.1.0") // because its awesome.
@@ -65,7 +66,7 @@ dependencies {
     implementation("com.nothome:javaxdelta:2.0.1") // GDIFF implementation for BinPatches
     implementation("com.google.code.gson:gson:2.10.1") // Used instead of Argo for building changelog.
 
-    implementation("net.md-5:SpecialSource:1.11.0") // deobf and reobs
+    implementation("com.anatawa12.forge:SpecialSource:1.11.1-SNAPSHOT") // deobf and reobs
 
     // because curse
     implementation("org.apache.httpcomponents:httpclient:4.5.14")
