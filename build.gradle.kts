@@ -96,7 +96,7 @@ dependencies {
     implementation("org.osgi:osgi.annotation:8.1.0")
 
     // stupid maven
-    deployerJars("org.apache.maven.wagon:wagon-ssh:3.5.2")
+    deployerJars("org.apache.maven.wagon:wagon-ssh:3.5.3")
 
     //Stuff used in the GradleStart classes
     if (gradleStartDev) {
