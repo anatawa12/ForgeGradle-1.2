@@ -25,7 +25,6 @@ val gradleStartDev = false
 
 repositories {
     mavenCentral()
-    maven("https://oss.sonatype.org/content/repositories/snapshots") // SpecialSource: temporal
     maven("https://maven.minecraftforge.net") {
         name = "forge"
     }
@@ -66,7 +65,7 @@ dependencies {
     implementation("com.nothome:javaxdelta:2.0.1") // GDIFF implementation for BinPatches
     implementation("com.google.code.gson:gson:2.10.1") // Used instead of Argo for building changelog.
 
-    implementation("com.anatawa12.forge:SpecialSource:1.11.1-SNAPSHOT") // deobf and reobs
+    implementation("com.anatawa12.forge:SpecialSource:1.11.1") // deobf and reobs
 
     // because curse
     implementation("org.apache.httpcomponents:httpclient:4.5.14")
