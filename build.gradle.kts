@@ -1,3 +1,5 @@
+import java.util.zip.ZipInputStream
+
 plugins {
     java
     idea
@@ -216,6 +218,36 @@ gradlePlugin {
         }
     }
 }
+
+val dependenciesJava8CompatibilityCheck by tasks.creating {
+    doLast {
+        if (System.getenv("CHECK_JDK_COMPATIBILITY")?.toBoolean() == true) {
+            configurations.runtimeClasspath.get().asSequence().forEach {
+                val reading = ByteArray(8)
+                val zis = ZipInputStream(it.inputStream())
+                while (true) {
+                    val entry = zis.nextEntry ?: break
+                    if (!entry.name.endsWith(".class")) continue
+                    if (entry.name == "module-info.class") continue
+                    if (entry.name.contains("META-INF/")) continue
+                    if (zis.read(reading) != reading.size) continue
+                    if (reading[0] == 0xCA.toByte() &&
+                        reading[1] == 0xFE.toByte() &&
+                        reading[2] == 0xBA.toByte() &&
+                        reading[3] == 0xBE.toByte() &&
+                        reading[4] == 0x00.toByte() &&
+                        reading[5] == 0x00.toByte()) {
+                        val major = reading[6].toInt().and(0xFF).shl(8) or reading[7].toInt().and(0xFF)
+                        if (major > 52)
+                            throw IllegalStateException("${entry.name} of $it is not compatible with java 8 (${major-44}): class ${entry.name}")
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.check.get().dependsOn(dependenciesJava8CompatibilityCheck)
 
 // write out version so its convenient for doc deployment
 file("build").mkdirs()
