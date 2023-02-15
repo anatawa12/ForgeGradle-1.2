@@ -208,13 +208,17 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             logger.warn("buildscript before or as a replacement of jcenter.");
         }
         if (!hasMavenMinecraftForgeBeforeFilesMinecraftForge(project.getBuildscript().getRepositories())
-                || hasMavenMinecraftForgeBeforeFilesMinecraftForge(project.getRepositories())) {
+                || !hasMavenMinecraftForgeBeforeFilesMinecraftForge(project.getRepositories())) {
             logger.lifecycle("");
             logger.warn("The minecraft forge's official maven repository has been moved to");
             logger.warn("https://maven.minecraftforge.net/. Currently redirection from previous location");
             logger.warn("previous location to new location is alive but we don't know");
             logger.warn("when it will stop so I especially recommend to change repository url.");
         }
+
+        logger.lifecycle("");
+        logger.warn("You're using ForgeGradle-1.2-1.0.x which is not going to be developed.");
+        logger.warn("Please upgrade ForgeGradle to 1.2-1.1.+.");
         displayBanner = false;
     }
 
