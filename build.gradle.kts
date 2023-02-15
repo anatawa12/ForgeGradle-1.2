@@ -83,7 +83,7 @@ dependencies {
     implementation("org.eclipse.platform:org.eclipse.core.contenttype:3.7.1000") // locked
     implementation("org.eclipse.platform:org.eclipse.core.expressions:3.7.100") // locked
     implementation("org.eclipse.platform:org.eclipse.core.filesystem:1.7.700") // locked
-    implementation("org.eclipse.platform:org.eclipse.core.jobs:3.11.0") // locked
+    implementation("org.eclipse.platform:org.eclipse.core.jobs:3.13.200") // locked
     implementation("org.eclipse.platform:org.eclipse.core.resources:3.14.0") // locked
     implementation("org.eclipse.platform:org.eclipse.core.runtime:3.22.0") // locked
     implementation("org.eclipse.platform:org.eclipse.equinox.app:1.5.100") // locked
