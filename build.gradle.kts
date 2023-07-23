@@ -90,7 +90,7 @@ dependencies {
     implementation("org.eclipse.platform:org.eclipse.equinox.common:3.14.100") // locked
     implementation("org.eclipse.platform:org.eclipse.equinox.preferences:3.9.100") // locked
     implementation("org.eclipse.platform:org.eclipse.equinox.registry:3.10.200") // locked
-    implementation("org.eclipse.platform:org.eclipse.osgi:3.18.200")
+    implementation("org.eclipse.platform:org.eclipse.osgi:3.18.400")
     implementation("org.eclipse.platform:org.eclipse.text:3.11.0") // locked
     implementation("org.osgi:org.osgi.service.prefs:1.1.2")
     implementation("org.osgi:osgi.annotation:8.1.0")
