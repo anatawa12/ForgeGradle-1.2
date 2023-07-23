@@ -104,7 +104,7 @@ dependencies {
         compileOnly("net.minecraft:launchwrapper:1.11")
     }
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.3")
 }
 
 val compileJava by tasks.getting(JavaCompile::class) {
