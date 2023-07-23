@@ -12,3 +12,4 @@ public class ProjectUtils {
         return Boolean.parseBoolean(prop.toString());
     }
 }
+ 
