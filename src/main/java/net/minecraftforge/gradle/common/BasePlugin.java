@@ -77,7 +77,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         }
 
         // logging
-        {
+        if (ProjectUtils.getBooleanProperty(project, "com.anatawa12.forge.gradle.log-in-cache-folder")) {
             File projectCacheDir = project.getGradle().getStartParameter().getProjectCacheDir();
             if (projectCacheDir == null)
                 projectCacheDir = new File(project.getProjectDir(), ".gradle");
