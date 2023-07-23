@@ -10,3 +10,19 @@ updates:
     open-pull-requests-limit: 100
     schedule:
       interval: "daily"
+    ignore:
+      # ignore locked dependencies due to java 8 compatibility.
+      # see build.gradle.kts
+      - dependency-name: "org.eclipse.jdt:org.eclipse.jdt.core"
+      - dependency-name: "org.eclipse.platform:org.eclipse.core.commands"
+      - dependency-name: "org.eclipse.platform:org.eclipse.core.contenttype"
+      - dependency-name: "org.eclipse.platform:org.eclipse.core.expressions"
+      - dependency-name: "org.eclipse.platform:org.eclipse.core.filesystem"
+      - dependency-name: "org.eclipse.platform:org.eclipse.core.jobs"
+      - dependency-name: "org.eclipse.platform:org.eclipse.core.resources"
+      - dependency-name: "org.eclipse.platform:org.eclipse.core.runtime"
+      - dependency-name: "org.eclipse.platform:org.eclipse.equinox.app"
+      - dependency-name: "org.eclipse.platform:org.eclipse.equinox.common"
+      - dependency-name: "org.eclipse.platform:org.eclipse.equinox.preferences"
+      - dependency-name: "org.eclipse.platform:org.eclipse.equinox.registry"
+      - dependency-name: "org.eclipse.platform:org.eclipse.text"
