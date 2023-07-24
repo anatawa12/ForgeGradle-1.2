@@ -56,7 +56,7 @@ dependencies {
     implementation("org.ow2.asm:asm-tree:9.5")
     implementation("com.google.guava:guava:31.1-jre")
 
-    implementation("com.opencsv:opencsv:5.7.1") // reading CSVs.. also used by SpecialSource
+    implementation("com.opencsv:opencsv:5.8") // reading CSVs.. also used by SpecialSource
     implementation("com.cloudbees:diff4j:1.3") // for difing and patching
     implementation("com.github.abrarsyed.jastyle:jAstyle:1.2") // formatting
     implementation("net.sf.trove4j:trove4j:2.1.0") // because its awesome.
