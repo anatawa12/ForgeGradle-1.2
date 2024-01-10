@@ -60,6 +60,9 @@ public class ProcessJarTask extends CachedTask {
     @Input
     private boolean applyMarkers = false;
 
+    @Input
+    private boolean copyEmptyDirectories = false;
+
     private DelayedFile outCleanJar; // clean = pure forge, or pure FML
     private DelayedFile outDirtyJar = new DelayedFile(getProject(), "{BUILD_DIR}/processed.jar"); // dirty = has any other ATs
 
@@ -193,7 +196,7 @@ public class ProcessJarTask extends CachedTask {
         RemapperProcessor atProcessor = new RemapperProcessor(null, null, accessMap);
         // make remapper
         JarRemapper remapper = new JarRemapper(srgProcessor, mapping, atProcessor);
-        remapper.setCopyEmptyDirectories(false);
+        remapper.setCopyEmptyDirectories(copyEmptyDirectories);
 
         // load jar
         Jar input = Jar.init(inJar);
@@ -462,6 +465,14 @@ public class ProcessJarTask extends CachedTask {
 
     public void setMethodCsv(DelayedFile methodCsv) {
         this.methodCsv = methodCsv;
+    }
+
+    public boolean getCopyEmptyDirectories() {
+        return copyEmptyDirectories;
+    }
+
+    public void setCopyEmptyDirectories(boolean copyEmptyDirectories) {
+        this.copyEmptyDirectories = copyEmptyDirectories;
     }
 
     @Override

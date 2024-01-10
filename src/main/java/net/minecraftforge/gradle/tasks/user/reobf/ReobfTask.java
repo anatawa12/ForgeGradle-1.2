@@ -79,6 +79,9 @@ public class ReobfTask extends DefaultTask {
     @Input
     private List<String> extraSrg = new ArrayList<>();
 
+    @Input
+    private boolean copyEmptyDirectories = false;
+
     private List<Object> extraSrgFiles = new ArrayList<>();
 
     public ReobfTask() {
@@ -305,6 +308,7 @@ public class ReobfTask extends DefaultTask {
         exc.excConfig = getExceptorCfg();
         exc.fieldCSV = getFieldCsv();
         exc.methodCSV = getMethodCsv();
+        exc.copyEmptyDirectories = getCopyEmptyDirectories();
 
         exc.doFirstThings();
 
@@ -459,6 +463,14 @@ public class ReobfTask extends DefaultTask {
 
     public void setMethodCsv(DelayedFile methodCsv) {
         this.methodCsv = methodCsv;
+    }
+
+    public boolean getCopyEmptyDirectories() {
+        return copyEmptyDirectories;
+    }
+
+    public void setCopyEmptyDirectories(boolean copyEmptyDirectories) {
+        this.copyEmptyDirectories = copyEmptyDirectories;
     }
 
     @Internal

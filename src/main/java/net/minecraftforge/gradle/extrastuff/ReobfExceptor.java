@@ -24,6 +24,7 @@ public class ReobfExceptor {
     public File methodCSV;
     public File fieldCSV;
     public File excConfig;
+    public boolean copyEmptyDirectories; // Only for SpecialSource
 
     // state stuff
     Map<String, String> clsMap = new HashMap<>();
