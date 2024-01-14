@@ -309,7 +309,7 @@ public class ObfArtifact implements PublishArtifact {
      *
      * @throws InvalidUserDataException if the there is insufficient information available to generate the signature.
      */
-    void generate(ReobfExceptor exc, File defaultSrg, File extraSrg, FileCollection extraSrgFiles) throws Exception {
+    void generate(ReobfExceptor exc, File defaultSrg, File extraSrg, FileCollection extraSrgFiles, boolean copyEmptyDirectories) throws Exception {
         File toObf = getToObf();
         if (toObf == null) {
             throw new InvalidUserDataException("Unable to obfuscate as the file to obfuscate has not been specified");
@@ -338,7 +338,7 @@ public class ObfArtifact implements PublishArtifact {
         if (caller.getUseRetroGuard())
             applyRetroGuard(toObfTemp, toInjectTemp, srg, extraSrg, extraSrgFiles);
         else
-            applySpecialSource(toObfTemp, toInjectTemp, srg, extraSrg, extraSrgFiles, exc != null && exc.copyEmptyDirectories);
+            applySpecialSource(toObfTemp, toInjectTemp, srg, extraSrg, extraSrgFiles, copyEmptyDirectories);
 
         // inject mcVersion!
         if (caller.getMcVersion().startsWith("1.8")) {

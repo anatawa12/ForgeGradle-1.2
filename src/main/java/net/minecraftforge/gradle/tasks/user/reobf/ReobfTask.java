@@ -294,7 +294,7 @@ public class ReobfTask extends DefaultTask {
         }
 
         for (ObfArtifact obf : getObfuscated())
-            obf.generate(exc, srg, extraSrg, getExtraSrgFiles());
+            obf.generate(exc, srg, extraSrg, getExtraSrgFiles(), getCopyEmptyDirectories());
 
         // cleanup
         srg.delete();
@@ -308,7 +308,6 @@ public class ReobfTask extends DefaultTask {
         exc.excConfig = getExceptorCfg();
         exc.fieldCSV = getFieldCsv();
         exc.methodCSV = getMethodCsv();
-        exc.copyEmptyDirectories = getCopyEmptyDirectories();
 
         exc.doFirstThings();
 
