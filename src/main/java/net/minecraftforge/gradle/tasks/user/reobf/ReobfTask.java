@@ -79,6 +79,9 @@ public class ReobfTask extends DefaultTask {
     @Input
     private List<String> extraSrg = new ArrayList<>();
 
+    @Input
+    private boolean copyEmptyDirectories = false;
+
     private List<Object> extraSrgFiles = new ArrayList<>();
 
     public ReobfTask() {
@@ -291,7 +294,7 @@ public class ReobfTask extends DefaultTask {
         }
 
         for (ObfArtifact obf : getObfuscated())
-            obf.generate(exc, srg, extraSrg, getExtraSrgFiles());
+            obf.generate(exc, srg, extraSrg, getExtraSrgFiles(), getCopyEmptyDirectories());
 
         // cleanup
         srg.delete();
@@ -459,6 +462,14 @@ public class ReobfTask extends DefaultTask {
 
     public void setMethodCsv(DelayedFile methodCsv) {
         this.methodCsv = methodCsv;
+    }
+
+    public boolean getCopyEmptyDirectories() {
+        return copyEmptyDirectories;
+    }
+
+    public void setCopyEmptyDirectories(boolean copyEmptyDirectories) {
+        this.copyEmptyDirectories = copyEmptyDirectories;
     }
 
     @Internal

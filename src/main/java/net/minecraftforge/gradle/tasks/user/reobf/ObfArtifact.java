@@ -309,7 +309,7 @@ public class ObfArtifact implements PublishArtifact {
      *
      * @throws InvalidUserDataException if the there is insufficient information available to generate the signature.
      */
-    void generate(ReobfExceptor exc, File defaultSrg, File extraSrg, FileCollection extraSrgFiles) throws Exception {
+    void generate(ReobfExceptor exc, File defaultSrg, File extraSrg, FileCollection extraSrgFiles, boolean copyEmptyDirectories) throws Exception {
         File toObf = getToObf();
         if (toObf == null) {
             throw new InvalidUserDataException("Unable to obfuscate as the file to obfuscate has not been specified");
@@ -338,7 +338,7 @@ public class ObfArtifact implements PublishArtifact {
         if (caller.getUseRetroGuard())
             applyRetroGuard(toObfTemp, toInjectTemp, srg, extraSrg, extraSrgFiles);
         else
-            applySpecialSource(toObfTemp, toInjectTemp, srg, extraSrg, extraSrgFiles);
+            applySpecialSource(toObfTemp, toInjectTemp, srg, extraSrg, extraSrgFiles, copyEmptyDirectories);
 
         // inject mcVersion!
         if (caller.getMcVersion().startsWith("1.8")) {
@@ -356,7 +356,7 @@ public class ObfArtifact implements PublishArtifact {
         System.gc(); // clean anything out.. I hope..
     }
 
-    private void applySpecialSource(File input, File output, File srg, File extraSrg, FileCollection extraSrgFiles) throws IOException {
+    private void applySpecialSource(File input, File output, File srg, File extraSrg, FileCollection extraSrgFiles, boolean copyEmptyDirectories) throws IOException {
         // load mapping
         JarMapping mapping = new JarMapping();
         mapping.loadMappings(srg);
@@ -368,7 +368,7 @@ public class ObfArtifact implements PublishArtifact {
 
         // make remapper
         JarRemapper remapper = new JarRemapper(null, mapping);
-        remapper.setCopyEmptyDirectories(false);
+        remapper.setCopyEmptyDirectories(copyEmptyDirectories);
 
         // load jar
         Jar inputJar = Jar.init(input);
