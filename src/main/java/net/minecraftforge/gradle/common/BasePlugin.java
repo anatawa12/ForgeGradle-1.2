@@ -213,7 +213,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             logger.warn("buildscript before or as a replacement of jcenter.");
         }
         if (!hasMavenMinecraftForgeBeforeFilesMinecraftForge(project.getBuildscript().getRepositories())
-                || hasMavenMinecraftForgeBeforeFilesMinecraftForge(project.getRepositories())) {
+                || !hasMavenMinecraftForgeBeforeFilesMinecraftForge(project.getRepositories())) {
             logger.lifecycle("");
             logger.warn("The minecraft forge's official maven repository has been moved to");
             logger.warn("https://maven.minecraftforge.net/. Currently redirection from previous location");
